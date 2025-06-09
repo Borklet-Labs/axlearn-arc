@@ -3,7 +3,7 @@ on:
   push:
     branches: [ main ]
 jobs:
-  cpu-test-job:
+  gpu-test-job:
     runs-on: gpu
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc:latest
