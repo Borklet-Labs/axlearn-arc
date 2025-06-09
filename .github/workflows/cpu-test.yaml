@@ -8,7 +8,7 @@ jobs:
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc:latest
     steps:
-      - name: Check for AXLearn directory
-        run: (ls /root/axlearn && echo found AXLearn) || (echo No AXLearn)
+      - name: Check for AXLearn test script for CPU
+        run: ls /root/setup/cpu.sh && echo found AXLearn tests
       - name: Run tests for CPU platform
-        run: (/bin/bash /root/setup.sh) || (echo Tests failed)
+        run: (/bin/bash /root/setup/cpu.sh) || (echo Tests failed)

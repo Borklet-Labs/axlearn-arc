@@ -26,3 +26,6 @@ RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies.
 RUN pip install --upgrade pip && pip install uv flit && pip cache purge
+# Copy the test setup to the image
+COPY setup/ /root/setup
+COPY gpu-extensions.yaml /root
