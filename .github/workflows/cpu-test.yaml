@@ -6,7 +6,7 @@ jobs:
   cpu-test-job:
     runs-on: cpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:latest
     steps:
       - name: Check for AXLearn test script for CPU
         run: ls /root/setup/cpu.sh && echo found AXLearn tests

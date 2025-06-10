@@ -6,7 +6,7 @@ jobs:
   gpu-test-job:
     runs-on: gpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:latest
     steps:
       - name: Check for AXLearn test script for GPU
         run: ls /root/setup/gpu.sh && echo found AXLearn tests

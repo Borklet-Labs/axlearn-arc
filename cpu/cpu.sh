@@ -11,7 +11,7 @@ export TPU_STDERR_LOG_LEVEL=2
 export TPU_MIN_LOG_LEVEL=2
 
 # Install the GCP utils and PyTest suite
-uv pip install .[core,tpu,gcp,dev] pytest pytest-instafail allure-pytest torch
+uv pip install .[core,tpu,gcp] pytest pytest-instafail allure-pytest torch
 
 # Clean any previous test results
 rm -rf /root/axlearn/xml_results
