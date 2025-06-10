@@ -34,4 +34,4 @@ RUN curl -o cuda-keyring_1.1-1_all.deb https://developer.download.nvidia.com/com
     apt-get update && apt-get install -y cuda-libraries-dev-12-8 ibverbs-utils && \
     apt clean -y
 # Copy the test setup to the image
-COPY gpu.sh /root
+COPY . .
