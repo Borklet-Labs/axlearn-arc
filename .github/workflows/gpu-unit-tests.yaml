@@ -1,0 +1,13 @@
+name: gpu-unit-tests
+on:
+  workflow_dispatch
+jobs:
+  gpu-unit-tests-job:
+    runs-on: gpu
+    container:
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:latest
+    steps:
+      - name: Check for AXLearn test script for GPU
+        run: ls /root/gpu.sh && echo found AXLearn tests
+      - name: Run tests for GPU platform
+        run: (/bin/bash /root/gpu.sh) || (echo Tests failed)

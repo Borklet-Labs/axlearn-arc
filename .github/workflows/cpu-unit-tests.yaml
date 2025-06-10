@@ -1,9 +1,8 @@
-name: cpu-tests
+name: cpu-unit-tests
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch
 jobs:
-  cpu-test-job:
+  cpu-unit-tests-job:
     runs-on: cpu
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:latest

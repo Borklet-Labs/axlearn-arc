@@ -6,7 +6,7 @@ git clone --depth 1 https://github.com/apple/axlearn.git
 cd /root/axlearn
 
 # Install the GCP utils and PyTest suite
-uv pip install .[core,gpu,gcp] pytest pytest-instafail allure-pytest torch
+uv pip install .[core,gpu,gcp] pytest pytest-instafail allure-pytest torch pytest-xdist
 
 # Clean any previous test results
 rm -rf /home/runner/_work/xml_results
@@ -25,7 +25,7 @@ for test in "${gpu_array[@]}"; do
     export output_name=$(sed 's/\//\-/g' <<< "$test")
     echo "[GPU] Testing $test..."
     # Get the XML output and the Allure results for easier reading
-    pytest -v --junit-xml=/home/runner/_work/xml_results/$output_name.xml --alluredir /home/runner/_work/allure_results $test
+    AXLEARN_CI_GPU_TESTS=1 pytest -v --junit-xml=/home/runner/_work/xml_results/$output_name.xml --alluredir /home/runner/_work/allure_results -n 8 $test
 done
 
 # Compress the results
