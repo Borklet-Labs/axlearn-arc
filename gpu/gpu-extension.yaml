@@ -93,9 +93,9 @@ spec:
     - name: NCCL_IB_FIFO_TC
       value: "84"
     - name: NCCL_SHIMNET_GUEST_CONFIG_CHECKER_CONFIG_FILE
-      value: /root/axlearn/cloud/gcp/nccl/a4_high/guest_config.txtpb
+      value: "/root/axlearn/axlearn/cloud/gcp/nccl/a4_high/guest_config.txtpb"
     - name: NCCL_TUNER_CONFIG_PATH
-      value: /root/axlearn/cloud/gcp/nccl/a4_high/tuner_config.txtpb
+      value: "/root/axlearn/axlearn/cloud/gcp/nccl/a4_high/tuner_config.txtpb"
     imagePullPolicy: Always
     image: "busybox:1.28" # This will always be overwritten with the runner image
 

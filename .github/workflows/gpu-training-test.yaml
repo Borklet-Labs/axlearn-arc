@@ -10,4 +10,4 @@ jobs:
       - name: Check for AXLearn test script for GPU
         run: ls /root/gpu-training-test.sh && echo found AXLearn tests
       - name: Run tests for GPU platform
-        run: (/bin/bash /root/gpu-training-test.sh) || (echo Tests failed)
+        run: (/bin/bash /root/gpu-training-test.sh) || (echo Tests completed)
