@@ -8,6 +8,6 @@ jobs:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:latest
     steps:
       - name: Check for AXLearn test script for CPU
-        run: ls /root/setup/cpu.sh && echo found AXLearn tests
+        run: ls /root/cpu-unit-tests.sh && echo found AXLearn tests
       - name: Run tests for CPU platform
-        run: (/bin/bash /root/setup/cpu.sh) || (echo Tests failed)
+        run: (/bin/bash /root/cpu-unit-tests.sh) || (echo Tests failed)

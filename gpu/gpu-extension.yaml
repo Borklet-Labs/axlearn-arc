@@ -13,7 +13,7 @@ spec:
   nodeSelector:
     cloud.google.com/gke-nodepool: gpu-b200-pool
   # Ensure that we override any affinity generated from the first
-  # worker pod scheduled
+  # worker pod scheduled, since it will be on the default-pool
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
