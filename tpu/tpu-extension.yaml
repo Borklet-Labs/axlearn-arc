@@ -1,0 +1,88 @@
+metadata:
+  annotations:
+    annotated-by: "tpu-extension"
+  labels:
+    labeled-by: "tpu-extension"
+spec:
+  # Allow scheduling on v6e nodes
+  tolerations:
+  - effect: NoSchedule
+    key: google.com/tpu
+    operator: Exists
+  # Select the correct nodepool
+  nodeSelector:
+    cloud.google.com/gke-nodepool: tpu-v6e-2x4-pool
+  # Ensure that we override any affinity generated from the first
+  # worker pod scheduled, since it will be on the default-pool
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: cloud.google.com/gke-nodepool
+            operator: In
+            values:
+            - tpu-v6e-2x4-pool
+  restartPolicy: Never
+  containers:
+  - name: $job # Overwrite the worker container with this syntax
+    resources:
+      limits:
+        google.com/tpu: "8"
+    # Ensure we mirror AXLearn training and use the host binaries
+    env:
+    # Ensure that libtpu flags and other settings are present
+    - name: TENSORSTORE_CURL_LOW_SPEED_LIMIT_BYTES
+      value: "256"
+    - name: TPU_WORKER_ID
+      value: "0"
+    - name: TPU_SKIP_MDS_QUERY
+      value: "true"
+    - name: NUM_TPU_SLICES
+      value: "1"
+    - name: TENSORSTORE_CURL_LOW_SPEED_TIME_SECONDS
+      value: "60"
+    - name: TPU_TYPE
+      value: "v6e-8"
+    - name: LD_PRELOAD
+      value: "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"
+    - name: GCS_RESOLVE_REFRESH_SECS
+      value: "600"
+    - name: GCS_PREFIX
+      value: "gs://axlearn-arc-testing/a4-sa-test"
+    - name: LIBTPU_INIT_ARGS
+      value: --xla_tpu_spmd_rng_bit_generator_unsafe=1 --xla_tpu_enable_latency_hiding_scheduler=true
+        --xla_tpu_perform_spmd_cse_prevention=false --megascale_grpc_premap_memory_bytes=17179869184 
+        --xla_tpu_host_transfer_overlap_limit=24 --xla_max_concurrent_host_send_recv=100 
+        --xla_tpu_scheduler_percent_shared_memory_limit=90 --xla_latency_hiding_scheduler_rerun=2 
+        --xla_tpu_scoped_vmem_limit_kib=98304 --xla_jf_crs_combiner_threshold_count=10 
+        --xla_tpu_iova_dma_chunk_size_bytes=1048576 --xla_tpu_use_tc_device_shape_on_sc=true 
+        --xla_sc_enable_instruction_fusion=false --xla_sc_disjoint_spmem=false --xla_sc_disable_megacore_partitioning=true 
+        --xla_tpu_enable_async_collective_fusion_fuse_all_gather=true --xla_tpu_enable_sparse_core_collective_offload_all_reduce=true 
+        --xla_tpu_enable_async_collective_fusion=true --xla_tpu_enable_async_collective_fusion_multiple_steps=true 
+        --xla_tpu_overlap_compute_collective_tc=true --xla_enable_async_all_gather=true 
+        --xla_tpu_enable_all_experimental_scheduler_features=true --xla_tpu_enable_scheduler_memory_pressure_tracking=true 
+        --xla_tpu_aggressive_opt_barrier_removal=true --xla_lhs_prioritize_async_depth_over_stall=true 
+        --xla_tpu_enable_ag_backward_pipelining=true --xla_should_allow_loop_variant_parameter_in_chain=true 
+        --xla_should_add_loop_invariant_op_in_chain=true --xla_tpu_use_enhanced_launch_barrier=true --megascale_grpc_enable_xor_tracer=false
+    - name: NODE_IP
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: status.hostIP
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: spec.nodeName
+    - name: TPU_WORKER_HOSTNAMES
+      value: "$HOSTNAME"
+    - name: TF_CPP_MIN_LOG_LEVEL
+      value: "0"
+    - name: TPU_STDERR_LOG_LEVEL
+      value: "0"
+    - name: TPU_MIN_LOG_LEVEL
+      value: "0"
+    imagePullPolicy: Always
+    image: "busybox:1.28" # This will always be overwritten with the runner image
+
