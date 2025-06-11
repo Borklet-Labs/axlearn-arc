@@ -85,11 +85,11 @@ spec:
     - name: TPU_WORKER_HOSTNAMES
       value: "$HOSTNAME"
     - name: TF_CPP_MIN_LOG_LEVEL
-      value: "0"
+      value: "1"
     - name: TPU_STDERR_LOG_LEVEL
-      value: "0"
+      value: "1"
     - name: TPU_MIN_LOG_LEVEL
-      value: "0"
+      value: "1"
     imagePullPolicy: Always
     image: "busybox:1.28" # This will always be overwritten with the runner image
 
