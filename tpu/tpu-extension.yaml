@@ -31,6 +31,11 @@ spec:
     resources:
       limits:
         google.com/tpu: "8"
+    # Modify the security context because of of the ulimit issue
+    securityContext:
+      runAsUser: 0
+      allowPrivilegeEscalation: true
+      privileged: true
     # Ensure we mirror AXLearn training and use the host binaries
     env:
     # Ensure that libtpu flags and other settings are present
