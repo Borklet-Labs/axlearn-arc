@@ -17,10 +17,7 @@ rm pytest_xml.tar.gz allure_results.tar.gz
 mkdir -p /home/runner/_work/xml_results
 mkdir -p /home/runner/_work/allure_results
 
-# Create an array of tests, excluding anything for GPU or Vertex AI
-readarray -d '' gcp_array < <(find axlearn -type f -name "*test*.py" ! -name "*gpu*" ! -name "*vertex*" ! -name "*tpu*" -print0)
-
-pytest -v --junit-xml=/home/runner/_work/xml_results/cpu_tests.xml --alluredir /home/runner/_work/allure_results -n 8 $gcp_array
+pytest -v --junit-xml=/home/runner/_work/xml_results/cpu_tests.xml --alluredir /home/runner/_work/allure_results -n 8 $(find axlearn -type f -name "*test*.py" ! -name "*gpu*" ! -name "*vertex*" ! -name "*tpu*" -printf '%p ')
 
 # Compress the results
 tar -czvf pytest_xml.tar.gz /home/runner/_work/xml_results

@@ -7,7 +7,11 @@ jobs:
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:latest
     steps:
-      - name: Check for AXLearn test script for GPU
-        run: ls /root/gpu-training-test.sh && echo Found AXLearn tests
-      - name: Run tests for GPU platform
-        run: /bin/bash /root/gpu-training-test.sh && echo Training test completed
+      - name: Fetch the latest AXLearn commit
+        run: cd /root && git clone --depth 1 https://github.com/apple/axlearn.git
+      - name: Install AXLearn dependiencies with uv
+        run: cd /root/axlearn && uv pip install .[core,gpu,gcp]
+      - name: Ensure old checkpoints have been cleaned up
+        run: gsutil -m rm -rf ${GCS_PREFIX}/launch_trainer_flags ${GCS_PREFIX}/model_analysis.txt ${GCS_PREFIX}/trainer_config ${GCS_PREFIX}/trainer_state_tree.txt ${GCS_PREFIX}/checkpoints || echo "Errors allowed for gsutil. Ignoring..."
+      - name: Run the training loop for Fuji v2 7B, single host
+        run: /bin/bash /root/gpu-training-test.sh
