@@ -1,21 +1,6 @@
 #!/bin/bash
 
-# Fetch the latest version of AXLearn directly from upstream
-cd /root
-git clone --depth 1 https://github.com/apple/axlearn.git
 cd /root/axlearn
-
-# Install the GCP utils and PyTest suite
-uv pip install .[core,gpu,gcp] pytest pytest-instafail allure-pytest torch pytest-xdist
-
-# Clean any previous test results
-rm -rf /home/runner/_work/xml_results
-rm -rf /home/runner/_work/allure_results
-rm pytest_xml.tar.gz allure_results.tar.gz
-
-# Create a test output directory
-mkdir -p /home/runner/_work/xml_results
-mkdir -p /home/runner/_work/allure_results
 
 # Create an array of GPU tests
 readarray -d '' gpu_array < <(find axlearn/common -type f -name "*gpu*test*.py" -print0)
@@ -25,7 +10,7 @@ for test in "${gpu_array[@]}"; do
     export output_name=$(sed 's/\//\-/g' <<< "$test")
     echo "[GPU] Testing $test..."
     # Get the XML output and the Allure results for easier reading
-    AXLEARN_CI_GPU_TESTS=1 pytest -v --junit-xml=/home/runner/_work/xml_results/$output_name.xml --alluredir /home/runner/_work/allure_results -n 8 $test
+    AXLEARN_CI_GPU_TESTS=1 pytest -v --junit-xml=/home/runner/_work/xml_results/$output_name.xml --alluredir /home/runner/_work/allure_results -n 8 $test || touch /home/runner/_work/test_failed
 done
 
 # Compress the results
@@ -33,5 +18,7 @@ tar -czvf pytest_xml.tar.gz /home/runner/_work/xml_results
 tar -czvf allure_results.tar.gz /home/runner/_work/allure_results
 
 # Upload to GCS, including the date and hostname inside the pod
-gsutil -m cp pytest_xml.tar.gz ${GCS_PREFIX}/testing/$(date +"%Y-%m-%d-%T")-${HOSTNAME}_pytest_xml.tar.gz
-gsutil -m cp allure_results.tar.gz ${GCS_PREFIX}/testing/$(date +"%Y-%m-%d-%T")-${HOSTNAME}_allure.tar.gz
+gsutil -m cp pytest_xml.tar.gz ${GCS_PREFIX}/testing/gpu-unit-test-$(date +"%Y-%m-%d-%T")-${HOSTNAME}_pytest_xml.tar.gz
+gsutil -m cp allure_results.tar.gz ${GCS_PREFIX}/testing/gpu-unit-tests-$(date +"%Y-%m-%d-%T")-${HOSTNAME}_allure.tar.gz
+
+[[ ! -f /home/runner/_work/test_failed ]] && echo "All tests passed successfully"

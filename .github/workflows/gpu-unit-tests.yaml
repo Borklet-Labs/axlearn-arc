@@ -7,7 +7,11 @@ jobs:
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:latest
     steps:
-      - name: Check for AXLearn test script for GPU
-        run: ls /root/gpu-unit-tests.sh && echo found AXLearn tests
-      - name: Run tests for GPU platform
-        run: (/bin/bash /root/gpu-unit-tests.sh) || (echo Tests failed)
+      - name: Fetch the latest AXLearn commit
+        run: cd /root && git clone --depth 1 https://github.com/apple/axlearn.git
+      - name: Install AXLearn and pytest dependiencies with uv
+        run: cd /root/axlearn && uv pip install .[core,gpu,gcp] pytest pytest-instafail allure-pytest torch pytest-xdist
+      - name: Create output directories
+        run: mkdir -p /home/runner/_work/{xml_results,allure_results}
+      - name: Run unit tests
+        run: /bin/bash /root/gpu-unit-tests.sh && echo "All tests passed successfully"
