@@ -4,7 +4,7 @@ cd /root/axlearn
 
 # Execute the training test job and timeout after 5 minutes
 timeout 300s python3 -m axlearn.common.launch_trainer_main \
-    --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash-single-host \
+    --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash-single-hostz \
     --trainer_dir=${GCS_PREFIX} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
     --jax_backend=gpu \

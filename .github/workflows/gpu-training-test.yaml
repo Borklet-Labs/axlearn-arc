@@ -12,6 +12,6 @@ jobs:
       - name: Install AXLearn dependiencies with uv
         run: cd /root/axlearn && uv pip install .[core,gpu,gcp]
       - name: Ensure old checkpoints have been cleaned up
-        run: gsutil -m rm -rf ${GCS_PREFIX}/launch_trainer_flags ${GCS_PREFIX}/model_analysis.txt ${GCS_PREFIX}/trainer_config ${GCS_PREFIX}/trainer_state_tree.txt ${GCS_PREFIX}/checkpoints > gcs_out || echo "Errors allowed for gsutil. Ignoring..."
+        run: gsutil -m rm -rf ${GCS_PREFIX}/launch_trainer_flags ${GCS_PREFIX}/model_analysis.txt ${GCS_PREFIX}/trainer_config ${GCS_PREFIX}/trainer_state_tree.txt ${GCS_PREFIX}/checkpoints || echo "Errors allowed for gsutil. Ignoring..."
       - name: Run the training loop for Fuji v2 7B, single host
         run: /bin/bash /root/gpu-training-test.sh
