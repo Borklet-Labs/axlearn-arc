@@ -12,6 +12,8 @@ spec:
   # Select the correct nodepool
   nodeSelector:
     cloud.google.com/gke-nodepool: tpu-v6e-2x4-pool
+    cloud.google.com/gke-tpu-accelerator: tpu-v6e-slice
+    cloud.google.com/gke-tpu-topology: 2x4
   # Ensure that we override any affinity generated from the first
   # worker pod scheduled, since it will be on the default-pool
   affinity:
