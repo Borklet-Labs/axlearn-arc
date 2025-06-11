@@ -33,5 +33,5 @@ tar -czvf pytest_xml.tar.gz /home/runner/_work/xml_results
 tar -czvf allure_results.tar.gz /home/runner/_work/allure_results
 
 # Upload to GCS, including the date and hostname inside the pod
-gsutil -m cp pytest_xml.tar.gz gs://supercomputer-testing-axlearn/a4-sa-test/testing/$(date +"%Y-%m-%d-%T")-${HOSTNAME}_pytest_xml.tar.gz
-gsutil -m cp allure_results.tar.gz gs://supercomputer-testing-axlearn/a4-sa-test/testing/$(date +"%Y-%m-%d-%T")-${HOSTNAME}_allure.tar.gz
+gsutil -m cp pytest_xml.tar.gz ${GCS_PREFIX}/testing/$(date +"%Y-%m-%d-%T")-${HOSTNAME}_pytest_xml.tar.gz
+gsutil -m cp allure_results.tar.gz ${GCS_PREFIX}/testing/$(date +"%Y-%m-%d-%T")-${HOSTNAME}_allure.tar.gz

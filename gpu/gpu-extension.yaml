@@ -96,6 +96,8 @@ spec:
       value: "/root/axlearn/axlearn/cloud/gcp/nccl/a4_high/guest_config.txtpb"
     - name: NCCL_TUNER_CONFIG_PATH
       value: "/root/axlearn/axlearn/cloud/gcp/nccl/a4_high/tuner_config.txtpb"
+    - name: GCS_PREFIX
+      value: "gs://axlearn-arc-testing/a4-sa-test"
     imagePullPolicy: Always
     image: "busybox:1.28" # This will always be overwritten with the runner image
 
