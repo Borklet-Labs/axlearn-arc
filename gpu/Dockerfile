@@ -18,8 +18,8 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.
       git screen ca-certificates google-perftools google-cloud-cli python3.10-venv && apt clean -y
 
 # Setup.
-RUN mkdir -p /root
-WORKDIR /root
+RUN mkdir -p /var/arc
+WORKDIR /var/arc
 # Setup venv to suppress pip warnings.
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV
@@ -35,3 +35,4 @@ RUN curl -o cuda-keyring_1.1-1_all.deb https://developer.download.nvidia.com/com
     apt clean -y
 # Copy the test setup to the image
 COPY . .
+WORKDIR /root

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /root/axlearn
+cd /root
 
 # Create an array of GPU tests
 readarray -d '' gpu_array < <(find axlearn/common -type f -name "*gpu*test*.py" -print0)

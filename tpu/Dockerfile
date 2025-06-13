@@ -18,8 +18,8 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.
       git screen ca-certificates google-perftools google-cloud-cli python3.10-venv && apt clean -y
 
 # Setup.
-RUN mkdir -p /root
-WORKDIR /root
+RUN mkdir -p /var/arc
+WORKDIR /var/arc
 # Setup venv to suppress pip warnings.
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV
@@ -28,3 +28,4 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install --upgrade pip && pip install uv flit && pip cache purge
 # Copy the test setup to the image
 COPY . .
+WORKDIR /root
