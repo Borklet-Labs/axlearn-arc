@@ -20,6 +20,7 @@ spec:
             - default-pool
   restartPolicy: Never
   serviceAccountName: jobset-gha-rs-kube-mode
+  terminationGracePeriodSeconds: 10
   containers:
   - name: $job # Overwrite the worker container with this syntax
     env:
@@ -27,4 +28,8 @@ spec:
       value: "gs://axlearn-arc-testing/a4-sa-test"
     imagePullPolicy: Always
     image: "busybox:1.28" # This will always be overwritten with the runner image
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/bash", "-c", "python3", "/var/arc/cleanup.py"]
 

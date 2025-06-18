@@ -154,8 +154,9 @@ def check_jobset_completed(jobset_name: str) -> bool:
 
     return False
 
-def update_git_info(jobset_base_config: dict) -> dict:
+def update_jobset(jobset_base_config: dict) -> dict:
     """Take in a JobSet config dict and update with new Git info
+    and information about the owner to handle proper termination
     
     Args:
         jobset_base_config: Dict containing the JobSet config
@@ -167,15 +168,37 @@ def update_git_info(jobset_base_config: dict) -> dict:
 
     if "CUSTOM_GIT_ORIGIN" in os.environ:
         if os.environ["CUSTOM_GIT_ORIGIN"] != "INSERT_GIT_ORIGIN":
-            updated_jobset.replace("INSERT_GIT_ORIGIN", os.environ["CUSTOM_GIT_ORIGIN"])
+            print(f"Found custom git origin {os.environ['CUSTOM_GIT_ORIGIN']}", file=sys.stderr)
+            updated_jobset = updated_jobset.replace("INSERT_GIT_ORIGIN", os.environ["CUSTOM_GIT_ORIGIN"])
+        else:
+            updated_jobset = updated_jobset.replace("INSERT_GIT_ORIGIN", "")
     else:
-        updated_jobset.replace("INSERT_GIT_ORIGIN", "")
+        updated_jobset = updated_jobset.replace("INSERT_GIT_ORIGIN", "")
 
     if "CUSTOM_GIT_BRANCH" in os.environ:
         if os.environ["CUSTOM_GIT_BRANCH"] != "INSERT_GIT_BRANCH":
-            updated_jobset.replace("INSERT_GIT_BRANCH", os.environ["CUSTOM_GIT_BRANCH"])
+            print(f"Found custom git branch {os.environ['CUSTOM_GIT_BRANCH']}", file=sys.stderr)
+            updated_jobset = updated_jobset.replace("INSERT_GIT_BRANCH", os.environ["CUSTOM_GIT_BRANCH"])
+        else:
+            updated_jobset = updated_jobset.replace("INSERT_GIT_BRANCH", "")
     else:
-        updated_jobset.replace("INSERT_GIT_BRANCH", "")
+        updated_jobset = updated_jobset.replace("INSERT_GIT_BRANCH", "")
+
+    # Get the pod UID to ensure clean deletion later
+    pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
+    pod_metadata = None
+
+    for pod in pods.items:
+        if pod.metadata.name == os.environ["HOSTNAME"]:
+            pod_metadata = pod.metadata
+            break
+
+    if pod_metadata:
+        updated_jobset = updated_jobset.replace("POD_NAME_HERE", os.environ["HOSTNAME"])
+        updated_jobset = updated_jobset.replace("UID_HERE", pod_metadata.uid)
+    else:
+        print("Unable to determine pod info and cannot create JobSet safely", file=sys.stderr)
+        sys.exit(-1)
 
     return json.loads(updated_jobset)
 
@@ -185,8 +208,7 @@ if __name__ == '__main__':
     with open(JOBSET_JSON, "r", encoding="utf-8") as js_file:
         jobset_config = json.load(js_file)
 
-    jobset_config = update_git_info(jobset_config)
-
+    jobset_config = update_jobset(jobset_config)
     # Create the JobSet
     print(f"Creating new JobSet {JOBSET_NAME} from template {JOBSET_JSON}", file=sys.stderr)
     JOBSET_API.create(body=jobset_config, namespace="axlearn-arc")

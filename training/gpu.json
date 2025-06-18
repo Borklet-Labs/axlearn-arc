@@ -5,7 +5,15 @@
     "name": "axlearn-gpu-training",
     "annotations": {
       "kueue.x-k8s.io/queue-name": "a4-high"
-    }
+    },
+    "ownerReferences": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "name": "POD_NAME_HERE",
+            "uid": "UID_HERE"
+        }
+    ]
   },
   "spec": {
     "failurePolicy": {

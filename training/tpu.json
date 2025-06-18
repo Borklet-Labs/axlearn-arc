@@ -6,7 +6,15 @@
     "annotations": {
       "alpha.jobset.sigs.k8s.io/exclusive-topology": "cloud.google.com/gke-nodepool",
       "kueue.x-k8s.io/queue-name": "tpu-v6e"
-    }
+    },
+    "ownerReferences": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "name": "POD_NAME_HERE",
+            "uid": "UID_HERE"
+        }
+    ]
   },
   "spec": {
     "failurePolicy": {
