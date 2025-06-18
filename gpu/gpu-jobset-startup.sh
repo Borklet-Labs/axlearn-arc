@@ -23,7 +23,7 @@ git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --dept
 git checkout $GIT_BRANCH
 
 # Show the commit information
-git log -1 --stat
+git log -1 --stat --pretty=format:"%H" --no-patch
 
 uv pip install .[core,gpu]
 
