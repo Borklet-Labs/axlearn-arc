@@ -28,4 +28,3 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install --upgrade pip && pip install uv flit && pip cache purge
 # Copy the test setup to the image
 COPY . .
-WORKDIR /root
