@@ -13,4 +13,4 @@ jobs:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
       - name: Launch the GPU training job
-        run: python3 /var/arc/launch_training.py
+        run: exec python3 /var/arc/launch_training.py

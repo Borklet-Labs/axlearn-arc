@@ -15,6 +15,7 @@ import json
 import sys
 import time
 import os
+import signal
 import kubernetes
 
 # Get the JobSet info from the environment
@@ -32,6 +33,19 @@ JOBSET_API = CLIENT.resources.get(api_version = "jobset.x-k8s.io/v1alpha2", kind
 # Prepare the standard API for use
 kubernetes.config.load_incluster_config()
 KUBE_API = kubernetes.client.CoreV1Api()
+
+def receive_signal(signum, signal):
+    """Receive a signal from Github and exit
+    
+    Args:
+        signum: Number of signal
+        signal: Signal"""
+
+    print(f"Received signal {signum}. Exiting...", file=sys.stderr)
+    cleanup_jobset_and_exit(JOBSET_NAME, -1)
+
+signal.signal(signal.SIGTERM, receive_signal)
+signal.signal(signal.SIGINT, receive_signal)
 
 def get_current_jobset(jobset_name: str):
     """Fetch a list of active JobSets in a predefined namespace, returning the JobSet
@@ -154,14 +168,14 @@ def update_git_info(jobset_base_config: dict) -> dict:
     if "CUSTOM_GIT_ORIGIN" in os.environ:
         if os.environ["CUSTOM_GIT_ORIGIN"] != "INSERT_GIT_ORIGIN":
             updated_jobset.replace("INSERT_GIT_ORIGIN", os.environ["CUSTOM_GIT_ORIGIN"])
-        else:
-            updated_jobset.replace("INSERT_GIT_ORIGIN", "")
+    else:
+        updated_jobset.replace("INSERT_GIT_ORIGIN", "")
 
     if "CUSTOM_GIT_BRANCH" in os.environ:
         if os.environ["CUSTOM_GIT_BRANCH"] != "INSERT_GIT_BRANCH":
             updated_jobset.replace("INSERT_GIT_BRANCH", os.environ["CUSTOM_GIT_BRANCH"])
-        else:
-            updated_jobset.replace("INSERT_GIT_BRANCH", "")
+    else:
+        updated_jobset.replace("INSERT_GIT_BRANCH", "")
 
     return json.loads(updated_jobset)
 

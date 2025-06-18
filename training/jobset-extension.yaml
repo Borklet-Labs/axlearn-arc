@@ -19,7 +19,7 @@ spec:
             values:
             - default-pool
   restartPolicy: Never
-  serviceAccountName: axlearn-arc-jobset-sa
+  serviceAccountName: jobset-gha-rs-kube-mode
   containers:
   - name: $job # Overwrite the worker container with this syntax
     env:
