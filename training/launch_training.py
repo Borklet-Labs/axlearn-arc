@@ -254,7 +254,8 @@ if __name__ == '__main__':
     time_elapsed = 0
     while time_elapsed < 600:
         jobset_healthy = check_jobset_healthy(JOBSET_NAME)
-        print(f"[{time_elapsed}/600]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}")
+        print(f"[{time_elapsed}/600]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}",
+              file=sys.stderr)
         # Check for failures
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)

@@ -18,7 +18,7 @@
   },
   "spec": {
     "failurePolicy": {
-      "maxRestarts": 0
+      "maxRestarts": 1
     },
     "replicatedJobs": [
       {
