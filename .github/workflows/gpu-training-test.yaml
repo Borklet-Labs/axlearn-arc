@@ -1,0 +1,17 @@
+name: gpu-training-test
+on:
+  workflow_dispatch
+jobs:
+  gpu-training-test-job:
+    runs-on: gpu
+    container:
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:latest
+    steps:
+      - name: Fetch the target AXLearn origin and branch
+        run: /bin/bash /var/arc/git-setup.sh
+      - name: Install AXLearn dependiencies with uv
+        run: cd /root && uv pip install .[core,gpu,gcp]
+      - name: Ensure old checkpoints have been cleaned up
+        run: gsutil -m rm -rf ${GCS_PREFIX}/launch_trainer_flags ${GCS_PREFIX}/model_analysis.txt ${GCS_PREFIX}/trainer_config ${GCS_PREFIX}/trainer_state_tree.txt ${GCS_PREFIX}/checkpoints || echo "Errors allowed for gsutil. Ignoring..."
+      - name: Run the training loop for Fuji v2 7B, single host
+        run: /bin/bash /var/arc/gpu-training-test.sh

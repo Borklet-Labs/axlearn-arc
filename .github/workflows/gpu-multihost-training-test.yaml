@@ -1,0 +1,16 @@
+name: gpu-multihost-training-test
+on:
+  workflow_dispatch
+jobs:
+  gpu-multihost-training-test-job:
+    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to GPU
+    container:
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-training:latest
+      env:
+        ARC_JOBSET_NAME: axlearn-gpu-training
+        ARC_JOBSET_JSON: /var/arc/gpu.json
+    steps:
+      - name: Install the Kubernetes Python SDK
+        run: uv pip install kubernetes
+      - name: Launch the GPU training job
+        run: exec python3 /var/arc/launch_training.py

@@ -1,0 +1,17 @@
+name: cpu-unit-tests
+on:
+  workflow_dispatch
+jobs:
+  cpu-unit-tests-job:
+    runs-on: cpu
+    container:
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:latest
+    steps:
+      - name: Fetch the target AXLearn origin and branch
+        run: /bin/bash /var/arc/git-setup.sh
+      - name: Install AXLearn and pytest dependiencies with uv
+        run: cd /root && uv pip install .[core,gpu,tpu,dev,gcp] pytest pytest-instafail allure-pytest pytest-xdist
+      - name: Create output directories
+        run: mkdir -p /home/runner/_work/{xml_results,allure_results}
+      - name: Run unit tests
+        run: /bin/bash /var/arc/cpu-unit-tests.sh && echo "All tests passed successfully"
