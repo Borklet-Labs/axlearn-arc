@@ -1,0 +1,191 @@
+{
+  "apiVersion": "jobset.x-k8s.io/v1alpha2",
+  "kind": "JobSet",
+  "metadata": {
+    "name": "axlearn-tpu-training",
+    "annotations": {
+      "alpha.jobset.sigs.k8s.io/exclusive-topology": "cloud.google.com/gke-nodepool",
+      "kueue.x-k8s.io/queue-name": "tpu-v6e"
+    },
+    "ownerReferences": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "name": "POD_NAME_HERE",
+            "uid": "UID_HERE"
+        }
+    ]
+  },
+  "spec": {
+    "failurePolicy": {
+      "maxRestarts": 1
+    },
+    "replicatedJobs": [
+      {
+        "name": "job",
+        "replicas": 1,
+        "template": {
+          "metadata": {
+            "annotations": {
+              "axlearn/replicatedjob-load-balancer-service-name": "axlearn-tpu-training-job-service",
+              "axlearn/replicatedjob-load-balancer-target-port": "9000",
+              "axlearn/replicatedjob-load-balancer-port": "80"
+            }
+          },
+          "spec": {
+            "parallelism": 4,
+            "completions": 4,
+            "backoffLimit": 0,
+            "template": {
+              "metadata": {
+                "annotations": {
+                  "tpu-provisioner.cloud.google.com/disable-autoprovisioning": "false"
+                },
+                "labels": {}
+              },
+              "spec": {
+                "terminationGracePeriodSeconds": 60,
+                "restartPolicy": "Never",
+                "hostAliases": [
+                  {
+                    "ip": "169.254.169.254",
+                    "hostnames": [
+                      "metadata",
+                      "metadata.google.internal"
+                    ]
+                  }
+                ],
+                "nodeSelector": {
+                  "cloud.google.com/gke-tpu-accelerator": "tpu-v6e-slice",
+                  "cloud.google.com/gke-tpu-topology": "4x4"
+                },
+                "tolerations": [],
+                "containers": [
+                  {
+                    "name": "axlearn-tpu-training",
+                    "image": "INSERT_DOCKER_IMAGE",
+                    "ports": [
+                      {
+                        "containerPort": 8471
+                      },
+                      {
+                        "containerPort": 8080
+                      },
+                      {
+                        "containerPort": 8431
+                      },
+                      {
+                        "containerPort": 9000
+                      }
+                    ],
+                    "securityContext": {
+                      "privileged": true
+                    },
+                    "command": [
+                      "bash",
+                      "/var/arc/tpu-jobset-startup.sh"
+                    ],
+                    "resources": {
+                      "limits": {
+                        "google.com/tpu": 4,
+                        "memory": "720Gi"
+                      },
+                      "requests": {
+                        "memory": "576Gi"
+                      }
+                    },
+                    "env": [
+                      {
+                        "name": "GCS_RESOLVE_REFRESH_SECS",
+                        "value": "600"
+                      },
+                      {
+                        "name": "TPU_TYPE",
+                        "value": "v6e-16"
+                      },
+                      {
+                        "name": "NUM_TPU_SLICES",
+                        "value": "1"
+                      },
+                      {
+                        "name": "XLA_FLAGS",
+                        "value": "--xla_dump_to=/output/axlearn-tpu-training/xla"
+                      },
+                      {
+                        "name": "TF_CPP_MIN_LOG_LEVEL",
+                        "value": "0"
+                      },
+                      {
+                        "name": "TPU_STDERR_LOG_LEVEL",
+                        "value": "0"
+                      },
+                      {
+                        "name": "TPU_MIN_LOG_LEVEL",
+                        "value": "0"
+                      },
+                      {
+                        "name": "TENSORSTORE_CURL_LOW_SPEED_TIME_SECONDS",
+                        "value": "60"
+                      },
+                      {
+                        "name": "TENSORSTORE_CURL_LOW_SPEED_LIMIT_BYTES",
+                        "value": "256"
+                      },
+                      {
+                        "name": "LD_PRELOAD",
+                        "value": "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"
+                      },
+                      {
+                        "name": "NODE_IP",
+                        "valueFrom": {
+                          "fieldRef": {
+                            "fieldPath": "status.hostIP"
+                          }
+                        }
+                      },
+                      {
+                        "name": "NODE_NAME",
+                        "valueFrom": {
+                          "fieldRef": {
+                            "fieldPath": "spec.nodeName"
+                          }
+                        }
+                      },
+                      {
+                        "name": "GCS_PREFIX",
+                        "value": "INSERT_GCS_PREFIX"
+                      },
+                      {
+                        "name": "CUSTOM_GIT_ORIGIN",
+                        "value": "INSERT_GIT_ORIGIN"
+                      },
+                      {
+                        "name": "CUSTOM_GIT_BRANCH",
+                        "value": "INSERT_GIT_BRANCH"
+                      }
+                    ],
+                    "volumeMounts": [
+                      {
+                        "name": "shared-output",
+                        "mountPath": "/output"
+                      }
+                    ],
+                    "imagePullPolicy": "Always"
+                  }
+                ],
+                "initContainers": [],
+                "serviceAccountName": "default",
+                "volumes": [
+                  {
+                    "name": "shared-output",
+                    "emptyDir": {}
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
