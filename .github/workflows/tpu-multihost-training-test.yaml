@@ -11,10 +11,10 @@ jobs:
         ARC_JOBSET_NAME: axlearn-tpu-training
         ARC_JOBSET_JSON: /var/arc/tpu.json
         GCS_PREFIX: gs://axlearn-arc-testing/a4-sa-test
-        TRAINING_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:latest
+        TRAINING_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu-py312:latest
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        CUSTOM_GIT_BRANCH: python3.12 # Customize with a different branch
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
