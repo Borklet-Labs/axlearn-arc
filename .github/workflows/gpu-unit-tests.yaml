@@ -10,7 +10,7 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/a4-sa-test/
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        CUSTOM_GIT_BRANCH: b200_test_fixes # Customize with a different branch
     steps:
       - name: Fetch the target AXLearn origin and branch
         run: /bin/bash /var/arc/git-setup.sh
