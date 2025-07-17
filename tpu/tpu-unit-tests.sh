@@ -12,9 +12,10 @@ pytest -v --junit-xml=/home/runner/_work/xml_results/tpu_tests.xml $(find axlear
 
 # Compress the results
 cd /home/runner/_work
-tar -czvf results.tar.gz xml_results 
+tar -czvf results.tar.gz xml_results csv_results
 
 # Upload to GCS, including the date and hostname inside the pod
-gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/tpu-unit-tests-$(date +"%Y-%m-%d-%T")-${HOSTNAME}.tar.gz
+timestamp=$(date +"%Y-%m-%d-%T")
+gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/tpu-unit-tests-${timestamp}-${HOSTNAME}.tar.gz
 
 [[ ! -f /home/runner/_work/test_failed ]] && echo "All tests passed successfully"

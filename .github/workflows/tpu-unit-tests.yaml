@@ -18,6 +18,6 @@ jobs:
       - name: Install AXLearn and pytest dependiencies with uv
         run: cd /root && uv pip install --prerelease=allow .[core,tpu,gcp] pytest pytest-instafail torch pytest-xdist pytest-csv
       - name: Create output directories
-        run: mkdir -p /home/runner/_work/{xml_results,csv_results}
+        run: mkdir -p /home/runner/_work/xml_results && mkdir -p /home/runner/_work/csv_results
       - name: Run unit tests
         run: /bin/bash /var/arc/tpu-unit-tests.sh && echo "All tests passed successfully"
