@@ -7,7 +7,7 @@ jobs:
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:latest
       env:
-        GCS_PREFIX: gs://axlearn-arc-testing/a4-sa-test
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
@@ -17,6 +17,6 @@ jobs:
       - name: Install AXLearn dependiencies with uv
         run: cd /root && uv pip install .[core,gpu,gcp]
       - name: Ensure old checkpoints have been cleaned up
-        run: gsutil -m rm -rf ${GCS_PREFIX}/launch_trainer_flags ${GCS_PREFIX}/model_analysis.txt ${GCS_PREFIX}/trainer_config ${GCS_PREFIX}/trainer_state_tree.txt ${GCS_PREFIX}/checkpoints || echo "Errors allowed for gsutil. Ignoring..."
+        run: gsutil -m rm -r ${GCS_PREFIX}/gpu_single_host_test || echo "Errors allowed for gsutil. Ignoring..."
       - name: Run the training loop for Fuji v2 7B, single host
         run: /bin/bash /var/arc/gpu-training-test.sh
