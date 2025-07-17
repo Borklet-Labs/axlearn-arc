@@ -4,7 +4,7 @@ cd /root
 
 # Get the XML output and the CSV results for easier reading
 AXLEARN_CI_GPU_TESTS=1 pytest -v --junit-xml=/home/runner/_work/xml_results/gpu_results.xml \
-    --csv /home/runner/_work/csv_results/gpu_tests.csv
+    --csv /home/runner/_work/csv_results/gpu_tests.csv \
     -n 8 $(find axlearn/common -type f -name "*gpu*test*.py" -printf '%p ') \
     || touch /home/runner/_work/test_failed
 

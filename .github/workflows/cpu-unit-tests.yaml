@@ -7,7 +7,7 @@ jobs:
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:latest
       env:
-        GCS_PREFIX: gs://axlearn-arc-testing/a4-sa-test/
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch

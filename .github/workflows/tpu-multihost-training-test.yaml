@@ -10,7 +10,7 @@ jobs:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: axlearn-tpu-training
         ARC_JOBSET_JSON: /var/arc/tpu.json
-        GCS_PREFIX: gs://axlearn-arc-testing/a4-sa-test
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
         TRAINING_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:latest
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
