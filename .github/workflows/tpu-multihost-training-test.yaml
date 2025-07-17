@@ -14,7 +14,7 @@ jobs:
         TRAINING_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:latest
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        CUSTOM_GIT_BRANCH: python3.12 # Customize with a different branch
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
