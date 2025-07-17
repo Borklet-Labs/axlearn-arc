@@ -20,8 +20,8 @@ for i in ${groups[@]}; do
     pytest -v --junit-xml=/home/runner/_work/xml_results/cpu_tests_${i}.xml \
         --csv /home/runner/_work/csv_results/cpu_tests_${i}.csv \
         -n auto -m "not (gs_login or tpu or high_cpu or fp64 or for_8_devices)" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal \
-        || touch /home/runner/_work/test_failed && echo "Test failures detected in group ${i}"
+        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal
+
     echo Adding results from group ${i} to master CSV
     if [[ "$i" == 00 ]]; then
         cat /home/runner/_work/csv_results/cpu_tests_${i}.csv >> /home/runner/_work/csv_results/cpu_tests_all_results.csv
@@ -30,6 +30,16 @@ for i in ${groups[@]}; do
         cat /home/runner/_work/csv_results/cpu_tests_${i}.csv >> /home/runner/_work/csv_results/cpu_tests_all_results.csv \
         || echo "No result CSV found for group ${i}. Skipping..."
     fi
+
+    if [ -f /home/runner/_work/csv_results/cpu_tests_${i}.csv ]; then
+        echo Checking for test failures
+        if grep -q ",failed," /home/runner/_work/csv_results/cpu_tests_${i}.csv; then
+            echo "Test failures detected in group ${i}"
+            touch /home/runner/_work/test_failed
+        else
+            echo "All tests passed / skipped in group ${i}"
+        fi
+    fi
 done
 
 for i in ${groups[@]}; do
@@ -37,12 +47,22 @@ for i in ${groups[@]}; do
     JAX_ENABLE_X64=1 pytest -v --junit-xml=/home/runner/_work/xml_results/cpu_tests_fp64_${i}.xml \
         --csv /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv \
         -n auto -m "fp64" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal \
-        || touch /home/runner/_work/test_failed && echo "Test failures detected in group ${i}"
+        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal
+
     echo Adding results from group ${i} to master CSV
     sed -i '1d' /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv && \
-    cat /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv >> /home/runner/_work/csv_results/cpu_tests_all_results.csv ||
-    || echo "No result CSV found for group ${i}. Skipping..."
+    cat /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv >> /home/runner/_work/csv_results/cpu_tests_all_results.csv \
+        || echo "No result CSV found for group ${i}. Skipping..."
+
+    if [ -f /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv ]; then
+        echo Checking for test failures
+        if grep -q ",failed," /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv; then
+            echo "Test failures detected in group ${i}"
+            touch /home/runner/_work/test_failed
+        else
+            echo "All tests passed / skipped in group ${i}"
+        fi
+    fi
 done
 
 for i in ${groups[@]}; do
@@ -51,12 +71,22 @@ for i in ${groups[@]}; do
     pytest -v --junit-xml=/home/runner/_work/xml_results/cpu_tests_for_8_devices_${i}.xml \
         --csv /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv \
         -n auto -m "for_8_devices" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal \
-        || touch /home/runner/_work/test_failed && echo "Test failures detected in group ${i}"
+        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal 
+
     echo Adding results from group ${i} to master CSV
     sed -i '1d' /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv && \
-    cat /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv >> /home/runner/_work/csv_results/cpu_tests_all_results.csv ||
-    || echo "No result CSV found for group ${i}. Skipping..."
+    cat /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv >> /home/runner/_work/csv_results/cpu_tests_all_results.csv \
+        || echo "No result CSV found for group ${i}. Skipping..."
+
+    if [ -f /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv ]; then
+        echo Checking for test failures
+        if grep -q ",failed," /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv; then
+            echo "Test failures detected in group ${i}"
+            touch /home/runner/_work/test_failed
+        else
+            echo "All tests passed / skipped in group ${i}"
+        fi
+    fi
 done
 
 # Compress the results
