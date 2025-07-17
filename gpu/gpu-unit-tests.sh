@@ -13,6 +13,6 @@ cd /home/runner/_work
 tar -czvf results.tar.gz xml_results csv_results
 
 # Upload to GCS, including the date and hostname inside the pod
-gsutil -m cp results.tar.gz ${GCS_PREFIX}/testing/gpu-unit-tests-$(date +"%Y-%m-%d-%T")-${HOSTNAME}.tar.gz
+gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/gpu-unit-tests-$(date +"%Y-%m-%d-%T")-${HOSTNAME}.tar.gz
 
 [[ ! -f /home/runner/_work/test_failed ]] && echo "All tests passed successfully"
