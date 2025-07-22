@@ -2,6 +2,10 @@
 
 cd /root
 
+# Set ulimit to avoid crashes with newer versions of containerd
+echo "Setting ulimit to 1,000,000 before tests"
+ulimit -n 1000000
+
 # Get CSV results for easier reading
 AXLEARN_CI_GPU_TESTS=1 pytest -v  \
     --csv /home/runner/_work/csv_results/gpu_tests.csv \
