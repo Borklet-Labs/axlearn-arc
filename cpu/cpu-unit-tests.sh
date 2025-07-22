@@ -13,7 +13,7 @@ curl https://huggingface.co/t5-base/resolve/main/spiece.model -o axlearn/data/to
 curl https://huggingface.co/FacebookAI/roberta-base/raw/main/merges.txt -o axlearn/data/tokenizers/bpe/roberta-base-merges.txt
 curl https://huggingface.co/FacebookAI/roberta-base/raw/main/vocab.json -o axlearn/data/tokenizers/bpe/roberta-base-vocab.json
 
-# Create eight groups of pytest files, needed to avoid OOM with stack trace failures
+# Create five groups of pytest files, needed to avoid OOM with stack trace failures
 groups=(00 01 02 03 04)
 find axlearn -type f -name "*_test*.py" ! -name "*gpu*" ! -name "*vertex*" ! -name "*tpu*" > pytest_files.txt
 split -n r/5 -a 2 -d pytest_files.txt split_pytest_files_
