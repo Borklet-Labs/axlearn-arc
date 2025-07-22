@@ -2,6 +2,10 @@
 
 cd /root
 
+# Get the timestamp of when the tests started
+TIMESTAMP=$(date +"%Y-%m-%d-%T")
+GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
+
 # Set ulimit to avoid crashes with newer versions of containerd
 echo "Setting ulimit to 1,000,000 before tests"
 ulimit -n 1000000
@@ -92,10 +96,9 @@ done
 # Compress the results
 cd /home/runner/_work
 tar -czvf results.tar.gz csv_results
-timestamp=$(date +"%Y-%m-%d-%T")
 
 # Upload to GCS, including the date and hostname inside the pod
-gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/cpu-unit-tests-${timestamp}-${HOSTNAME}.tar.gz
-gsutil -m cp /home/runner/_work/csv_results/cpu_tests_all_results.csv ${GCS_PREFIX}/results/cpu-unit-tests-${timestamp}-${HOSTNAME}-all.csv
+gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/archive/cpu-unit-tests-${GITHUB_HASH}-${TIMESTAMP}.tar.gz
+gsutil -m cp /home/runner/_work/csv_results/cpu_tests_all_results.csv ${GCS_PREFIX}/results/unit-tests-cpu-${GITHUB_HASH}-${TIMESTAMP}.csv
 
 [[ ! -f /home/runner/_work/test_failed ]] && echo "All tests passed successfully"
