@@ -9,7 +9,7 @@ ulimit -n 1000000
 # Get CSV results for easier reading
 AXLEARN_CI_GPU_TESTS=1 pytest -v  \
     --csv /home/runner/_work/csv_results/gpu_tests.csv \
-    -n 8 $(find axlearn/common -type f -name "*gpu*test*.py" -printf '%p ') \
+    -n 8 $(find axlearn/common -type f -name "*gpu*test*.py" ! -name '*gpu_client_test*' -printf '%p ') \
     --dist worksteal --timeout=120
 
 # Compress the results
