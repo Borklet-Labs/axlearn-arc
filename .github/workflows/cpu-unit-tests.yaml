@@ -5,12 +5,13 @@ jobs:
   cpu-unit-tests-job:
     runs-on: cpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:python3.12
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        CUSTOM_GIT_BRANCH: py3.12_ub24.04
+        UV_FIND_LINKS: https://storage.googleapis.com/jax-releases/libtpu_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html
     steps:
       - name: Fetch the target AXLearn origin and branch
         run: /bin/bash /var/arc/git-setup.sh
