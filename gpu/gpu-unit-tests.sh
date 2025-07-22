@@ -2,7 +2,7 @@
 
 cd /root
 
-# Get the XML output and the CSV results for easier reading
+# Get CSV results for easier reading
 AXLEARN_CI_GPU_TESTS=1 pytest -v  \
     --csv /home/runner/_work/csv_results/gpu_tests.csv \
     -n 8 $(find axlearn/common -type f -name "*gpu*test*.py" -printf '%p ') \
