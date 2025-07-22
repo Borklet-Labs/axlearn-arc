@@ -2,14 +2,15 @@
 
 cd /root
 
-# Get the XML output and the CSV results for easier reading
-AXLEARN_CI_GPU_TESTS=1 pytest -v --junit-xml=/home/runner/_work/xml_results/gpu_results.xml \
+# Get CSV results for easier reading
+AXLEARN_CI_GPU_TESTS=1 pytest -v  \
     --csv /home/runner/_work/csv_results/gpu_tests.csv \
-    -n 8 $(find axlearn/common -type f -name "*gpu*test*.py" -printf '%p ')
+    -n 8 $(find axlearn/common -type f -name "*gpu*test*.py" -printf '%p ') \
+    --dist worksteal --timeout=120
 
 # Compress the results
 cd /home/runner/_work
-tar -czvf results.tar.gz xml_results csv_results
+tar -czvf results.tar.gz csv_results
 
 # Upload to GCS, including the date and hostname inside the pod
 timestamp=$(date +"%Y-%m-%d-%T")

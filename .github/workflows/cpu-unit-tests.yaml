@@ -15,8 +15,8 @@ jobs:
       - name: Fetch the target AXLearn origin and branch
         run: /bin/bash /var/arc/git-setup.sh
       - name: Install AXLearn and pytest dependiencies with uv
-        run: cd /root && uv pip install .[core,dev,gcp,open_api,audio] pytest pytest-instafail pytest-xdist pytest-csv
+        run: cd /root && uv pip install .[core,dev,gcp,open_api,audio] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
       - name: Create output directories
-        run: mkdir -p /home/runner/_work/xml_results && mkdir -p /home/runner/_work/csv_results
+        run: mkdir -p /home/runner/_work/csv_results
       - name: Run unit tests
         run: /bin/bash /var/arc/cpu-unit-tests.sh && echo "All tests passed successfully"
