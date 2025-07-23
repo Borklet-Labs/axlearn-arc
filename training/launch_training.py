@@ -17,7 +17,7 @@ import time
 import os
 import signal
 import kubernetes
-from kubernetes.client.rest import ApiException
+import threading
 
 # Get the JobSet info from the environment
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
@@ -112,42 +112,11 @@ def get_pod_status(pod_name: str):
         if pod_name in pod.metadata.name:
             return pod.status
 
-def get_final_pod_logs(pod_name: str):
-    """Get the logs of a pod before it is killed
-    
-    Args:
-        pod_name: String with the name of the pod
-        
-    Returns:
-        Returns the logs of the pod. Returns None if error"""
-
-    pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
-    target_pod = None
-
-    for pod in pods.items:
-        if pod_name in pod.metadata.name:
-            target_pod = pod.metadata.name
-            break
-    if not target_pod:
-        return "Unable to infer pod name. Returning empty result"
-
-    result = None
-    try:
-        result = [line for line in kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
-            namespace="axlearn-arc", name=target_pod)]
-    except ApiException as e:
-        print(f"Failed to fetch final pod logs: {e}", file=sys.stderr)
-
-    return result
-
 def get_pod_logs(pod_name: str):
-    """Get the logs of a pod
+    """Spawn a stream to print out pod logs during execution
     
     Args:
-        pod_name: String with the name of the pod
-        
-    Returns:
-        Returns the logs of the pod. Returns None if error"""
+        pod_name: String with the name of the pod"""
 
     pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
     target_pod = None
@@ -159,13 +128,11 @@ def get_pod_logs(pod_name: str):
     if not target_pod:
         return "Unable to infer pod name. Returning empty result"
 
-    result = None
-    try:
-        result = KUBE_API.read_namespaced_pod_log(namespace="axlearn-arc", name=target_pod)
-    except ApiException as e:
-        print(f"Failed to fetch logs: {e}", file=sys.stderr)
+    stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
+                                             namespace="axlearn-arc", name=target_pod)
 
-    return result
+    for line in stream:
+        print(line, file=sys.stderr)
 
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state
@@ -312,9 +279,11 @@ if __name__ == '__main__':
         print(f"Error: Pod for JobSet {JOBSET_NAME} was unable to be scheduled or crashed", file=sys.stderr)
         cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
+    # Spawn a thread to print pod logs to stderr
+    log_worker = threading.Thread(target=get_pod_logs, args=(JOBSET_NAME,))
+    log_worker.start()
     # Wait up to 10 minutes for a JobSet error to be reported, otherwise assume
     # execution was successful
-    pod_log = None
     time_elapsed = 0
     while time_elapsed < 600:
         jobset_healthy = check_jobset_healthy(JOBSET_NAME)
@@ -323,29 +292,14 @@ if __name__ == '__main__':
         # Check for failures
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
-            print(f"Last log available:\n{pod_log}", file=sys.stderr)
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
         else:
-            new_pod_log = get_pod_logs(JOBSET_NAME)
-            # get_pod_logs returns None if there's an error. We still want to retain previous log in case
-            # of error
-            if new_pod_log:
-                pod_log = new_pod_log
             if check_jobset_completed(JOBSET_NAME):
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
-                print(pod_log, file=sys.stderr)
                 cleanup_jobset_and_exit(JOBSET_NAME, 0)
         # Sleep 30 seconds before polling the status of the JobSet again
         time.sleep(30)
         time_elapsed += 30
-
-    # Print out the pod logs as we prepare to exit
-    final_pod_log = get_final_pod_logs(JOBSET_NAME)
-    if final_pod_log:
-        for line in final_pod_log:
-            print(line, file=sys.stderr)
-    else:
-        print(pod_log, file=sys.stderr)
 
     if check_jobset_healthy(JOBSET_NAME):
         print(f"JobSet {JOBSET_NAME} running as expected. Reporting success.", file=sys.stderr)

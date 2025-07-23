@@ -29,8 +29,8 @@ export UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/libtpu_release
 uv pip install --prerelease=allow .[core,tpu]
 
 # Modify the batch size to account for TPU v6e 4x4
-sed -i 's/train_batch_size=train_batch_size/train_batch_size=64/g' /root/axlearn/experiments/text/gpt/fuji.py
-sed -i 's/fsdp=256/fsdp=32/g' /root/axlearn/experiments/text/gpt/fuji.py
+sed -i 's/train_batch_size=train_batch_size/train_batch_size=128/g' /root/axlearn/experiments/text/gpt/fuji.py
+sed -i 's/fsdp=8/fsdp=32/g' /root/axlearn/experiments/text/gpt/fuji.py
 
 # Set ulimit before running tests
 echo "Setting ulimit before tests"
@@ -42,5 +42,5 @@ python3 -m axlearn.common.launch_trainer_main \
     --trainer_dir=${GCS_PREFIX} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
     --jax_backend=tpu \
-    --mesh_selector=tpu-v6e-256-2 \
+    --mesh_selector=tpu-v6e-16 \
     --trace_at_steps=5
