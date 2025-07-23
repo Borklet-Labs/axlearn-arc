@@ -28,7 +28,7 @@ for i in ${groups[@]}; do
     pytest -v  \
         --csv /home/runner/_work/csv_results/cpu_tests_${i}.csv \
         -n auto -m "not (gs_login or tpu or high_cpu or fp64 or for_8_devices)" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=120
+        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=30
 
     echo Adding results from group ${i} to master CSV
     if [[ "$i" == 00 ]]; then
@@ -53,7 +53,7 @@ for i in ${groups[@]}; do
     JAX_ENABLE_X64=1 pytest -v \
         --csv /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv \
         -n auto -m "fp64" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=120
+        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=30
 
     echo Adding results from group ${i} to master CSV
     sed -i '1d' /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv && \
@@ -75,7 +75,7 @@ for i in ${groups[@]}; do
     pytest -v \
         --csv /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv \
         -n auto -m "for_8_devices" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=120
+        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=30
 
     echo Adding results from group ${i} to master CSV
     sed -i '1d' /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv && \

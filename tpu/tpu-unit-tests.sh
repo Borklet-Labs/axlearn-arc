@@ -13,7 +13,7 @@ ulimit -n 1000000
 # Get the CSV results for easier reading, limit to 1 process for TPU
 pytest -v --csv /home/runner/_work/csv_results/tpu_tests.csv \
     -n 1 $(find axlearn/common -type f -name "*tpu*test*.py" -printf '%p ') \
-    --dist worksteal --timeout=120
+    --dist worksteal --timeout=30
 
 # Compress the results
 cd /home/runner/_work
