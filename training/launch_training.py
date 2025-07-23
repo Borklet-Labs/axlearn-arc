@@ -112,6 +112,34 @@ def get_pod_status(pod_name: str):
         if pod_name in pod.metadata.name:
             return pod.status
 
+def get_final_pod_logs(pod_name: str):
+    """Get the logs of a pod before it is killed
+    
+    Args:
+        pod_name: String with the name of the pod
+        
+    Returns:
+        Returns the logs of the pod. Returns None if error"""
+
+    pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
+    target_pod = None
+
+    for pod in pods.items:
+        if pod_name in pod.metadata.name:
+            target_pod = pod.metadata.name
+            break
+    if not target_pod:
+        return "Unable to infer pod name. Returning empty result"
+
+    result = None
+    try:
+        result = [line for line in kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
+            namespace="axlearn-arc", name=target_pod)]
+    except ApiException as e:
+        print(f"Failed to fetch final pod logs: {e}", file=sys.stderr)
+
+    return result
+
 def get_pod_logs(pod_name: str):
     """Get the logs of a pod
     
@@ -129,7 +157,7 @@ def get_pod_logs(pod_name: str):
             target_pod = pod.metadata.name
             break
     if not target_pod:
-        return "Unable to infer pod name. Returning emptry result"
+        return "Unable to infer pod name. Returning empty result"
 
     result = None
     try:
@@ -312,10 +340,12 @@ if __name__ == '__main__':
         time_elapsed += 30
 
     # Print out the pod logs as we prepare to exit
-    new_pod_log = get_pod_logs(JOBSET_NAME)
-    if new_pod_log:
-        pod_log = new_pod_log
-    print(pod_log, file=sys.stderr)
+    final_pod_log = get_final_pod_logs(JOBSET_NAME)
+    if final_pod_log:
+        for line in final_pod_log:
+            print(line, file=sys.stderr)
+    else:
+        print(pod_log, file=sys.stderr)
 
     if check_jobset_healthy(JOBSET_NAME):
         print(f"JobSet {JOBSET_NAME} running as expected. Reporting success.", file=sys.stderr)
