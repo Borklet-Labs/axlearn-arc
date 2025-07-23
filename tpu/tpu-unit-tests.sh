@@ -19,9 +19,7 @@ pytest -v --csv /home/runner/_work/csv_results/tpu_tests.csv \
 cd /home/runner/_work
 tar -czvf results.tar.gz csv_results
 
-# Upload to GCS, including the date and hostname inside the pod
-TIMESTAMP=$(date +"%Y-%m-%d-%T")
-GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
+# Upload to GCS, including the date and hash of the commit
 gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/archive/tpu-unit-tests-${GITHUB_HASH}-${TIMESTAMP}.tar.gz
 gsutil -m cp /home/runner/_work/csv_results/tpu_tests.csv ${GCS_PREFIX}/results/unit-tests-tpu-${GITHUB_HASH}-${TIMESTAMP}.csv
 

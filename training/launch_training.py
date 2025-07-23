@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-06-23
+ # @version: 2025-07-23
  #
 
 import json
@@ -17,6 +17,7 @@ import time
 import os
 import signal
 import kubernetes
+from kubernetes.client.rest import ApiException
 
 # Get the JobSet info from the environment
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
@@ -92,7 +93,7 @@ def cleanup_jobset_and_exit(jobset_name: str, exit_code: int):
     Args:
         jobset_name: String containing the JobSet to delete
         exit_code: Integer code to return"""
-    
+
     cleanup_jobset(jobset_name)
     sys.exit(exit_code)
 
@@ -111,6 +112,33 @@ def get_pod_status(pod_name: str):
         if pod_name in pod.metadata.name:
             return pod.status
 
+def get_pod_logs(pod_name: str):
+    """Get the logs of a pod
+    
+    Args:
+        pod_name: String with the name of the pod
+        
+    Returns:
+        Returns the logs of the pod. Returns None if error"""
+
+    pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
+    target_pod = None
+
+    for pod in pods.items:
+        if pod_name in pod.metadata.name:
+            target_pod = pod.metadata.name
+            break
+    if not target_pod:
+        return "Unable to infer pod name. Returning emptry result"
+
+    result = None
+    try:
+        result = KUBE_API.read_namespaced_pod_log(namespace="axlearn-arc", name=target_pod)
+    except ApiException as e:
+        print(f"Failed to fetch logs: {e}", file=sys.stderr)
+
+    return result
+
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state
     
@@ -128,7 +156,7 @@ def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     elif jobset_status["active"] != 0:
         if before_schedule:
             return True
-        
+
         pod_status = get_pod_status(jobset_name)
         if "Running" in pod_status.phase:
             return True
@@ -165,7 +193,7 @@ def update_jobset(jobset_base_config: dict) -> dict:
         
     Returns:
         Returns a new dict for the JobSet"""
-    
+
     updated_jobset = json.dumps(jobset_base_config)
 
     if "CUSTOM_GIT_ORIGIN" in os.environ:
@@ -233,9 +261,9 @@ if __name__ == '__main__':
         cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
     time_elapsed = 0
-    while time_elapsed < 600:
+    while time_elapsed < (15 * 60):
         pod_status = get_pod_status(JOBSET_NAME)
-        print(f"[{time_elapsed}/600]: Waiting for pod for JobSet {JOBSET_NAME} to be scheduled: {pod_status.phase}",
+        print(f"[{time_elapsed}/{15 * 60}]: Waiting for pod for JobSet {JOBSET_NAME} to be scheduled: {pod_status.phase}",
               file=sys.stderr)
         # Check to see if the pod has been scheduled
         if "Running" in pod_status.phase:
@@ -244,11 +272,11 @@ if __name__ == '__main__':
         elif "Error" in pod_status.phase or "Terminating" in pod_status.phase:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
-        
+
         if not check_jobset_healthy(JOBSET_NAME, before_schedule=True):
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
-            
+
         time.sleep(15)
         time_elapsed += 15
 
@@ -258,6 +286,7 @@ if __name__ == '__main__':
 
     # Wait up to 10 minutes for a JobSet error to be reported, otherwise assume
     # execution was successful
+    pod_log = None
     time_elapsed = 0
     while time_elapsed < 600:
         jobset_healthy = check_jobset_healthy(JOBSET_NAME)
@@ -266,14 +295,27 @@ if __name__ == '__main__':
         # Check for failures
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
+            print(f"Last log available:\n{pod_log}", file=sys.stderr)
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
         else:
+            new_pod_log = get_pod_logs(JOBSET_NAME)
+            # get_pod_logs returns None if there's an error. We still want to retain previous log in case
+            # of error
+            if new_pod_log:
+                pod_log = new_pod_log
             if check_jobset_completed(JOBSET_NAME):
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
+                print(pod_log, file=sys.stderr)
                 cleanup_jobset_and_exit(JOBSET_NAME, 0)
         # Sleep 30 seconds before polling the status of the JobSet again
         time.sleep(30)
         time_elapsed += 30
+
+    # Print out the pod logs as we prepare to exit
+    new_pod_log = get_pod_logs(JOBSET_NAME)
+    if new_pod_log:
+        pod_log = new_pod_log
+    print(pod_log, file=sys.stderr)
 
     if check_jobset_healthy(JOBSET_NAME):
         print(f"JobSet {JOBSET_NAME} running as expected. Reporting success.", file=sys.stderr)

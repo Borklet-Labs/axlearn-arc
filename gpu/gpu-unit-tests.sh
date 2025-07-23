@@ -20,7 +20,7 @@ AXLEARN_CI_GPU_TESTS=1 pytest -v  \
 cd /home/runner/_work
 tar -czvf results.tar.gz csv_results
 
-# Upload to GCS, including the date and hostname inside the pod
+# Upload to GCS, including the date and commit hash
 gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/archive/gpu-unit-tests-${GITHUB_HASH}-${TIMESTAMP}.tar.gz
 gsutil -m cp /home/runner/_work/csv_results/gpu_tests.csv ${GCS_PREFIX}/results/unit-tests-gpu-${GITHUB_HASH}-${TIMESTAMP}.csv
 

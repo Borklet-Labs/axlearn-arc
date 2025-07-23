@@ -17,7 +17,7 @@ curl https://huggingface.co/t5-base/resolve/main/spiece.model -o axlearn/data/to
 curl https://huggingface.co/FacebookAI/roberta-base/raw/main/merges.txt -o axlearn/data/tokenizers/bpe/roberta-base-merges.txt
 curl https://huggingface.co/FacebookAI/roberta-base/raw/main/vocab.json -o axlearn/data/tokenizers/bpe/roberta-base-vocab.json
 
-# Create five groups of pytest files, needed to avoid OOM with stack trace failures
+# Create eight groups of pytest files, needed to avoid OOM with stack trace failures
 groups=(00 01 02 03 04)
 find axlearn -type f -name "*_test*.py" ! -name "*gpu*" ! -name "*vertex*" ! -name "*tpu*" > pytest_files.txt
 split -n r/5 -a 2 -d pytest_files.txt split_pytest_files_
@@ -97,7 +97,7 @@ done
 cd /home/runner/_work
 tar -czvf results.tar.gz csv_results
 
-# Upload to GCS, including the date and hostname inside the pod
+# Upload to GCS, including the date and commit hash
 gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/archive/cpu-unit-tests-${GITHUB_HASH}-${TIMESTAMP}.tar.gz
 gsutil -m cp /home/runner/_work/csv_results/cpu_tests_all_results.csv ${GCS_PREFIX}/results/unit-tests-cpu-${GITHUB_HASH}-${TIMESTAMP}.csv
 
