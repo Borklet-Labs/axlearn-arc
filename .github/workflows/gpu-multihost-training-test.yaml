@@ -14,7 +14,7 @@ jobs:
         TRAINING_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.12
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12
+        CUSTOM_GIT_BRANCH: jax_0.7.0_py3.12
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
