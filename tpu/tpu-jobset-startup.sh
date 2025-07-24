@@ -2,7 +2,7 @@
 
 # Check for custom origin
 if [ -z "$CUSTOM_GIT_ORIGIN" ]; then
-    GIT_ORIGIN="https://github.com/andersensam/axlearn"
+    GIT_ORIGIN="https://github.com/Borklet-Labs/axlearn"
 else
     GIT_ORIGIN="$CUSTOM_GIT_ORIGIN"
 fi
