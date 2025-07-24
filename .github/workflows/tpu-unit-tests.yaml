@@ -5,7 +5,7 @@ jobs:
   tpu-unit-tests-job:
     runs-on: tpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.10
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags

@@ -5,7 +5,7 @@ jobs:
   cpu-unit-tests-job:
     runs-on: cpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:python3.10
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags

@@ -5,7 +5,7 @@ jobs:
   gpu-unit-tests-job:
     runs-on: gpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.10
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags
