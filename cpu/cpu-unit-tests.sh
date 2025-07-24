@@ -18,9 +18,9 @@ curl https://huggingface.co/FacebookAI/roberta-base/raw/main/merges.txt -o axlea
 curl https://huggingface.co/FacebookAI/roberta-base/raw/main/vocab.json -o axlearn/data/tokenizers/bpe/roberta-base-vocab.json
 
 # Create five groups of pytest files, needed to avoid OOM with stack trace failures
-groups=(00 01 02 03 04)
+groups=(00 01 02 03 04 05 06 07)
 find axlearn -type f -name "*_test*.py" ! -name "*gpu*" ! -name "*vertex*" ! -name "*tpu*" > pytest_files.txt
-split -n r/5 -a 2 -d pytest_files.txt split_pytest_files_
+split -n r/8 -a 2 -d pytest_files.txt split_pytest_files_
 touch /home/runner/_work/csv_results/cpu_tests_all_results.csv
 
 for i in ${groups[@]}; do
