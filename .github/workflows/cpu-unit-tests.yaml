@@ -3,7 +3,7 @@ on:
   workflow_dispatch
 jobs:
   cpu-unit-tests-job:
-    runs-on: cpu
+    runs-on: jobset
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:python3.12
       env:
