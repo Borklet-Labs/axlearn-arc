@@ -2,7 +2,7 @@
   "apiVersion": "jobset.x-k8s.io/v1alpha2",
   "kind": "JobSet",
   "metadata": {
-    "name": "axlearn-cpu-unit-tests",
+    "name": "cpu-unit-tests",
     "annotations": {
       "kueue.x-k8s.io/queue-name": "cpu-worker"
     },
@@ -31,7 +31,7 @@
             "template": {
               "metadata": {
                 "annotations": {
-                  "kubectl.kubernetes.io/default-container": "axlearn-cpu-unit-tests"
+                  "kubectl.kubernetes.io/default-container": "cpu-unit-tests"
                 }
               },
               "spec": {
@@ -40,17 +40,27 @@
                 "initContainers": [],
                 "hostNetwork": true,
                 "dnsPolicy": "ClusterFirstWithHostNet",
+                "nodeSelector": {
+                  "cloud.google.com/gke-nodepool": "worker-pool"
+                },
                 "containers": [
                   {
-                    "name": "axlearn-cpu-unit-tests",
+                    "name": "cpu-unit-tests",
                     "image": "INSERT_DOCKER_IMAGE",
                     "securityContext": {
                       "privileged": true
                     },
+                    
                     "command": [
                       "bash",
                       "/var/arc/cpu-jobset-startup.sh"
                     ],
+                    "resources": {
+                      "requests": {
+                        "cpu": "30",
+                        "memory": "128Gi"
+                      }
+                    },
                     "env": [
                       {
                         "name": "NUM_PROCESSES",

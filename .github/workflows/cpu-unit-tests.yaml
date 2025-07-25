@@ -11,7 +11,7 @@ jobs:
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         CUSTOM_GIT_BRANCH: jax_0.7.0_py3.12
-        ARC_JOBSET_NAME: axlearn-cpu-unit-tests
+        ARC_JOBSET_NAME: cpu-unit-tests
         ARC_JOBSET_JSON: /var/arc/cpu.json
         TRAINING_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:python3.12
     steps:
