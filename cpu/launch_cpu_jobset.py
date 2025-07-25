@@ -15,9 +15,9 @@ import json
 import sys
 import time
 import os
+import threading
 import signal
 import kubernetes
-import threading
 
 # Get the JobSet info from the environment
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
@@ -128,11 +128,14 @@ def get_pod_logs(pod_name: str):
     if not target_pod:
         return "Unable to infer pod name. Returning empty result"
 
-    stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
-                                             namespace="axlearn-arc", name=target_pod)
-
-    for line in stream:
-        print(line, file=sys.stderr)
+    while True:
+        try:
+            stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
+                namespace="axlearn-arc", name=target_pod)
+            for line in stream:
+                print(line, file=sys.stderr)
+        except Exception as e:
+            print(f"Error in streaming logs, restarting logger... Exception: {e}", file=sys.stderr)
 
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state
@@ -285,9 +288,9 @@ if __name__ == '__main__':
     # Wait up to 60 minutes for a JobSet error to be reported, otherwise assume
     # execution was successful
     time_elapsed = 0
-    while time_elapsed < 6000:
+    while time_elapsed < (60 * 60):
         jobset_healthy = check_jobset_healthy(JOBSET_NAME)
-        print(f"[{time_elapsed}/6000]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}",
+        print(f"[{time_elapsed}/{60*60}]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}",
               file=sys.stderr)
         # Check for failures
         if not jobset_healthy:
