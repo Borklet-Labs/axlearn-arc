@@ -11,7 +11,7 @@ jobs:
         ARC_JOBSET_NAME: axlearn-tpu-training-multislice
         ARC_JOBSET_JSON: /var/arc/tpu-multislice.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        TRAINING_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.10
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.10
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
@@ -19,4 +19,4 @@ jobs:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
       - name: Launch the TPU training job
-        run: python3 /var/arc/launch_training.py
+        run: python3 /var/arc/launch_jobset.py

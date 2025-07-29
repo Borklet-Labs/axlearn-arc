@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-07-23
+ # @version: 2025-07-29
  #
 
 import json
@@ -16,14 +16,15 @@ import sys
 import time
 import os
 import signal
-import kubernetes
 import threading
+import kubernetes
 
 # Get the JobSet info from the environment
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
 JOBSET_JSON = os.environ['ARC_JOBSET_JSON']
-DOCKER_IMAGE = os.environ['TRAINING_DOCKER_IMAGE']
+DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
 GCS_PREFIX = os.environ['GCS_PREFIX']
+JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -112,11 +113,12 @@ def get_pod_status(pod_name: str):
         if pod_name in pod.metadata.name:
             return pod.status
 
-def get_pod_logs(pod_name: str):
+def get_pod_logs(pod_name: str, stop):
     """Spawn a stream to print out pod logs during execution
     
     Args:
-        pod_name: String with the name of the pod"""
+        pod_name: String with the name of the pod
+        stop: Threading event to stop execution"""
 
     pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
     target_pod = None
@@ -128,11 +130,16 @@ def get_pod_logs(pod_name: str):
     if not target_pod:
         return "Unable to infer pod name. Returning empty result"
 
-    stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
-                                             namespace="axlearn-arc", name=target_pod)
-
-    for line in stream:
-        print(line, file=sys.stderr)
+    while not stop.is_set():
+        try:
+            stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
+                namespace="axlearn-arc", name=target_pod)
+            for line in stream:
+                print(line, file=sys.stderr)
+        except Exception as e:
+            print(f"Error in streaming logs, Exception: {e}", file=sys.stderr)
+            print("Turning off log streaming... full log will be available in GCS after the run",
+                 file=sys.stderr)
 
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state
@@ -280,22 +287,27 @@ if __name__ == '__main__':
         cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
     # Spawn a thread to print pod logs to stderr
-    log_worker = threading.Thread(target=get_pod_logs, args=(JOBSET_NAME,))
+    stop_log = threading.Event()
+    log_worker = threading.Thread(target=get_pod_logs, args=(JOBSET_NAME,stop_log))
     log_worker.start()
     # Wait up to 10 minutes for a JobSet error to be reported, otherwise assume
     # execution was successful
     time_elapsed = 0
-    while time_elapsed < 600:
+    while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
         jobset_healthy = check_jobset_healthy(JOBSET_NAME)
-        print(f"[{time_elapsed}/600]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}",
+        print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}",
               file=sys.stderr)
         # Check for failures
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
+            stop_log.set()
+            log_worker.join()
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
         else:
             if check_jobset_completed(JOBSET_NAME):
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
+                stop_log.set()
+                log_worker.join()
                 cleanup_jobset_and_exit(JOBSET_NAME, 0)
         # Sleep 30 seconds before polling the status of the JobSet again
         time.sleep(30)
@@ -303,7 +315,11 @@ if __name__ == '__main__':
 
     if check_jobset_healthy(JOBSET_NAME):
         print(f"JobSet {JOBSET_NAME} running as expected. Reporting success.", file=sys.stderr)
+        stop_log.set()
+        log_worker.join()
         cleanup_jobset_and_exit(JOBSET_NAME, 0)
 
     print(f"Failure detected in JobSet {JOBSET_NAME}", file=sys.stderr)
+    stop_log.set()
+    log_worker.join()
     cleanup_jobset_and_exit(JOBSET_NAME, -1)

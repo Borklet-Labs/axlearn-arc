@@ -3,20 +3,19 @@ on:
   workflow_dispatch
 jobs:
   cpu-unit-tests-job:
-    runs-on: cpu
+    runs-on: jobset
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:python3.10
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
+        ARC_JOBSET_NAME: cpu-unit-tests
+        ARC_JOBSET_JSON: /var/arc/cpu.json
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:python3.10
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
     steps:
-      - name: Fetch the target AXLearn origin and branch
-        run: /bin/bash /var/arc/git-setup.sh
-      - name: Install AXLearn and pytest dependiencies with uv
-        run: cd /root && uv pip install .[core,dev,gcp,open_api,audio] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
-      - name: Create output directories
-        run: mkdir -p /home/runner/_work/csv_results
-      - name: Run unit tests
-        run: /bin/bash /var/arc/cpu-unit-tests.sh && echo "All tests passed successfully"
+      - name: Install the Kubernetes Python SDK
+        run: uv pip install kubernetes
+      - name: Launch the CPU unit tests
+        run: exec python3 /var/arc/launch_jobset.py
