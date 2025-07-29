@@ -12,6 +12,7 @@ jobs:
         ARC_JOBSET_JSON: /var/arc/gpu.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.10
+        JOBSET_HEALTHY_TIMEOUT: 600
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
