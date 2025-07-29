@@ -5,7 +5,7 @@ jobs:
   gpu-multihost-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to GPU
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-training:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: axlearn-gpu-training

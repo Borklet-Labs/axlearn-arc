@@ -5,7 +5,7 @@ jobs:
   tpu-single-slice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-training:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: axlearn-tpu-training
