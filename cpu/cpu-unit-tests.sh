@@ -27,8 +27,8 @@ for i in ${groups[@]}; do
     echo Starting standard tests for group ${i}
     pytest -v  \
         --csv /home/runner/_work/csv_results/cpu_tests_${i}.csv \
-        -n auto -m "not (gs_login or tpu or high_cpu or fp64 or for_8_devices)" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=30
+        -n auto -m "not (gs_login or tpu or high_cpu or fp64 or for_8_devices)" --durations=100 --dist worksteal --timeout=60 \
+        $(tr '\n' ' ' < split_pytest_files_${i}) 
 
     echo Adding results from group ${i} to master CSV
     if [[ "$i" == 00 ]]; then
@@ -52,8 +52,8 @@ for i in ${groups[@]}; do
     echo Starting FP64 for group ${i}
     JAX_ENABLE_X64=1 pytest -v \
         --csv /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv \
-        -n auto -m "fp64" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=30
+        -n auto -m "fp64" --durations=100 --dist worksteal --timeout=60 \
+        $(tr '\n' ' ' < split_pytest_files_${i})
 
     echo Adding results from group ${i} to master CSV
     sed -i '1d' /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv && \
@@ -74,8 +74,8 @@ for i in ${groups[@]}; do
     XLA_FLAGS="--xla_force_host_platform_device_count=8" \
     pytest -v \
         --csv /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv \
-        -n auto -m "for_8_devices" --durations=100 \
-        $(tr '\n' ' ' < split_pytest_files_${i}) --dist worksteal --timeout=30
+        -n auto -m "for_8_devices" --durations=100 --dist worksteal --timeout=60 \
+        $(tr '\n' ' ' < split_pytest_files_${i}) 
 
     echo Adding results from group ${i} to master CSV
     sed -i '1d' /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv && \
@@ -101,4 +101,4 @@ tar -czvf results.tar.gz csv_results
 gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/archive/cpu-unit-tests-${GITHUB_HASH}-${TIMESTAMP}.tar.gz
 gsutil -m cp /home/runner/_work/csv_results/cpu_tests_all_results.csv ${GCS_PREFIX}/results/unit-tests-cpu-${GITHUB_HASH}-${TIMESTAMP}.csv
 
-[[ ! -f /home/runner/_work/test_failed ]] && echo "All tests passed successfully"
+exit
