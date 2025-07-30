@@ -2,7 +2,7 @@
   "apiVersion": "jobset.x-k8s.io/v1alpha2",
   "kind": "JobSet",
   "metadata": {
-    "name": "axlearn-tpu-training-multislice",
+    "name": "arc-tpu-multislice",
     "annotations": {
       "alpha.jobset.sigs.k8s.io/exclusive-topology": "cloud.google.com/gke-nodepool",
       "kueue.x-k8s.io/queue-name": "tpu-v6e"
@@ -27,7 +27,7 @@
         "template": {
           "metadata": {
             "annotations": {
-              "axlearn/replicatedjob-load-balancer-service-name": "axlearn-tpu-training-job-service",
+              "axlearn/replicatedjob-load-balancer-service-name": "arc-tpu-multislice-job-service",
               "axlearn/replicatedjob-load-balancer-target-port": "9000",
               "axlearn/replicatedjob-load-balancer-port": "80"
             }
@@ -62,7 +62,7 @@
                 "tolerations": [],
                 "containers": [
                   {
-                    "name": "axlearn-tpu-training",
+                    "name": "arc-tpu-training",
                     "image": "INSERT_DOCKER_IMAGE",
                     "ports": [
                       {
@@ -109,7 +109,7 @@
                       },
                       {
                         "name": "XLA_FLAGS",
-                        "value": "--xla_dump_to=/output/axlearn-tpu-training/xla"
+                        "value": "--xla_dump_to=/output/arc-tpu-training/xla"
                       },
                       {
                         "name": "TF_CPP_MIN_LOG_LEVEL",

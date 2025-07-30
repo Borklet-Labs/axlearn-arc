@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-07-29
+ # @version: 2025-07-30
  #
 
 import json
@@ -88,13 +88,25 @@ def cleanup_jobset(jobset_name: str):
     print(f"Deleting JobSet {jobset_name}...", file=sys.stderr)
     JOBSET_API.delete(name=jobset_name, namespace="axlearn-arc")
 
-def cleanup_jobset_and_exit(jobset_name: str, exit_code: int):
+def cleanup_jobset_and_exit(jobset_name: str,
+                            exit_code: int,
+                            log_worker: threading.Thread = None,
+                            stop_log: threading.Event = None):
     """Delete a JobSet and exit
     
     Args:
         jobset_name: String containing the JobSet to delete
-        exit_code: Integer code to return"""
-
+        exit_code: Integer code to return
+        log_worker: Thread where the logger is running
+        stop_log: Event to stop the log_worker before join"""
+    if log_worker and stop_log:
+        stop_log.set()
+        thread_running = True
+        while thread_running:
+            print("Attempting to stop log thread...", file=sys.stderr)
+            log_worker.join(timeout=10.0)
+            thread_running = log_worker.is_alive()
+        print("Log thread stopped successfully. Finishing cleanup...", file=sys.stderr)
     cleanup_jobset(jobset_name)
     sys.exit(exit_code)
 
@@ -113,7 +125,7 @@ def get_pod_status(pod_name: str):
         if pod_name in pod.metadata.name:
             return pod.status
 
-def get_pod_logs(pod_name: str, stop):
+def get_pod_logs(pod_name: str, stop: threading.Event):
     """Spawn a stream to print out pod logs during execution
     
     Args:
@@ -300,26 +312,18 @@ if __name__ == '__main__':
         # Check for failures
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
-            stop_log.set()
-            log_worker.join()
-            cleanup_jobset_and_exit(JOBSET_NAME, -1)
+            cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
         else:
             if check_jobset_completed(JOBSET_NAME):
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
-                stop_log.set()
-                log_worker.join()
-                cleanup_jobset_and_exit(JOBSET_NAME, 0)
+                cleanup_jobset_and_exit(JOBSET_NAME, 0, log_worker, stop_log)
         # Sleep 30 seconds before polling the status of the JobSet again
         time.sleep(30)
         time_elapsed += 30
 
     if check_jobset_healthy(JOBSET_NAME):
         print(f"JobSet {JOBSET_NAME} running as expected. Reporting success.", file=sys.stderr)
-        stop_log.set()
-        log_worker.join()
-        cleanup_jobset_and_exit(JOBSET_NAME, 0)
+        cleanup_jobset_and_exit(JOBSET_NAME, 0, log_worker, stop_log)
 
     print(f"Failure detected in JobSet {JOBSET_NAME}", file=sys.stderr)
-    stop_log.set()
-    log_worker.join()
-    cleanup_jobset_and_exit(JOBSET_NAME, -1)
+    cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)

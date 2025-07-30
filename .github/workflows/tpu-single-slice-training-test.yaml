@@ -8,7 +8,7 @@ jobs:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
       env:
         # Required environmental variables for a successful run
-        ARC_JOBSET_NAME: axlearn-tpu-training
+        ARC_JOBSET_NAME: arc-tpu-training
         ARC_JOBSET_JSON: /var/arc/tpu.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.10
