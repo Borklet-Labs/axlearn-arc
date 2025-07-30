@@ -13,7 +13,7 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.10
         JOBSET_HEALTHY_TIMEOUT: 600
-        ACCELERATOR: v6e
+        ACCELERATOR: v6e_4x4_1
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
