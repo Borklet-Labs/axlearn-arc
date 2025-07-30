@@ -263,6 +263,10 @@ def update_jobset(jobset_base_config: dict) -> dict:
     return json.loads(updated_jobset)
 
 def write_result(success: bool):
+    """Write the result of a test to a CSV
+    
+    Args:
+        success: True if the loop ended successful"""
 
     result_text = "failed"
     if success:
@@ -334,10 +338,12 @@ if __name__ == '__main__':
         # Check for failures
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
+            write_result(False)
             cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
         else:
             if check_jobset_completed(JOBSET_NAME):
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
+                write_result(True)
                 cleanup_jobset_and_exit(JOBSET_NAME, 0, log_worker, stop_log)
         # Sleep 30 seconds before polling the status of the JobSet again
         time.sleep(30)
@@ -345,7 +351,9 @@ if __name__ == '__main__':
 
     if check_jobset_healthy(JOBSET_NAME):
         print(f"JobSet {JOBSET_NAME} running as expected. Reporting success.", file=sys.stderr)
+        write_result(True)
         cleanup_jobset_and_exit(JOBSET_NAME, 0, log_worker, stop_log)
 
     print(f"Failure detected in JobSet {JOBSET_NAME}", file=sys.stderr)
+    write_result(False)
     cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
