@@ -262,6 +262,17 @@ def update_jobset(jobset_base_config: dict) -> dict:
 
     return json.loads(updated_jobset)
 
+def write_result(success: bool):
+
+    result_text = "failed"
+    if success:
+        result_text = "passed"
+
+    # Open the result CSV file in write mode
+    with open("/var/arc/result.csv", "w", encoding="utf-8") as csv_file:
+        csv_file.write("id,module,name,file,doc,markers,status,message,duration")
+        csv_file.write(f"axlearn/experiments/text/gpt/fuji.py::RunTrainingLoop::fuji_training,axlearn.experiments.text.gpt.fuji,fuji_training,axlearn/experiments/text/gpt/fuji.py,,,{result_text},See full logs in GCS or Github,1.0")
+
 if __name__ == '__main__':
 
     # Read in the JobSet JSON

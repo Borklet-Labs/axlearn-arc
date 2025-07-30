@@ -13,7 +13,7 @@ jobs:
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
     steps:
       - name: Persist the run id
-        run: export GH_RUN_ID=${{ github.run_id }}
+        run: echo ${{ github.run_id }} > /var/arc/run_id
       - name: Fetch the target AXLearn origin and branch
         run: /bin/bash /var/arc/git-setup.sh
       - name: Install AXLearn dependiencies with uv

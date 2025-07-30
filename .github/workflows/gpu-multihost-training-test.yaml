@@ -19,7 +19,5 @@ jobs:
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
-      - name: Persist the run id
-        run: export GH_RUN_ID=${{ github.run_id }}
       - name: Launch the GPU training job
-        run: exec python3 /var/arc/launch_jobset.py
+        run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
