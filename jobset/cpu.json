@@ -85,6 +85,10 @@
                       {
                         "name": "CUSTOM_GIT_BRANCH",
                         "value": "INSERT_GIT_BRANCH"
+                      },
+                      {
+                        "name": "GH_RUN_ID",
+                        "value": "INSERT_GH_RUN_ID"
                       }
                     ]
                   }

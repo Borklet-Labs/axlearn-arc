@@ -25,6 +25,7 @@ JOBSET_JSON = os.environ['ARC_JOBSET_JSON']
 DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
 GCS_PREFIX = os.environ['GCS_PREFIX']
 JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
+GH_RUN_ID = os.environ['GH_RUN_ID']
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -256,6 +257,8 @@ def update_jobset(jobset_base_config: dict) -> dict:
     updated_jobset = updated_jobset.replace("INSERT_DOCKER_IMAGE", DOCKER_IMAGE)
     # Insert the GCS prefix
     updated_jobset = updated_jobset.replace("INSERT_GCS_PREFIX", GCS_PREFIX)
+    # Insert the Github ARC run id
+    updated_jobset = updated_jobset.replace("INSERT_GH_RUN_ID", GH_RUN_ID)
 
     return json.loads(updated_jobset)
 
