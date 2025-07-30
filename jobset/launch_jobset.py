@@ -100,12 +100,19 @@ def cleanup_jobset_and_exit(jobset_name: str,
         log_worker: Thread where the logger is running
         stop_log: Event to stop the log_worker before join"""
     if log_worker and stop_log:
+        attempts = 1
         stop_log.set()
-        thread_running = True
+        thread_running = log_worker.is_alive()
         while thread_running:
-            print("Attempting to stop log thread...", file=sys.stderr)
+            if attempts == 5:
+                print("WARN: Unable to stop log thread. Proceeding with killing execution...",
+                      file=sys.stderr)
+                break
+            print(f"Attempting to stop log thread with a 10 second timeout.. Attempt {attempts}/5",
+                  file=sys.stderr)
             log_worker.join(timeout=10.0)
             thread_running = log_worker.is_alive()
+            attempts += 1
         print("Log thread stopped successfully. Finishing cleanup...", file=sys.stderr)
     cleanup_jobset(jobset_name)
     sys.exit(exit_code)
@@ -142,16 +149,17 @@ def get_pod_logs(pod_name: str, stop: threading.Event):
     if not target_pod:
         return "Unable to infer pod name. Returning empty result"
 
-    while not stop.is_set():
-        try:
-            stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
-                namespace="axlearn-arc", name=target_pod)
-            for line in stream:
-                print(line, file=sys.stderr)
-        except Exception as e:
-            print(f"Error in streaming logs, Exception: {e}", file=sys.stderr)
-            print("Turning off log streaming... full log will be available in GCS after the run",
-                 file=sys.stderr)
+    try:
+        stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
+            namespace="axlearn-arc", name=target_pod)
+        for line in stream:
+            if stop.is_set():
+                break
+            print(line, file=sys.stderr)
+    except Exception as e:
+        print(f"Error in streaming logs, Exception: {e}", file=sys.stderr)
+        print("Turning off log streaming... full log will be available in GCS after the run",
+                file=sys.stderr)
 
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state

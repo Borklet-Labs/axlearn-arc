@@ -18,5 +18,7 @@ jobs:
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
+      - name: Persist the run id
+        run: echo ${{ github.run_id }} > /var/arc/run_id
       - name: Launch the CPU unit tests
         run: exec python3 /var/arc/launch_jobset.py
