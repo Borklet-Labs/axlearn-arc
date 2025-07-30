@@ -277,13 +277,12 @@ def write_result(success: bool):
         csv_file.write("id,module,name,file,doc,markers,status,message,duration\n")
         csv_file.write(f"axlearn/experiments/text/gpt/fuji.py::RunTrainingLoop::fuji_training,axlearn.experiments.text.gpt.fuji,fuji_training,axlearn/experiments/text/gpt/fuji.py,,,{result_text},See full logs in GCS or Github,1.0\n")
 
-if __name__ == '__main__':
+def create_jobset_and_wait(jobset_config):
+    """Create a JobSet using the CRD API and ensure its completion happens
+    
+    Args:
+        jobset_config: A config to submit to the kube API"""
 
-    # Read in the JobSet JSON
-    with open(JOBSET_JSON, "r", encoding="utf-8") as js_file:
-        jobset_config = json.load(js_file)
-
-    jobset_config = update_jobset(jobset_config)
     # Create the JobSet
     print(f"Creating new JobSet {JOBSET_NAME} from template {JOBSET_JSON}", file=sys.stderr)
     JOBSET_API.create(body=jobset_config, namespace="axlearn-arc")
@@ -320,9 +319,11 @@ if __name__ == '__main__':
         time.sleep(15)
         time_elapsed += 15
 
-    if not check_jobset_healthy(JOBSET_NAME):
-        print(f"Error: Pod for JobSet {JOBSET_NAME} was unable to be scheduled or crashed", file=sys.stderr)
-        cleanup_jobset_and_exit(JOBSET_NAME, -1)
+def monitor_jobset_status():
+    """Monitor the progression of a JobSet, looking at the health of the pod and counting down
+    to JOBSET_HEALTHY_TIMEOUT
+    
+    Returns: Returns references to stop_log and log_worker"""
 
     # Spawn a thread to print pod logs to stderr
     stop_log = threading.Event()
@@ -348,6 +349,49 @@ if __name__ == '__main__':
         # Sleep 30 seconds before polling the status of the JobSet again
         time.sleep(30)
         time_elapsed += 30
+
+    return log_worker, stop_log
+
+if __name__ == '__main__':
+
+    # Read in the JobSet JSON
+    with open(JOBSET_JSON, "r", encoding="utf-8") as js_file:
+        jobset_config = json.load(js_file)
+    # Update the JobSet config with any variables that need to be injected
+    jobset_config = update_jobset(jobset_config)
+
+    # Configure the log_worker and stop_log references
+    log_worker: threading.Thread = None
+    stop_log: threading.Event = None
+    jobset_resumed = False
+    # Check to see if the JobSet already exists
+    print(f"Checking to see if JobSet {JOBSET_NAME} already exists", file=sys.stderr)
+    if get_current_jobset(JOBSET_NAME):
+        jobset_status = get_jobset_status(JOBSET_NAME)
+        if jobset_status["active"] != 0:
+            if "RESUME_JOBSET" in os.environ:
+                print(f"JobSet {JOBSET_NAME} is still active and RESUME_JOBSET is configured... Reattaching",
+                      file=sys.stderr)
+                jobset_resumed = True
+                log_worker, stop_log = monitor_jobset_status()
+            else:
+                print(f"JobSet {JOBSET_NAME} still active, but RESUME_JOBSET is not configured. Killing and exiting",
+                      file=sys.stderr)
+                cleanup_jobset_and_exit(JOBSET_NAME, 1)
+        elif jobset_status["failed"] != 0 or jobset_status["succeeded"] != 0 or jobset_status["suspended"] != 0:
+            print(f"JobSet {JOBSET_NAME} is stale. Deleting and exiting", file=sys.stderr)
+            cleanup_jobset_and_exit(JOBSET_NAME, 1)
+
+    # Create the JobSet and wait for creation to complete
+    if not jobset_resumed:
+        create_jobset_and_wait(jobset_config)
+        if not check_jobset_healthy(JOBSET_NAME):
+            print(f"Error: Pod for JobSet {JOBSET_NAME} was unable to be scheduled or crashed",
+                  file=sys.stderr)
+            cleanup_jobset_and_exit(JOBSET_NAME, -1)
+
+        # Monitor the JobSet status for the duration of the execution
+        log_worker, stop_log = monitor_jobset_status()
 
     if check_jobset_healthy(JOBSET_NAME):
         print(f"JobSet {JOBSET_NAME} running as expected. Reporting success.", file=sys.stderr)

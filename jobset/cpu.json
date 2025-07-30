@@ -5,15 +5,7 @@
     "name": "cpu-unit-tests",
     "annotations": {
       "kueue.x-k8s.io/queue-name": "cpu-worker"
-    },
-    "ownerReferences": [
-        {
-            "apiVersion": "v1",
-            "kind": "Pod",
-            "name": "POD_NAME_HERE",
-            "uid": "UID_HERE"
-        }
-    ]
+    }
   },
   "spec": {
     "failurePolicy": {
