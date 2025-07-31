@@ -277,19 +277,21 @@ def write_result(success: bool):
         csv_file.write("id,module,name,file,doc,markers,status,message,duration\n")
         csv_file.write(f"axlearn/experiments/text/gpt/fuji.py::RunTrainingLoop::fuji_training,axlearn.experiments.text.gpt.fuji,fuji_training,axlearn/experiments/text/gpt/fuji.py,,,{result_text},See full logs in GCS or Github,1.0\n")
 
-def create_jobset_and_wait(jobset_config):
+def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
     """Create a JobSet using the CRD API and ensure its completion happens
     
     Args:
-        jobset_config: A config to submit to the kube API"""
+        jobset_config: A config to submit to the kube API
+        skip_creation: Don't create the JobSet, just wait for creation"""
 
-    # Create the JobSet
-    print(f"Creating new JobSet {JOBSET_NAME} from template {JOBSET_JSON}", file=sys.stderr)
-    JOBSET_API.create(body=jobset_config, namespace="axlearn-arc")
+    if not skip_creation:
+        # Create the JobSet
+        print(f"Creating new JobSet {JOBSET_NAME} from template {JOBSET_JSON}", file=sys.stderr)
+        JOBSET_API.create(body=jobset_config, namespace="axlearn-arc")
 
-    # Sleep to ensure that the JobSet is created and is not suspended, usually from
-    # nodepool scale up events
-    time.sleep(15)
+        # Sleep to ensure that the JobSet is created and is not suspended, usually from
+        # nodepool scale up events
+        time.sleep(15)
 
     # Create a context for pulling custom objects
     jobset_status = get_jobset_status(JOBSET_NAME)
@@ -373,6 +375,7 @@ if __name__ == '__main__':
                 print(f"JobSet {JOBSET_NAME} is still active and RESUME_JOBSET is configured... Reattaching",
                       file=sys.stderr)
                 jobset_resumed = True
+                create_jobset_and_wait(jobset_config, skip_creation=True)
                 log_worker, stop_log = monitor_jobset_status()
             else:
                 print(f"JobSet {JOBSET_NAME} still active, but RESUME_JOBSET is not configured. Killing and exiting",
