@@ -7,10 +7,6 @@ TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 
-# Set ulimit to avoid crashes with newer versions of containerd
-echo "Setting ulimit to 1,000,000 before tests"
-ulimit -n 1000000
-
 # Fetch resources needed
 mkdir -p axlearn/data/tokenizers/sentencepiece
 mkdir -p axlearn/data/tokenizers/bpe

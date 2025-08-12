@@ -8,10 +8,6 @@ GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 GH_RUN_ID=$(cat /var/arc/run_id)
 
-# Set ulimit to avoid crashes with newer versions of containerd
-echo "Setting ulimit to 1,000,000 before tests"
-ulimit -n 1000000
-
 # Get the CSV results for easier reading, limit to 1 process for TPU
 pytest -v --csv /home/runner/_work/csv_results/tpu_tests.csv \
     -n 1 $(find axlearn/common -type f -name "*tpu*test*.py" -printf '%p ') \

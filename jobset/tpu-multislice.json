@@ -18,7 +18,7 @@
   },
   "spec": {
     "failurePolicy": {
-      "maxRestarts": 0
+      "maxRestarts": INSERT_MAX_RESTARTS
     },
     "replicatedJobs": [
       {
@@ -83,7 +83,7 @@
                     },
                     "command": [
                       "bash",
-                      "/var/arc/tpu-jobset-startup.sh"
+                      "/var/arc/tpu-jobset-multislice-startup.sh"
                     ],
                     "resources": {
                       "limits": {

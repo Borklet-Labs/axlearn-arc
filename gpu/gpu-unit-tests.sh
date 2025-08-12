@@ -8,10 +8,6 @@ GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 GH_RUN_ID=$(cat /var/arc/run_id)
 
-# Set ulimit to avoid crashes with newer versions of containerd
-echo "Setting ulimit to 1,000,000 before tests"
-ulimit -n 1000000
-
 # Get CSV results for easier reading
 AXLEARN_CI_GPU_TESTS=1 pytest -v  \
     --csv /home/runner/_work/csv_results/gpu_tests.csv \

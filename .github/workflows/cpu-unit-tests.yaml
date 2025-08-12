@@ -16,6 +16,7 @@ jobs:
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes

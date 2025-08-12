@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-07-30
+ # @version: 2025-08-12
  #
 
 import json
@@ -259,6 +259,13 @@ def update_jobset(jobset_base_config: dict) -> dict:
     updated_jobset = updated_jobset.replace("INSERT_GCS_PREFIX", GCS_PREFIX)
     # Insert the Github ARC run id
     updated_jobset = updated_jobset.replace("INSERT_GH_RUN_ID", GH_RUN_ID)
+
+    # Check to see if we override the maxRestarts in the JobSet
+    if "JOBSET_MAX_RESTARTS" in os.environ:
+        print(f"Detected maxRestarts override: {os.environ["JOBSET_MAX_RESTARTS"]}", file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_MAX_RESTARTS", os.environ["JOBSET_MAX_RESTARTS"])
+    else:
+        update_jobset = update_jobset.replace("INSERT_MAX_RESTARTS", 0)
 
     return json.loads(updated_jobset)
 

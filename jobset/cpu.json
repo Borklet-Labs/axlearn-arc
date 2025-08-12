@@ -9,7 +9,7 @@
   },
   "spec": {
     "failurePolicy": {
-      "maxRestarts": 0
+      "maxRestarts": REPLACE_JOBSET_RESTART
     },
     "replicatedJobs": [
       {
