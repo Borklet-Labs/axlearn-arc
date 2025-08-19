@@ -11,12 +11,12 @@ jobs:
         ARC_JOBSET_NAME: axlearn-gpu-training
         ARC_JOBSET_JSON: /var/arc/gpu.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.10
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.12
         JOBSET_HEALTHY_TIMEOUT: 600
         ACCELERATOR: b200_16
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        CUSTOM_GIT_BRANCH: jax_0.7.0_py3.12 # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
       - name: Install the Kubernetes Python SDK
