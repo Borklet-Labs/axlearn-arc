@@ -24,8 +24,7 @@ git checkout $GIT_BRANCH
 
 # Show the commit information
 git log -1 --stat --pretty=format:"%H" --no-patch
-pip install -U --pre jax jaxlib libtpu requests -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
-echo "Installed JAX nightly"
+
 # Get the timestamp of when the tests started
 TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
