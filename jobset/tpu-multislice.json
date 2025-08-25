@@ -5,7 +5,7 @@
     "name": "arc-tpu-multislice",
     "annotations": {
       "alpha.jobset.sigs.k8s.io/exclusive-topology": "cloud.google.com/gke-nodepool",
-      "kueue.x-k8s.io/queue-name": "tpu-v6e"
+      "kueue.x-k8s.io/queue-name": "tpu-v6e-spot"
     },
     "ownerReferences": [
         {
