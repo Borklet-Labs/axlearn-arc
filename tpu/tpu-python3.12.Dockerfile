@@ -31,12 +31,4 @@ ENV UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/jax_cuda_releases
 # Copy the test setup to the image
 COPY . .
 
-# Make the startup script executable.
-RUN chmod +x /var/arc/tpu-startup.sh
-
-# Set the final working directory.
 WORKDIR /root
-
-# Set the default command to run the script when the container starts.
-# We use the full path because the script was copied to /var/arc.
-CMD ["/var/arc/tpu-jobset-multislice-startup.sh"]
