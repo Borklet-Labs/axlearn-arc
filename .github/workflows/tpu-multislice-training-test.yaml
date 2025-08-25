@@ -21,7 +21,7 @@ jobs:
         # CUSTOM_GIT_BRANCH: jax_0.7.0_py3.12 # Customize with a different branch
         CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
         CUSTOM_GIT_BRANCH: jax-nightly-py312 # Customize with a different branch
-        JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
+        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
