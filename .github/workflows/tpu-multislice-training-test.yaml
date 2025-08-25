@@ -13,11 +13,13 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         #JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.12
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu-py312-jax-nightly:latest
-        JOBSET_HEALTHY_TIMEOUT: 600
+        JOBSET_HEALTHY_TIMEOUT: 1200
         ACCELERATOR: v6e_4x4_2
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: jax_0.7.0_py3.12 # Customize with a different branch
+        # CUSTOM_GIT_BRANCH: jax_0.7.0_py3.12 # Customize with a different branch
+        CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
+        CUSTOM_GIT_BRANCH: jax-nightly-py312 # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
       - name: Install the Kubernetes Python SDK
