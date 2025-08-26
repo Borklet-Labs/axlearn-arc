@@ -5,8 +5,8 @@ jobs:
   tpu-multislice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
-      # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-multi-slice:latest
+      # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-multi-slice:latest
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: arc-tpu-multislice
@@ -14,7 +14,7 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         #JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.12
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu-py312-jax-nightly:latest
-        JOBSET_HEALTHY_TIMEOUT: 1200
+        JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_2
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
