@@ -9,7 +9,7 @@
   },
   "spec": {
     "failurePolicy": {
-      "maxRestarts": INSERT_MAX_RESTARTS
+      "maxRestarts": "INSERT_MAX_RESTARTS"
     },
     "replicatedJobs": [
       {
@@ -39,6 +39,7 @@
                   {
                     "name": "cpu-unit-tests",
                     "image": "INSERT_DOCKER_IMAGE",
+                    "imagePullPolicy": "Always",
                     "securityContext": {
                       "privileged": true
                     },
