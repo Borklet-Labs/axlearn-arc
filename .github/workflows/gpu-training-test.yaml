@@ -5,12 +5,12 @@ jobs:
   gpu-training-test-job:
     runs-on: gpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.10
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.12
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
     steps:
       - name: Persist the run id
         run: echo ${{ github.run_id }} > /var/arc/run_id
