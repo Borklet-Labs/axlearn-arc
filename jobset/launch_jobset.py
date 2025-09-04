@@ -263,9 +263,9 @@ def update_jobset(jobset_base_config: dict) -> dict:
     # Check to see if we override the maxRestarts in the JobSet
     if "JOBSET_MAX_RESTARTS" in os.environ:
         print(f'Detected maxRestarts override: {os.environ["JOBSET_MAX_RESTARTS"]}', file=sys.stderr)
-        updated_jobset = updated_jobset.replace('"INSERT_MAX_RESTARTS"', os.environ["JOBSET_MAX_RESTARTS"])
+        updated_jobset = updated_jobset.replace('"INSERT_MAX_RESTARTS"', str(os.environ["JOBSET_MAX_RESTARTS"]))
     else:
-        updated_jobset = updated_jobset.replace('"INSERT_MAX_RESTARTS"', 0)
+        updated_jobset = updated_jobset.replace('"INSERT_MAX_RESTARTS"', str(0))
 
     return json.loads(updated_jobset)
 
