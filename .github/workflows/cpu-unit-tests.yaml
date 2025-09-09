@@ -15,7 +15,9 @@ jobs:
         RESUME_JOBSET: true
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: jax_0.6.2_py3.10 # Customize with a different branch
+        CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
+        # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.10 # Customize with a different branch
+        CUSTOM_GIT_BRANCH: bug/array-none-type
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
       - name: Install the Kubernetes Python SDK
