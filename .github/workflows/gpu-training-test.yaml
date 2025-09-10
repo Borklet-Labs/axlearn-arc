@@ -1,6 +1,7 @@
 name: gpu-training-test
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  workflow_call:
 jobs:
   gpu-training-test-job:
     runs-on: gpu
@@ -10,7 +11,9 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
+        CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
+        CUSTOM_GIT_BRANCH: jax-nightly-py312
+        # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
     steps:
       - name: Persist the run id
         run: echo ${{ github.run_id }} > /var/arc/run_id
@@ -18,6 +21,8 @@ jobs:
         run: /bin/bash /var/arc/git-setup.sh
       - name: Install AXLearn dependiencies with uv
         run: cd /root && uv pip install --find-links https://storage.googleapis.com/axlearn-wheels/wheels.html .[core,gpu,gcp]
+      - name: Install JAX nightly
+        run: pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
       - name: Ensure old checkpoints have been cleaned up
         run: gsutil -m rm -r ${GCS_PREFIX}/gpu_single_host_test || echo "Errors allowed for gsutil. Ignoring..."
       - name: Run the training loop for Fuji v2 7B, single host

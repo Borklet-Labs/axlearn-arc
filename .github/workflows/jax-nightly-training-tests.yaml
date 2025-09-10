@@ -1,0 +1,21 @@
+name: jax-nightly-training-tests-sequence
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-tpu-single-slice-training-test:
+    name: Trigger TPU Single Slice Training Test
+    uses: ./.github/workflows/tpu-single-slice-training-test.yaml
+  
+  run-tpu-multi-slices-training-test:
+    name: Trigger TPU Multi-slice Training Test
+    uses: ./.github/workflows/tpu-multislice-training-test.yaml
+    needs: run-tpu-single-slice-training-test
+  
+  run-gpu-multihost-training-test:
+    name: Trigger GPU Multi-host Training Test
+    uses: ./.github/workflows/gpu-training-test.yaml
+    needs: run-tpu-multi-slices-training-test
