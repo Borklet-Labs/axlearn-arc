@@ -14,8 +14,10 @@ jobs:
     name: Trigger TPU Multi-slice Training Test
     uses: ./.github/workflows/tpu-multislice-training-test.yaml
     needs: run-tpu-single-slice-training-test
+    if: always()
   
   run-gpu-multihost-training-test:
     name: Trigger GPU Multi-host Training Test
     uses: ./.github/workflows/gpu-training-test.yaml
     needs: run-tpu-multi-slices-training-test
+    if: always()
