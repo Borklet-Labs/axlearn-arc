@@ -19,7 +19,7 @@ jobs:
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run tpu-single-slice-training-test.yaml --ref jax_nightly_py3.12
+          gh workflow run tpu-single-slice-training-test.yaml --ref jax_nightly_py3.12 --wait
   
   run-tpu-multi-slices-training-test:
     runs-on: ubuntu-latest
@@ -35,7 +35,7 @@ jobs:
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run tpu-multislice-training-test.yaml --ref jax_nightly_py3.12
+          gh workflow run tpu-multislice-training-test.yaml --ref jax_nightly_py3.12 --wait
    
   
   run-gpu-single-host-training-test:
@@ -52,7 +52,7 @@ jobs:
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run gpu-training-test.yaml --ref jax_nightly_py3.12
+          gh workflow run gpu-training-test.yaml --ref jax_nightly_py3.12 --wait
   
   run-gpu-multi-slices-training-test:
     runs-on: ubuntu-latest
@@ -68,4 +68,4 @@ jobs:
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run gpu-multihost-training-test.yaml --ref jax_nightly_py3.12
+          gh workflow run gpu-multihost-training-test.yaml --ref jax_nightly_py3.12 --wait
