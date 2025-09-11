@@ -19,4 +19,4 @@ jobs:
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow list --branch jax_nightly_py3.12
+          gh workflow run jax-nightly-training-tests.yaml --ref jax_nightly_py3.12
