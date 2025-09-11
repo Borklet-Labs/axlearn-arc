@@ -24,7 +24,7 @@ jobs:
           gh workflow run tpu-single-slice-training-test.yaml --ref jax_nightly_py3.12
 
           echo "Waiting 10 seconds for the new run to be registered with the API..."
-          sleep 10
+          sleep 60
 
           echo "Fetching the ID of the new run..."
           RUN_ID=$(gh run list --workflow="tpu-single-slice-training-test.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
