@@ -19,7 +19,23 @@ jobs:
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run tpu-single-slice-training-test.yaml --ref jax_nightly_py3.12 --wait
+          set -e
+          echo "Triggering workflow: tpu-single-slice-training-test.yaml"
+          gh workflow run tpu-single-slice-training-test.yaml --ref jax_nightly_py3.12
+
+          echo "Waiting 10 seconds for the new run to be registered with the API..."
+          sleep 10
+
+          echo "Fetching the ID of the new run..."
+          RUN_ID=$(gh run list --workflow="tpu-single-slice-training-test.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+
+          if [ -z "$RUN_ID" ]; then
+            echo "Error: Could not find a recent run for the workflow."
+            exit 1
+          fi
+
+          echo "Found run ID: $RUN_ID. Waiting for it to complete..."
+          gh run watch "$RUN_ID"
   
   run-tpu-multi-slices-training-test:
     runs-on: ubuntu-latest
