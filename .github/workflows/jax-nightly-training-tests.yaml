@@ -16,8 +16,16 @@ jobs:
     needs: run-tpu-single-slice-training-test
     if: always()
   
-  run-gpu-multihost-training-test:
-    name: Trigger GPU Multi-host Training Test
+  run-gpu-single-host-training-test:
+    name: Trigger GPU Single-host Training Test
     uses: ./.github/workflows/gpu-training-test.yaml
     needs: run-tpu-multi-slices-training-test
     if: always()
+  
+  run-gpu-multi-slices-training-test:
+    name: Trigger GPU Multi-hosts Training Test
+    uses: ./.github/workflows/gpu-multihost-training-test.yaml
+    needs: run-gpu-single-host-training-test
+    if: always()
+
+
