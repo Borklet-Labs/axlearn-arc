@@ -96,6 +96,8 @@ tar -czvf results.tar.gz csv_results
 
 # Upload to GCS, including the date and commit hash
 gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/archive/cpu-unit-tests-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.tar.gz
-gsutil -m cp /home/runner/_work/csv_results/cpu_tests_all_results.csv ${GCS_PREFIX}/results/unit-tests-cpu-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
+gsutil -h "x-goog-meta-github-hash:${GITHUB_HASH}" -h "x-goog-meta-jax-version:${JAX_VER}" \
+   -h "x-goog-meta-github-run-id:${GH_RUN_ID}" -h "x-goog-meta-timestamp:${TIMESTAMP}" \
+   -m cp /home/runner/_work/csv_results/cpu_tests_all_results.csv ${GCS_PREFIX}/results/unit-tests-cpu-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
 
 exit
