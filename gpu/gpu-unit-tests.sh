@@ -20,8 +20,9 @@ tar -czvf results.tar.gz csv_results
 
 # Upload to GCS, including the date and commit hash
 gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/archive/gpu-unit-tests-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.tar.gz
-gsutil -h "x-goog-meta-github-hash:${GITHUB_HASH}" -h "x-goog-meta-jax-version:${JAX_VER}" \
-   -h "x-goog-meta-github-run-id:${GH_RUN_ID}" -h "x-goog-meta-timestamp:${TIMESTAMP}" \
+gsutil -h "x-goog-meta-test-type:unit-tests" -h "x-goog-meta-processor:gpu" \
+   -h "x-goog-meta-commit-hash:${GITHUB_HASH}" -h "x-goog-meta-jax-version:${JAX_VER}" \
+   -h "x-goog-meta-github-run-id:${GH_RUN_ID}" -h "x-goog-meta-run-timestamp:${TIMESTAMP}" \
    -m cp /home/runner/_work/csv_results/gpu_tests.csv ${GCS_PREFIX}/results/unit-tests-gpu-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
 
 # Check to see if there were any real test failures

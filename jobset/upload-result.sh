@@ -31,7 +31,7 @@ GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 JAX_VER=$(cat pyproject.toml | grep jax== | sed 's/\s*"jax==//g' | sed 's/",\s*//g')
 
 # Upload the result CSV to GCS
-gsutil -h "x-goog-meta-github-hash:${GITHUB_HASH}" -h "x-goog-meta-jax-version:${JAX_VER}" \
-   -h "x-goog-meta-github-run-id:${GH_RUN_ID}" -h "x-goog-meta-timestamp:${TIMESTAMP}" \
-   -h "x-goog-meta-accelerator: ${ACCELERATOR}" \
+gsutil -h "x-goog-meta-test-type:training-test" -h "x-goog-meta-commit-hash:${GITHUB_HASH}" \
+   -h "x-goog-meta-jax-version:${JAX_VER}" -h "x-goog-meta-github-run-id:${GH_RUN_ID}" \
+   -h "x-goog-meta-run-timestamp:${TIMESTAMP}" -h "x-goog-meta-accelerator: ${ACCELERATOR}" \
    -m cp /var/arc/result.csv ${GCS_PREFIX}/results/training-test-${ACCELERATOR}-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
