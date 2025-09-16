@@ -32,7 +32,7 @@ name: gpu-training-test
 #         run: /bin/bash /var/arc/gpu-training-test.sh
 #       - name: Upload Test Results
 #         run: /bin/bash /var/arc/upload-result.sh
-# name: gpu-multihost-training-test
+# name: gpu-multihost-training-test 
 on:
   workflow_dispatch:
   workflow_call:
@@ -43,7 +43,7 @@ jobs:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
       env:
         # Required environmental variables for a successful run
-        ARC_JOBSET_NAME: arc-gpu-single-host
+        ARC_JOBSET_NAME: axlearn-gpu-training-single-host
         ARC_JOBSET_JSON: /var/arc/gpu-single-host.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
