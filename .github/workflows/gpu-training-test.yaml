@@ -1,34 +1,65 @@
 name: gpu-training-test
+# on:
+#   workflow_dispatch:
+#   workflow_call:
+# jobs:
+#   gpu-training-test-job:
+#     runs-on: gpu
+#     container:
+#       # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.12
+#       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-jax-nightly-python312:latest
+#       env:
+#         GCS_PREFIX: gs://axlearn-arc-testing/testing
+#         # Optional flags
+#         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+#         CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
+#         CUSTOM_GIT_BRANCH: jax-nightly-py312
+#         # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
+#     steps:
+#       - name: Persist the run id
+#         run: echo ${{ github.run_id }} > /var/arc/run_id
+#       - name: Fetch the target AXLearn origin and branch
+#         run: /bin/bash /var/arc/git-setup.sh
+#       - name: Install AXLearn dependiencies with uv
+#         run: cd /root && uv pip install --find-links https://storage.googleapis.com/axlearn-wheels/wheels.html .[core,gpu,gcp]
+#       - name: Clean up previous env
+#         run: pip uninstall -y jax jaxlib jax-cuda12-plugin
+#       - name: Install JAX nightly
+#         run: pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+#       - name: Ensure old checkpoints have been cleaned up
+#         run: gsutil -m rm -r ${GCS_PREFIX}/gpu_single_host_test || echo "Errors allowed for gsutil. Ignoring..."
+#       - name: Run the training loop for Fuji v2 7B, single host
+#         run: /bin/bash /var/arc/gpu-training-test.sh
+#       - name: Upload Test Results
+#         run: /bin/bash /var/arc/upload-result.sh
+# name: gpu-multihost-training-test
 on:
   workflow_dispatch:
   workflow_call:
 jobs:
-  gpu-training-test-job:
-    runs-on: gpu
+  gpu-multihost-training-test-job:
+    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to GPU
     container:
-      # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.12
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-jax-nightly-python312:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
       env:
+        # Required environmental variables for a successful run
+        ARC_JOBSET_NAME: arc-gpu-single-host
+        ARC_JOBSET_JSON: /var/arc/gpu-single-host.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
+        JOBSET_HEALTHY_TIMEOUT: 600
+        ACCELERATOR: b200_16
         # Optional flags
-        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
         CUSTOM_GIT_BRANCH: jax-nightly-py312
+        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
+        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
-      - name: Persist the run id
-        run: echo ${{ github.run_id }} > /var/arc/run_id
-      - name: Fetch the target AXLearn origin and branch
-        run: /bin/bash /var/arc/git-setup.sh
-      - name: Install AXLearn dependiencies with uv
-        run: cd /root && uv pip install --find-links https://storage.googleapis.com/axlearn-wheels/wheels.html .[core,gpu,gcp]
-      - name: Clean up previous env
-        run: pip uninstall -y jax jaxlib jax-cuda12-plugin
-      - name: Install JAX nightly
-        run: pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-      - name: Ensure old checkpoints have been cleaned up
-        run: gsutil -m rm -r ${GCS_PREFIX}/gpu_single_host_test || echo "Errors allowed for gsutil. Ignoring..."
-      - name: Run the training loop for Fuji v2 7B, single host
-        run: /bin/bash /var/arc/gpu-training-test.sh
-      - name: Upload Test Results
-        run: /bin/bash /var/arc/upload-result.sh
+      - name: Install the Kubernetes Python SDK
+        run: uv pip install kubernetes
+      - name: Launch the GPU training job
+        run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+      - name: Upload the training result to GCS
+        if: always()
+        run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh

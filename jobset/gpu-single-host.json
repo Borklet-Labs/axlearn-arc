@@ -2,7 +2,7 @@
   "apiVersion": "jobset.x-k8s.io/v1alpha2",
   "kind": "JobSet",
   "metadata": {
-    "name": "axlearn-gpu-training",
+    "name": "axlearn-gpu-training-single-host",
     "annotations": {
       "kueue.x-k8s.io/queue-name": "a4-high"
     },
@@ -55,7 +55,7 @@
                     },
                     "command": [
                       "bash",
-                      "/var/arc/gpu-jobset-startup.sh"
+                      "/var/arc/gpu-jobset-single-host-startup.sh"
                     ],
                     "resources": {
                       "limits": {
@@ -69,7 +69,7 @@
                       },
                       {
                         "name": "NUM_PROCESSES",
-                        "value": "2"
+                        "value": "1"
                       },
                       {
                         "name": "XLA_FLAGS",
