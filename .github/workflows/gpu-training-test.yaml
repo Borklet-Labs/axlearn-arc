@@ -37,7 +37,7 @@ on:
   workflow_dispatch:
   workflow_call:
 jobs:
-  gpu-multihost-training-test-job:
+  gpu-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to GPU
     container:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
