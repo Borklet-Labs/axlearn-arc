@@ -6,7 +6,8 @@ jobs:
   gpu-training-test-job:
     runs-on: gpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.12
+      # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.12
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-jax-nightly-python312:latest
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags
@@ -29,3 +30,5 @@ jobs:
         run: gsutil -m rm -r ${GCS_PREFIX}/gpu_single_host_test || echo "Errors allowed for gsutil. Ignoring..."
       - name: Run the training loop for Fuji v2 7B, single host
         run: /bin/bash /var/arc/gpu-training-test.sh
+      - name: Upload Test Results
+        run: /bin/bash /var/arc/upload-result.sh

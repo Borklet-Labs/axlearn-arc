@@ -9,8 +9,8 @@ jobs:
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
       env:
         # Required environmental variables for a successful run
-        ARC_JOBSET_NAME: axlearn-gpu-training
-        ARC_JOBSET_JSON: /var/arc/gpu.json
+        ARC_JOBSET_NAME: arc-gpu-multihosts
+        ARC_JOBSET_JSON: /var/arc/gpu-multi-hosts.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
         JOBSET_HEALTHY_TIMEOUT: 600
