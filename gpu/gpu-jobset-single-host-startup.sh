@@ -37,7 +37,7 @@ echo "Installing JAX nightly"
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 echo "JAX_VERSION_OUTPUT:${JAX_VER}"
 
-gsutil -h "x-goog-meta-jax-version:${JAX_VER}" -m cp /dev/null ${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}.txt
+gsutil -h "x-goog-meta-jax-version:${JAX_VER}" -m cp /dev/null ${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}
 
 # Modify the batch size to account for B200
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=64/g' /root/axlearn/experiments/text/gpt/fuji.py
