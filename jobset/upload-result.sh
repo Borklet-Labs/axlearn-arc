@@ -29,7 +29,7 @@ git log -1 --stat --pretty=format:"%H" --no-patch
 TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 # JAX_VER=$(cat pyproject.toml | grep jax== | sed 's/\s*"jax==//g' | sed 's/",\s*//g')
-JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
+# JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 
 echo "JAX version: ${JAX_VER}"
 

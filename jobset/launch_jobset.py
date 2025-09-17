@@ -23,6 +23,7 @@ import kubernetes
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
 JOBSET_JSON = os.environ['ARC_JOBSET_JSON']
 DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
+GITHUB_OUTPUT = os.environ.get('GITHUB_OUTPUT')
 GCS_PREFIX = os.environ['GCS_PREFIX']
 JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 GH_RUN_ID = os.environ['GH_RUN_ID']
@@ -100,6 +101,19 @@ def cleanup_jobset_and_exit(jobset_name: str,
         exit_code: Integer code to return
         log_worker: Thread where the logger is running
         stop_log: Event to stop the log_worker before join"""
+    if GITHUB_OUTPUT:
+        # Find the pod name from the JobSet
+        # This is simplified; assumes jobset name is part of pod name
+        pod_name = f"{jobset_name}-job-0-0" 
+        
+        jax_version = extract_log_value(pod_name, "JAX_VERSION_OUTPUT:")
+        if jax_version:
+            # Write the variable to the GitHub Actions output file
+            # The format is 'KEY=VALUE' >> $GITHUB_OUTPUT
+            with open(GITHUB_OUTPUT, "a") as f:
+                f.write(f"jax_version={jax_version}\n")
+            print(f"Exported jax_version={jax_version} to GitHub output", file=sys.stderr)
+
     if log_worker and stop_log:
         attempts = 1
         stop_log.set()
@@ -360,6 +374,23 @@ def monitor_jobset_status():
         time_elapsed += 30
 
     return log_worker, stop_log
+
+def extract_log_value(pod_name: str, key: str) -> str | None:
+    """Fetch all logs and extract a specific KEY:VALUE pair."""
+    try:
+        # Read the entire log of the target container
+        logs = KUBE_API.read_namespaced_pod_log(
+            namespace="axlearn-arc", name=pod_name, _preload_content=False).read().decode()
+        
+        # Search for the custom prefix line
+        for line in logs.splitlines():
+            if line.startswith(key):
+                return line.split(':', 1)[-1].strip()
+        
+    except Exception as e:
+        print(f"Error extracting log value: {e}", file=sys.stderr)
+        return None
+    return None
 
 if __name__ == '__main__':
 
