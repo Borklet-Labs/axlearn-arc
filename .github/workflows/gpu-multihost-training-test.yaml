@@ -26,6 +26,7 @@ jobs:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
       - name: Launch the GPU training job
+        id: launch_job
         run: |
           export GITHUB_OUTPUT=$GITHUB_OUTPUT
 

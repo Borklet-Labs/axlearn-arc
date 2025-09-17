@@ -38,3 +38,6 @@ gsutil -h "x-goog-meta-test-type:training-test" -h "x-goog-meta-commit-hash:${GI
    -h "x-goog-meta-jax-version:${JAX_VER}" -h "x-goog-meta-github-run-id:${GH_RUN_ID}" \
    -h "x-goog-meta-run-timestamp:${TIMESTAMP}" -h "x-goog-meta-accelerator:${ACCELERATOR}" \
    -m cp /var/arc/result.csv ${GCS_PREFIX}/results/training-test-${ACCELERATOR}-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
+
+GCS_VERSION_TAG_FILE="${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}"
+gsutil rm "${GCS_VERSION_TAG_FILE}"

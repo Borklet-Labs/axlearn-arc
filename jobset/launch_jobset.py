@@ -18,12 +18,13 @@ import os
 import signal
 import threading
 import kubernetes
+import subprocess
+
 
 # Get the JobSet info from the environment
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
 JOBSET_JSON = os.environ['ARC_JOBSET_JSON']
 DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
-GITHUB_OUTPUT = os.environ.get('GITHUB_OUTPUT')
 GCS_PREFIX = os.environ['GCS_PREFIX']
 JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 GH_RUN_ID = os.environ['GH_RUN_ID']
@@ -101,19 +102,20 @@ def cleanup_jobset_and_exit(jobset_name: str,
         exit_code: Integer code to return
         log_worker: Thread where the logger is running
         stop_log: Event to stop the log_worker before join"""
-    if GITHUB_OUTPUT:
-        # Find the pod name from the JobSet
-        # This is simplified; assumes jobset name is part of pod name
-        pod_name = f"{jobset_name}-job-0-0" 
-        
-        jax_version = extract_log_value(pod_name, "JAX_VERSION_OUTPUT:")
-        if jax_version:
-            # Write the variable to the GitHub Actions output file
-            # The format is 'KEY=VALUE' >> $GITHUB_OUTPUT
-            with open(GITHUB_OUTPUT, "a") as f:
-                f.write(f"jax_version={jax_version}\n")
-            print(f"Exported jax_version={jax_version} to GitHub output", file=sys.stderr)
 
+    github_output_path = os.environ.get('GITHUB_OUTPUT')
+    if github_output_path:
+        # ⚠️ This is now called after the JobSet has finished running (or failed).
+        # We rely on the inner Pod having had time to write the GCS metadata file.
+        JAX_VER_OUTPUT = get_jax_version_from_gcs_metadata() 
+
+        if JAX_VER_OUTPUT != "unknown_version": # Check if the extraction actually found a value
+            with open(github_output_path, "a") as f:
+                f.write(f"jax_version={JAX_VER_OUTPUT}\n")
+            print(f"Successfully exported jax_version={JAX_VER_OUTPUT} to GitHub output.", file=sys.stderr)
+        else:
+            print("WARNING: Could not extract JAX version for GITHUB_OUTPUT.", file=sys.stderr)
+    
     if log_worker and stop_log:
         attempts = 1
         stop_log.set()
@@ -375,22 +377,29 @@ def monitor_jobset_status():
 
     return log_worker, stop_log
 
-def extract_log_value(pod_name: str, key: str) -> str | None:
-    """Fetch all logs and extract a specific KEY:VALUE pair."""
+def get_jax_version_from_gcs_metadata():
+    """Reads the JAX version tag from GCS object metadata."""
+    
+    GCS_VERSION_TAG_FILE = f"{GCS_PREFIX}/metadata/jax_version_tag_{GH_RUN_ID}"
+    
     try:
-        # Read the entire log of the target container
-        logs = KUBE_API.read_namespaced_pod_log(
-            namespace="axlearn-arc", name=pod_name, _preload_content=False).read().decode()
+        # Use gsutil stat to get object metadata
+        # The output contains a line like: 'Metadata:  jax-version: 0.7.2.dev20250916'
+        command = f"gsutil stat {GCS_VERSION_TAG_FILE}"
         
-        # Search for the custom prefix line
-        for line in logs.splitlines():
-            if line.startswith(key):
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        
+        # Search output for the metadata key
+        for line in result.stdout.splitlines():
+            if "jax-version:" in line:
+                # Extract the value after the key
                 return line.split(':', 1)[-1].strip()
         
     except Exception as e:
-        print(f"Error extracting log value: {e}", file=sys.stderr)
-        return None
-    return None
+        print(f"WARNING: Could not retrieve JAX version from GCS metadata: {e}", file=os.sys.stderr)
+        return "unknown_version" # Return a default or error tag
+
+    return "unknown_version"
 
 if __name__ == '__main__':
 

@@ -33,7 +33,11 @@ pip uninstall -y jax jaxlib jax-cuda12-plugin
 pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 echo "Installing JAX nightly"
+
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
+echo "JAX_VERSION_OUTPUT:${JAX_VER}"
+
+gsutil cp -h "x-goog-meta-jax-version:${JAX_VER}" /dev/null "${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}"
 
 # Modify the batch size to account for B200
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=64/g' /root/axlearn/experiments/text/gpt/fuji.py
