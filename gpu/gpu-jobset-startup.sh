@@ -40,7 +40,7 @@ sed -i 's/train_batch_size=train_batch_size/train_batch_size=64/g' /root/axlearn
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 echo "JAX_VERSION_OUTPUT:${JAX_VER}"
 
-gsutil cp -h "x-goog-meta-jax-version:${JAX_VER}" /dev/null "${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}"
+gsutil -h "x-goog-meta-jax-version:${JAX_VER}" -m cp /dev/null ${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}.txt
 
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main --module=text.gpt.c4_trainer --config=fuji-70B-v2-flash \

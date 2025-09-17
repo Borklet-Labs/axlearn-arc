@@ -29,7 +29,7 @@ jobs:
         id: launch_job
         run: |
           export GITHUB_OUTPUT=$GITHUB_OUTPUT
-
+          
           GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
       - name: Upload the training result to GCS
         if: always()
