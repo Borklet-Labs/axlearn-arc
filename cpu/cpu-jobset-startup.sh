@@ -9,7 +9,7 @@ bash /var/arc/git-setup.sh
 # Install dependencies
 export UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/libtpu_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html"
 echo "UV links: ${UV_FIND_LINKS}"
-cd /root && uv pip install .[core,dev,gcp,open_api,audio] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
+cd /root && uv pip install --prerelease=allow .[core,dev,gcp,open_api,audio] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
 
 # Run the unit tests
 if [ $? -eq 0 ]; then

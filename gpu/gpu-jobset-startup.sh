@@ -27,7 +27,7 @@ git log -1 --stat --pretty=format:"%H" --no-patch
 
 export UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/jax_cuda_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html"
 echo "UV links: ${UV_FIND_LINKS}"
-uv pip install .[core,gpu]
+uv pip install --prerelease=allow .[core,gpu]
 
 # Modify the batch size to account for B200
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=64/g' /root/axlearn/experiments/text/gpt/fuji.py
