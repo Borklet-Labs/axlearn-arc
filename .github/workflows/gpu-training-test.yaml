@@ -14,7 +14,7 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
         JOBSET_HEALTHY_TIMEOUT: 600
-        ACCELERATOR: b200_16
+        ACCELERATOR: b200_16_1
         # Optional flags
         CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
         CUSTOM_GIT_BRANCH: jax-nightly-py312
