@@ -17,6 +17,7 @@ jobs:
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         CUSTOM_GIT_BRANCH: jax_0.7.2_py3.12
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
+        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes

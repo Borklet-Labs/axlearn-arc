@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-08-12
+ # @version: 2025-09-18
  #
 
 import json
@@ -26,6 +26,7 @@ DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
 GCS_PREFIX = os.environ['GCS_PREFIX']
 JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 GH_RUN_ID = os.environ['GH_RUN_ID']
+SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in os.environ else 15 * 60
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -309,9 +310,9 @@ def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
         cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
     time_elapsed = 0
-    while time_elapsed < (15 * 60):
+    while time_elapsed < (SCHEDULE_TIMEOUT):
         pod_status = get_pod_status(JOBSET_NAME)
-        print(f"[{time_elapsed}/{15 * 60}]: Waiting for pod for JobSet {JOBSET_NAME} to be scheduled: {pod_status.phase}",
+        print(f"[{time_elapsed}/{SCHEDULE_TIMEOUT}]: Waiting for pod for JobSet {JOBSET_NAME} to be scheduled: {pod_status.phase}",
               file=sys.stderr)
         # Check to see if the pod has been scheduled
         if "Running" in pod_status.phase:
