@@ -22,7 +22,7 @@
     "replicatedJobs": [
       {
         "name": "job",
-        "replicas": 2,
+        "replicas": 1,
         "template": {
           "spec": {
             "parallelism": 2,
