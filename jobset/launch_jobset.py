@@ -72,15 +72,37 @@ def get_current_jobset(jobset_name: str):
             return jobset
 
 def get_jobset_status(jobset_name: str):
-    """Get the status of a JobSet
-    
-    Args:
-        jobnet_name: String containing the JobSet name
-        
-    Returns:
-        Returns the JobSet status object matching the name, or None"""
+    """
+    Get the status of a JobSet, retrying for a short period if it's not
+    immediately found after creation.
+    """
+    attempts = 0
+    max_attempts = 12  # Retry for up to 60 seconds
+    while attempts < max_attempts:
+        jobset = get_current_jobset(jobset_name)
+        # Check if the jobset exists and has a status with replicatedJobsStatus
+        if (
+            jobset
+            and "status" in jobset
+            and "replicatedJobsStatus" in jobset["status"]
+            and len(jobset["status"]["replicatedJobsStatus"]) > 0
+        ):
+            return jobset["status"]["replicatedJobsStatus"][0]
 
-    return get_current_jobset(jobset_name)["status"]["replicatedJobsStatus"][0]
+        print(
+            f"WARN: JobSet '{jobset_name}' not found or status not ready. "
+            f"Retrying in 5s... (Attempt {attempts + 1}/{max_attempts})",
+            file=sys.stderr,
+        )
+        time.sleep(5)
+        attempts += 1
+    
+    print(
+        f"FATAL: Could not get status for JobSet '{jobset_name}' "
+        f"after {max_attempts} attempts. Calling cleanup and exiting.",
+        file=sys.stderr,
+    )
+    cleanup_jobset_and_exit(jobset_name=jobset_name, exit_code=-1)
 
 def cleanup_jobset(jobset_name: str):
     """Delete a JobSet when finishing execution

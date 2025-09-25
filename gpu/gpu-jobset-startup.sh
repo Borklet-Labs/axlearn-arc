@@ -35,12 +35,11 @@ pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/m
 echo "Installing JAX nightly"
 
 # Modify the batch size to account for B200
-sed -i 's/train_batch_size=train_batch_size/train_batch_size=64/g' /root/axlearn/experiments/text/gpt/fuji.py
-
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 echo "JAX_VERSION_OUTPUT:${JAX_VER}"
 
 gsutil -h "x-goog-meta-jax-version:${JAX_VER}" -m cp /dev/null ${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}
+sed -i 's/train_batch_size=train_batch_size/train_batch_size=64/g' /root/axlearn/experiments/text/gpt/fuji.py
 
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main --module=text.gpt.c4_trainer --config=fuji-70B-v2-flash \

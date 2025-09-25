@@ -27,7 +27,18 @@ git log -1 --stat --pretty=format:"%H" --no-patch
 
 export UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/jax_cuda_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html"
 echo "UV links: ${UV_FIND_LINKS}"
-uv pip install .[core,gpu]
+
+uv pip install --find-links https://storage.googleapis.com/axlearn-wheels/wheels.html .[core,gpu,gcp]
+pip uninstall -y jax jaxlib jax-cuda12-plugin
+pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+echo "Installing JAX nightly"
+
+# Modify the batch size to account for B200
+JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
+echo "JAX_VERSION_OUTPUT:${JAX_VER}"
+
+gsutil -h "x-goog-meta-jax-version:${JAX_VER}" -m cp /dev/null ${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}
 
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash-single-host \
