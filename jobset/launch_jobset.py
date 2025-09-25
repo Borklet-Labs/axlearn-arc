@@ -322,6 +322,7 @@ def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
     # Ensure the JobSet is not marked as failed
     if jobset_status["failed"] != 0 or jobset_status["suspended"] != 0:
         print(f"JobSet {JOBSET_NAME} failed.", file=sys.stderr)
+        time.sleep(300)
         cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
     time_elapsed = 0
@@ -335,10 +336,12 @@ def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
             break
         elif "Error" in pod_status.phase or "Terminating" in pod_status.phase:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
+            time.sleep(300)
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
         if not check_jobset_healthy(JOBSET_NAME, before_schedule=True):
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
+            time.sleep(300)
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
         time.sleep(15)
@@ -365,6 +368,7 @@ def monitor_jobset_status():
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
             write_result(False)
+            time.sleep(300)
             cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
         else:
             if check_jobset_completed(JOBSET_NAME):
