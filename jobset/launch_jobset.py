@@ -171,12 +171,8 @@ def get_pod_status(pod_name: str):
         if pod_name in pod.metadata.name:
             return pod.status
 
-def get_pod_logs(pod_name: str, stop: threading.Event):
-    """Spawn a stream to print out pod logs during execution
-    
-    Args:
-        pod_name: String with the name of the pod
-        stop: Threading event to stop execution"""
+def get_pod_logs(pod_name: str, stop: threading.Event, log_state: dict):
+    """Spawn a stream to print out pod logs during execution"""
 
     pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
     target_pod = None
@@ -192,6 +188,8 @@ def get_pod_logs(pod_name: str, stop: threading.Event):
         stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
             namespace="axlearn-arc", name=target_pod)
         for line in stream:
+            # NEW: Update the timestamp every time a log is received.
+            log_state['last_log_time'] = time.time()
             if stop.is_set():
                 break
             print(line, file=sys.stderr)
@@ -416,29 +414,41 @@ def monitor_jobset_status():
     
     Returns: Returns references to stop_log and log_worker"""
 
-    # Spawn a thread to print pod logs to stderr
+    # NEW: Define how long to wait for new logs before timing out (in seconds).
+    LOG_TIMEOUT_SECONDS = 45 * 60  # 45 minutes
+
+    # NEW: Create a shared state dictionary to pass to the thread.
+    log_state = {'last_log_time': time.time()}
+
+    # NEW: Pass the log_state dictionary to the logging thread.
     stop_log = threading.Event()
-    log_worker = threading.Thread(target=get_pod_logs, args=(JOBSET_NAME,stop_log))
+    log_worker = threading.Thread(target=get_pod_logs, args=(JOBSET_NAME, stop_log, log_state))
     log_worker.start()
-    # Wait up to 10 minutes for a JobSet error to be reported, otherwise assume
-    # execution was successful
+    
     time_elapsed = 0
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
         jobset_healthy = check_jobset_healthy(JOBSET_NAME)
         print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}",
               file=sys.stderr)
-        # Check for failures
+        
+        time_since_last_log = time.time() - log_state['last_log_time']
+        print(f"INFO: Time since last log message: {int(time_since_last_log)} seconds.", file=sys.stderr)
+
+        if time_since_last_log > LOG_TIMEOUT_SECONDS:
+            print(f"ERROR: Job failed due to no new log output for over {LOG_TIMEOUT_SECONDS} seconds.", file=sys.stderr)
+            write_result(False) # Write "failed" status
+            cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
+
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
             write_result(False)
-            time.sleep(300)
             cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
         else:
             if check_jobset_completed(JOBSET_NAME):
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
                 write_result(True)
                 cleanup_jobset_and_exit(JOBSET_NAME, 0, log_worker, stop_log)
-        # Sleep 30 seconds before polling the status of the JobSet again
+        
         time.sleep(30)
         time_elapsed += 30
 
