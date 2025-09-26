@@ -415,7 +415,7 @@ def monitor_jobset_status():
     Returns: Returns references to stop_log and log_worker"""
 
     # NEW: Define how long to wait for new logs before timing out (in seconds).
-    LOG_TIMEOUT_SECONDS = 45 * 60  # 45 minutes
+    LOG_TIMEOUT_SECONDS = 10 * 60  # 45 minutes
 
     # NEW: Create a shared state dictionary to pass to the thread.
     log_state = {'last_log_time': time.time()}
