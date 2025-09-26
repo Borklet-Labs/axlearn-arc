@@ -200,30 +200,71 @@ def get_pod_logs(pod_name: str, stop: threading.Event):
         print("Turning off log streaming... full log will be available in GCS after the run",
                 file=sys.stderr)
 
-def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
-    """Check if a JobSet was accepted and if the pods are in a healthy state
-    
-    Args:
-        jobset_name: String containing the JobSet name
-        
-    Returns:
-        True if the JobSet is active and pods are running
-        False if the JobSet is active but pods aren't scheduled"""
+def check_jobset_healthy(jobset_name: str, before_schedule=False) -> bool:
+    """
+    Check if a JobSet was accepted and if its pods and containers are in a
+    truly healthy state. This check is stricter than the original.
+    """
+    jobset = get_current_jobset(jobset_name)
 
-    jobset_status = get_jobset_status(jobset_name)
-
-    if jobset_status["failed"] != 0 or jobset_status["suspended"] != 0:
+    # If the JobSet object itself isn't found, it's not healthy.
+    if not jobset or "status" not in jobset:
+        print(f"WARN: JobSet '{jobset_name}' not found or has no status.", file=sys.stderr)
         return False
-    elif jobset_status["active"] != 0:
+
+    jobset_status = jobset["status"]["replicatedJobsStatus"][0]
+
+    # Check for definitive failure or suspension at the JobSet level first.
+    if jobset_status["failed"] > 0 or jobset_status["suspended"] > 0:
+        print(f"INFO: JobSet reports failed={jobset_status['failed']}, suspended={jobset_status['suspended']}.", file=sys.stderr)
+        return False
+
+    # If the job has already succeeded, it's considered healthy for our check.
+    if jobset_status["succeeded"] > 0:
+        return True
+
+    # If the job is still active, we need to inspect the pod health deeply.
+    if jobset_status["active"] > 0:
         if before_schedule:
             return True
 
         pod_status = get_pod_status(jobset_name)
-        if "Running" in pod_status.phase:
-            return True
-    elif jobset_status["succeeded"] != 0:
+
+        # 1. Check for pod existence. If pod is gone while JobSet is active, it's a failure.
+        if not pod_status:
+            print(f"ERROR: JobSet '{jobset_name}' is active, but its pod was not found.", file=sys.stderr)
+            return False
+
+        # 2. Check the overall pod phase.
+        if pod_status.phase not in ["Running", "Pending"]:
+            print(f"INFO: Pod phase is '{pod_status.phase}', considered not healthy.", file=sys.stderr)
+            return False
+            
+        if pod_status.phase == "Pending":
+            return True # Still healthy, just waiting to be scheduled
+
+        # 3. CRITICAL: Check the container statuses within the running pod.
+        if not pod_status.container_statuses:
+            return True # Containers might not have reported status yet, assume healthy for now.
+
+        for container in pod_status.container_statuses:
+            # 4. Check for container restarts. This is a clear sign of a crash.
+            if container.restart_count > 0:
+                print(f"ERROR: Container '{container.name}' has restarted {container.restart_count} times.", file=sys.stderr)
+                return False
+            # 5. Check if a container has terminated with an error.
+            if container.state.terminated and container.state.terminated.exit_code != 0:
+                print(f"ERROR: Container '{container.name}' terminated with exit code {container.state.terminated.exit_code}.", file=sys.stderr)
+                return False
+            # 6. Check if a container is in a waiting state with a crash reason.
+            if container.state.waiting and container.state.waiting.reason == "CrashLoopBackOff":
+                print(f"ERROR: Container '{container.name}' is in CrashLoopBackOff.", file=sys.stderr)
+                return False
+
+        # If all checks passed, the pod and its containers are truly running.
         return True
 
+    # If the job is not failed, suspended, active, or succeeded, it's in an unknown state.
     return False
 
 def check_jobset_completed(jobset_name: str) -> bool:
