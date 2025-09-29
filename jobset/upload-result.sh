@@ -64,5 +64,11 @@ gsutil -h "x-goog-meta-test-type:training-test" -h "x-goog-meta-commit-hash:${GI
    -h "x-goog-meta-run-timestamp:${TIMESTAMP}" -h "x-goog-meta-accelerator:${ACCELERATOR}" \
    -m cp /var/arc/result.csv ${GCS_PREFIX}/results/training-test-${ACCELERATOR}-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
 
+if [[ -z "$GCS_PREFIX" || "$GCS_PREFIX" != gs://* ]]; then
+  echo "FATAL ERROR: The GCS_PREFIX environment variable is not set or is invalid."
+  echo "It must start with 'gs://'. Current value: '$GCS_PREFIX'"
+  exit 1
+fi
+
 # Clean up the temporary metadata file
 gsutil rm "${GCS_VERSION_TAG_FILE}"
