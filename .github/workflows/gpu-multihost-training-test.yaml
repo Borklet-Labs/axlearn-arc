@@ -5,23 +5,23 @@ on:
 jobs:
   gpu-multihost-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to GPU
+    env:
+      # Required environmental variables for a successful run
+      ARC_JOBSET_NAME: axlearn-gpu-training
+      ARC_JOBSET_JSON: /var/arc/gpu-multi-hosts.json
+      GCS_PREFIX: gs://axlearn-arc-testing/testing
+      JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
+      JOBSET_HEALTHY_TIMEOUT: 900
+      ACCELERATOR: b200_16
+      # Optional flags
+      CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
+      CUSTOM_GIT_BRANCH: jax_nightly_py3.12
+      # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+      # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
+      # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     container:
       # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
-      env:
-        # Required environmental variables for a successful run
-        ARC_JOBSET_NAME: axlearn-gpu-training
-        ARC_JOBSET_JSON: /var/arc/gpu-multi-hosts.json
-        GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
-        JOBSET_HEALTHY_TIMEOUT: 900
-        ACCELERATOR: b200_16
-        # Optional flags
-        CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
-        CUSTOM_GIT_BRANCH: jax_nightly_py3.12
-        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
-        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
