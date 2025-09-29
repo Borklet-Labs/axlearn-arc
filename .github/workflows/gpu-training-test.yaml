@@ -34,7 +34,7 @@ jobs:
         if: always()
         env:
           GCS_PREFIX: gs://axlearn-arc-testing/testing
-          ACCELERATOR: b200_16
+          ACCELERATOR: b200_8
         run: |
           JAX_VER=${{ steps.launch_job.outputs.jax_version }}
           GH_RUN_ID=${{ github.run_id }} JAX_VER="${JAX_VER}" bash /var/arc/upload-result.sh
