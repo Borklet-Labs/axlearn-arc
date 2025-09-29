@@ -32,6 +32,7 @@ TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 
 echo "Checking for JAX version..."
+GCS_VERSION_TAG_FILE="${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}"
 
 # 1. Primary Method: Check if JAX_VER was passed in from the previous step.
 if [ -n "${JAX_VER}" ]; then
@@ -39,7 +40,6 @@ if [ -n "${JAX_VER}" ]; then
 else
   # 2. Fallback Method: If not, attempt to fetch it directly from GCS.
   echo "JAX_VER was not provided. Attempting to fetch from GCS as a fallback..."
-  GCS_VERSION_TAG_FILE="${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}"
   
   # Corrected the grep command to look for "jax-version:"
   JAX_VER_FALLBACK=$(gsutil stat "${GCS_VERSION_TAG_FILE}" 2>/dev/null | grep 'jax-version' | sed 's/.*: *//')
