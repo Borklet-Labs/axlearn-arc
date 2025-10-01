@@ -11,7 +11,7 @@ jobs:
         ARC_JOBSET_NAME: arc-tpu-training
         ARC_JOBSET_JSON: /var/arc/tpu.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.12
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.12-libtpu
         JOBSET_HEALTHY_TIMEOUT: 600
         ACCELERATOR: v6e_4x4_1
         # Optional flags
