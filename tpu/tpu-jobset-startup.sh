@@ -23,10 +23,10 @@ git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --dept
 git checkout $GIT_BRANCH
 
 # Show the commit information
-git log -1 --stat --pretty=format:"%H" --no-patch
+# git log -1 --stat --pretty=format:"%H" --no-patch
+echo "About to pip install AxLearn"
 
 export UV_FIND_LINKS="https://storage.googleapis.com/axlearn-wheels/wheels.html"
-echo "About to pip install AxLearn"
 uv pip install -e -v .[core,tpu]
 echo "Done installing AxLearn"
 
