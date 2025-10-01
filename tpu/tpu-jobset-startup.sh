@@ -17,16 +17,19 @@ fi
 echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
 # Grab the latest AXLearn from upstream
-git init /root && cd /root 
+echo "1"
+git init /root && cd /root
+echo "2"
 git remote add origin $GIT_ORIGIN
+echo "3"
 git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin
+echo "4"
 git checkout $GIT_BRANCH
-
+echo "5"
 # Show the commit information
 git log -1 --stat --pretty=format:"%H" --no-patch
-
+echo "6"
 export UV_FIND_LINKS="https://storage.googleapis.com/axlearn-wheels/wheels.html"
-echo "About to pip install AxLearn"
 uv pip install -e -v .[core,tpu]
 echo "Done installing AxLearn"
 
