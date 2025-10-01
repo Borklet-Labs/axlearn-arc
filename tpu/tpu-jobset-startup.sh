@@ -26,9 +26,9 @@ git checkout $GIT_BRANCH
 git log -1 --stat --pretty=format:"%H" --no-patch
 
 export UV_FIND_LINKS="https://storage.googleapis.com/axlearn-wheels/wheels.html"
-echo("About to pip install AxLearn")
+echo "About to pip install AxLearn"
 uv pip install -e -v .[core,tpu]
-echo("Done installing AxLearn")
+echo "Done installing AxLearn"
 
 # Modify the batch size to account for TPU v6e 4x4
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn/experiments/text/gpt/fuji.py
