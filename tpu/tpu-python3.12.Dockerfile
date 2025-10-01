@@ -25,7 +25,7 @@ ENV VIRTUAL_ENV=/opt/venv
 RUN python3.12 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies.
-RUN pip install --upgrade pip && pip install uv flit && pip cache purge
+RUN pip install --upgrade pip && pip install uv flit && pip cache purge && pip uninstall libtpu && pip install libtpu==0.0.17
 # Ensure we are pulling the custom wheels required for Python 3.12
 ENV UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/jax_cuda_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html"
 # Copy the test setup to the image
