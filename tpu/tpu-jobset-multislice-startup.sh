@@ -27,8 +27,11 @@ git log -1 --stat --pretty=format:"%H" --no-patch
 
 export UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/libtpu_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html"
 uv pip install --prerelease=allow .[core,tpu]
-# Install the libtpu for Jax 0.7.2
-uv pip install --no-deps /wheels/*.whl && uv cache clean
+
+# Install the libtpu override wheel if present
+if [ -d "/wheels" ]; then
+    uv pip install --no-deps /wheels/*.whl && uv cache clean
+fi
 
 # Modify the batch size to account for TPU v6e 4x4
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=128/g' /root/axlearn/experiments/text/gpt/fuji.py

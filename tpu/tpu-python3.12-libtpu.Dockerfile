@@ -29,7 +29,7 @@ RUN pip install --upgrade pip && pip install uv flit && pip cache purge
 # Ensure we are pulling the custom wheels required for Python 3.12
 ENV UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/jax_cuda_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html"
 # Install the latest libtpu for testing on Jax 0.7.2
-# COPY --from=libtpu-target:latest /wheels /wheels
+COPY --from=libtpu-target:latest /wheels /wheels
 # Copy the test setup to the image
 COPY . .
 WORKDIR /root
