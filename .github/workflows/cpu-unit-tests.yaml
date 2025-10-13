@@ -15,7 +15,7 @@ jobs:
         RESUME_JOBSET: true
         # Optional flags
         CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: jax_0.8.2_py3.12_test
+        CUSTOM_GIT_BRANCH: jax_0.8.0_py3.12_v7x_test
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
     steps:
