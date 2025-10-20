@@ -19,8 +19,7 @@ jobs:
         ACCELERATOR: v6e_4x4_1
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn
-        CUSTOM_GIT_BRANCH: jax_nightly_py3.12
+        CUSTOM_GIT_BRANCH: jax_0.8.0_py3.12_v7x
         # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
