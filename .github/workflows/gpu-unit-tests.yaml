@@ -10,6 +10,7 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
         CUSTOM_GIT_BRANCH: jax_py3.12_nightly
     steps:
       - name: Persist the run id

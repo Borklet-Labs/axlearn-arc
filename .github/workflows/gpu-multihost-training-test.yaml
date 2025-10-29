@@ -14,9 +14,8 @@ jobs:
       JOBSET_HEALTHY_TIMEOUT: 900
       ACCELERATOR: b200_16
       # Optional flags
+      CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
       CUSTOM_GIT_BRANCH: jax_py3.12_nightly
-      # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-      # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
       # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     container:
       # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
