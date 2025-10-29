@@ -14,9 +14,10 @@ jobs:
         JOBSET_HEALTHY_TIMEOUT: 3600
         RESUME_JOBSET: true
         # Optional flags
-        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: jax_py3.12_nightly
+        # CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
+        # CUSTOM_GIT_BRANCH: jax_py3.12_nightly
+        CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn
+        CUSTOM_GIT_BRANCH: jax_nightly_py3.12_test
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     steps:
       - name: Install the Kubernetes Python SDK
