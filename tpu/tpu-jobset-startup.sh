@@ -27,9 +27,9 @@ git log -1 --stat --pretty=format:"%H" --no-patch
 
 uv pip install --prerelease=allow .[core,tpu]
 
-# Install the libtpu override wheel if present
-if [ -d "/wheels" ]; then
-    uv pip install --no-deps /wheels/*.whl && uv cache clean
+# Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
+if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
+    eval "$POST_SETUP_CMD"
 fi
 
 # Modify the batch size to account for TPU v6e 4x4

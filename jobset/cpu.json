@@ -82,6 +82,10 @@
                       {
                         "name": "GH_RUN_ID",
                         "value": "INSERT_GH_RUN_ID"
+                      },
+                      {
+                        "name": "POST_SETUP_CMD",
+                        "value": "INSERT_POST_SETUP_CMD"
                       }
                     ]
                   }

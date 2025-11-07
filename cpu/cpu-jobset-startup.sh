@@ -15,6 +15,11 @@ TF_VER=$(pip freeze | grep -w tensorflow= | awk -F '==' {'print $2'}) && \
     uv pip install --no-deps tensorflow-cpu==$TF_VER && \
     uv cache clean
 
+# Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
+if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
+    eval "$POST_SETUP_CMD"
+fi
+
 # Run the unit tests
 if [ $? -eq 0 ]; then
     bash /var/arc/cpu-unit-tests.sh 2>&1 | tee -a /home/runner/_work/csv_results/full_output.log
