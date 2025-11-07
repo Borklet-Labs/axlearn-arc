@@ -1,14 +1,14 @@
- #  ________   ___   __    ______   ______   ______    ______   ______   ___   __    ______   ________   ___ __ __     
- # /_______/\ /__/\ /__/\ /_____/\ /_____/\ /_____/\  /_____/\ /_____/\ /__/\ /__/\ /_____/\ /_______/\ /__//_//_/\    
- # \::: _  \ \\::\_\\  \ \\:::_ \ \\::::_\/_\:::_ \ \ \::::_\/_\::::_\/_\::\_\\  \ \\::::_\/_\::: _  \ \\::\| \| \ \   
- #  \::(_)  \ \\:. `-\  \ \\:\ \ \ \\:\/___/\\:(_) ) )_\:\/___/\\:\/___/\\:. `-\  \ \\:\/___/\\::(_)  \ \\:.      \ \  
- #   \:: __  \ \\:. _    \ \\:\ \ \ \\::___\/_\: __ `\ \\_::._\:\\::___\/_\:. _    \ \\_::._\:\\:: __  \ \\:.\-/\  \ \ 
+ #  ________   ___   __    ______   ______   ______    ______   ______   ___   __    ______   ________   ___ __ __
+ # /_______/\ /__/\ /__/\ /_____/\ /_____/\ /_____/\  /_____/\ /_____/\ /__/\ /__/\ /_____/\ /_______/\ /__//_//_/\
+ # \::: _  \ \\::\_\\  \ \\:::_ \ \\::::_\/_\:::_ \ \ \::::_\/_\::::_\/_\::\_\\  \ \\::::_\/_\::: _  \ \\::\| \| \ \
+ #  \::(_)  \ \\:. `-\  \ \\:\ \ \ \\:\/___/\\:(_) ) )_\:\/___/\\:\/___/\\:. `-\  \ \\:\/___/\\::(_)  \ \\:.      \ \
+ #   \:: __  \ \\:. _    \ \\:\ \ \ \\::___\/_\: __ `\ \\_::._\:\\::___\/_\:. _    \ \\_::._\:\\:: __  \ \\:.\-/\  \ \
  #    \:.\ \  \ \\. \`-\  \ \\:\/.:| |\:\____/\\ \ `\ \ \ /____\:\\:\____/\\. \`-\  \ \ /____\:\\:.\ \  \ \\. \  \  \ \
- #     \__\/\__\/ \__\/ \__\/ \____/_/ \_____\/ \_\/ \_\/ \_____\/ \_____\/ \__\/ \__\/ \_____\/ \__\/\__\/ \__\/ \__\/    
- #                                                                                                               
+ #     \__\/\__\/ \__\/ \__\/ \____/_/ \_____\/ \_\/ \_\/ \_____\/ \_____\/ \__\/ \__\/ \_____\/ \__\/\__\/ \__\/ \__\/
+ #
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-08-12
+ # @version: 2025-11-07-nightly
  #
 
 import json
@@ -28,6 +28,8 @@ DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
 GCS_PREFIX = os.environ['GCS_PREFIX']
 JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 GH_RUN_ID = os.environ['GH_RUN_ID']
+POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
+print(f"POST_SETUP_CMD: {POST_SETUP_CMD}")
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -43,7 +45,7 @@ KUBE_API = kubernetes.client.CoreV1Api()
 
 def receive_signal(signum, signal):
     """Receive a signal from Github and exit
-    
+
     Args:
         signum: Number of signal
         signal: Signal"""
@@ -57,10 +59,10 @@ signal.signal(signal.SIGINT, receive_signal)
 def get_current_jobset(jobset_name: str):
     """Fetch a list of active JobSets in a predefined namespace, returning the JobSet
     that matches the name provided
-    
+
     Args:
         jobnet_name: String containing the JobSet name
-        
+
     Returns:
         Returns the JobSet object matching the name, or None"""
 
@@ -96,7 +98,7 @@ def get_jobset_status(jobset_name: str):
         )
         time.sleep(5)
         attempts += 1
-    
+
     print(
         f"FATAL: Could not get status for JobSet '{jobset_name}' "
         f"after {max_attempts} attempts. Calling cleanup and exiting.",
@@ -106,7 +108,7 @@ def get_jobset_status(jobset_name: str):
 
 def cleanup_jobset(jobset_name: str):
     """Delete a JobSet when finishing execution
-    
+
     Args:
         jobset_name: String containing the JobSet to delete"""
 
@@ -118,7 +120,7 @@ def cleanup_jobset_and_exit(jobset_name: str,
                             log_worker: threading.Thread = None,
                             stop_log: threading.Event = None):
     """Delete a JobSet and exit
-    
+
     Args:
         jobset_name: String containing the JobSet to delete
         exit_code: Integer code to return
@@ -129,7 +131,7 @@ def cleanup_jobset_and_exit(jobset_name: str,
     if github_output_path:
         # ⚠️ This is now called after the JobSet has finished running (or failed).
         # We rely on the inner Pod having had time to write the GCS metadata file.
-        JAX_VER_OUTPUT = get_jax_version_from_gcs_metadata() 
+        JAX_VER_OUTPUT = get_jax_version_from_gcs_metadata()
 
         if JAX_VER_OUTPUT != "unknown_version": # Check if the extraction actually found a value
             with open(github_output_path, "a") as f:
@@ -137,7 +139,7 @@ def cleanup_jobset_and_exit(jobset_name: str,
             print(f"Successfully exported jax_version={JAX_VER_OUTPUT} to GitHub output.", file=sys.stderr)
         else:
             print("WARNING: Could not extract JAX version for GITHUB_OUTPUT.", file=sys.stderr)
-    
+
     if log_worker and stop_log:
         attempts = 1
         stop_log.set()
@@ -158,10 +160,10 @@ def cleanup_jobset_and_exit(jobset_name: str,
 
 def get_pod_status(pod_name: str):
     """Get the status of a pod
-    
+
     Args:
         pod_name: String with the name of the pod
-        
+
     Returns:
         Returns the current status of the pod"""
 
@@ -237,7 +239,7 @@ def check_jobset_healthy(jobset_name: str, before_schedule=False) -> bool:
         if pod_status.phase not in ["Running", "Pending"]:
             print(f"INFO: Pod phase is '{pod_status.phase}', considered not healthy.", file=sys.stderr)
             return False
-            
+
         if pod_status.phase == "Pending":
             return True # Still healthy, just waiting to be scheduled
 
@@ -267,10 +269,10 @@ def check_jobset_healthy(jobset_name: str, before_schedule=False) -> bool:
 
 def check_jobset_completed(jobset_name: str) -> bool:
     """Check to see if a JobSet completed
-    
+
     Args:
         jobset_name: String with the JobSet name
-        
+
     Returns:
         True if completed
         False if not completed"""
@@ -287,10 +289,10 @@ def check_jobset_completed(jobset_name: str) -> bool:
 def update_jobset(jobset_base_config: dict) -> dict:
     """Take in a JobSet config dict and update with new Git info
     and information about the owner to handle proper termination
-    
+
     Args:
         jobset_base_config: Dict containing the JobSet config
-        
+
     Returns:
         Returns a new dict for the JobSet"""
 
@@ -344,11 +346,16 @@ def update_jobset(jobset_base_config: dict) -> dict:
     else:
         updated_jobset = updated_jobset.replace('"INSERT_MAX_RESTARTS"', str(0))
 
+    # Add any additional setup commands if defined
+    if POST_SETUP_CMD:
+        print(f'Detected post-setup command: {POST_SETUP_CMD}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_POST_SETUP_CMD", POST_SETUP_CMD)
+
     return json.loads(updated_jobset)
 
 def write_result(success: bool):
     """Write the result of a test to a CSV
-    
+
     Args:
         success: True if the loop ended successful"""
 
@@ -363,7 +370,7 @@ def write_result(success: bool):
 
 def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
     """Create a JobSet using the CRD API and ensure its completion happens
-    
+
     Args:
         jobset_config: A config to submit to the kube API
         skip_creation: Don't create the JobSet, just wait for creation"""
@@ -411,7 +418,7 @@ def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
 def monitor_jobset_status():
     """Monitor the progression of a JobSet, looking at the health of the pod and counting down
     to JOBSET_HEALTHY_TIMEOUT
-    
+
     Returns: Returns references to stop_log and log_worker"""
 
     # NEW: Define how long to wait for new logs before timing out (in seconds).
@@ -424,13 +431,13 @@ def monitor_jobset_status():
     stop_log = threading.Event()
     log_worker = threading.Thread(target=get_pod_logs, args=(JOBSET_NAME, stop_log, log_state))
     log_worker.start()
-    
+
     time_elapsed = 0
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
         jobset_healthy = check_jobset_healthy(JOBSET_NAME)
         print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}",
               file=sys.stderr)
-        
+
         time_since_last_log = time.time() - log_state['last_log_time']
         print(f"INFO: Time since last log message: {int(time_since_last_log)} seconds.", file=sys.stderr)
 
@@ -448,7 +455,7 @@ def monitor_jobset_status():
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
                 write_result(True)
                 cleanup_jobset_and_exit(JOBSET_NAME, 0, log_worker, stop_log)
-        
+
         time.sleep(30)
         time_elapsed += 30
 
@@ -456,22 +463,22 @@ def monitor_jobset_status():
 
 def get_jax_version_from_gcs_metadata():
     """Reads the JAX version tag from GCS object metadata."""
-    
+
     GCS_VERSION_TAG_FILE = f"{GCS_PREFIX}/metadata/jax_version_tag_{GH_RUN_ID}"
-    
+
     try:
         # Use gsutil stat to get object metadata
         # The output contains a line like: 'Metadata:  jax-version: 0.7.2.dev20250916'
         command = f"gsutil stat {GCS_VERSION_TAG_FILE}"
-        
+
         result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
-        
+
         # Search output for the metadata key
         for line in result.stdout.splitlines():
             if "jax-version:" in line:
                 # Extract the value after the key
                 return line.split(':', 1)[-1].strip()
-        
+
     except Exception as e:
         print(f"WARNING: Could not retrieve JAX version from GCS metadata: {e}", file=os.sys.stderr)
         return "unknown_version" # Return a default or error tag

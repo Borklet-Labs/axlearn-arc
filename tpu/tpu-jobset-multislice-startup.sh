@@ -17,7 +17,7 @@ fi
 echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
 # Grab the latest AXLearn from upstream
-git init /root && cd /root 
+git init /root && cd /root
 git remote add origin $GIT_ORIGIN
 git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin
 git checkout $GIT_BRANCH
@@ -25,11 +25,14 @@ git checkout $GIT_BRANCH
 # Show the commit information
 git log -1 --stat --pretty=format:"%H" --no-patch
 
-export UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/libtpu_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html"
-uv pip install --prerelease=allow .[core,tpu]
-pip install -U --pre jax jaxlib libtpu requests -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
 
-echo "Installed JAX nightly"
+uv pip install --prerelease=allow .[core,tpu]
+
+# Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
+if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
+    eval "$POST_SETUP_CMD"
+fi
+
 
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 echo "JAX_VERSION_OUTPUT:${JAX_VER}"

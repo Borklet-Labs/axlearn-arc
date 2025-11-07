@@ -17,7 +17,7 @@ fi
 echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
 # Grab the latest AXLearn from upstream
-git init /root && cd /root 
+git init /root && cd /root
 git remote add origin $GIT_ORIGIN
 git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin
 git checkout $GIT_BRANCH
