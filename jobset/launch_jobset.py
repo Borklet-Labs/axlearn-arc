@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-09-18
+ # @version: 2025-11-07
  #
 
 import json
@@ -27,6 +27,7 @@ GCS_PREFIX = os.environ['GCS_PREFIX']
 JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 GH_RUN_ID = os.environ['GH_RUN_ID']
 SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in os.environ else 15 * 60
+POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -267,6 +268,11 @@ def update_jobset(jobset_base_config: dict) -> dict:
         updated_jobset = updated_jobset.replace('"INSERT_MAX_RESTARTS"', str(os.environ["JOBSET_MAX_RESTARTS"]))
     else:
         updated_jobset = updated_jobset.replace('"INSERT_MAX_RESTARTS"', str(0))
+
+    # Add any additional setup commands if defined
+    if POST_SETUP_CMD:
+        print(f'Detected post-setup command: {POST_SETUP_CMD}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_POST_SETUP_CMD", POST_SETUP_CMD)
 
     return json.loads(updated_jobset)
 

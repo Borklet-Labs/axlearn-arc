@@ -27,6 +27,11 @@ git log -1 --stat --pretty=format:"%H" --no-patch
 
 uv pip install .[core,gpu]
 
+# Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
+if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
+    eval "$POST_SETUP_CMD"
+fi
+
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash-single-host \
     --trainer_dir=${GCS_PREFIX} --data_dir=gs://axlearn-public/tensorflow_datasets \

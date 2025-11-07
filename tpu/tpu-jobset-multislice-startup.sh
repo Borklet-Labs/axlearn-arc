@@ -27,6 +27,11 @@ git log -1 --stat --pretty=format:"%H" --no-patch
 
 uv pip install --prerelease=allow .[core,tpu]
 
+# Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
+if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
+    eval "$POST_SETUP_CMD"
+fi
+
 # Modify the batch size to account for TPU v6e 4x4
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=128/g' /root/axlearn/experiments/text/gpt/fuji.py
 sed -i 's/fsdp=8/fsdp=32/g' /root/axlearn/experiments/text/gpt/fuji.py
