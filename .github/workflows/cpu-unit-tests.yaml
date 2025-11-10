@@ -5,12 +5,12 @@ jobs:
   cpu-unit-tests-job:
     runs-on: jobset
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-post-cmd-nightly:latest
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         ARC_JOBSET_NAME: cpu-unit-tests
         ARC_JOBSET_JSON: /var/arc/cpu.json
-        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:python3.12
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu-py312-jax-nightly:latest
         JOBSET_HEALTHY_TIMEOUT: 3600
         RESUME_JOBSET: true
         # Optional flags
