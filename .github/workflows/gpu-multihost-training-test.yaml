@@ -18,8 +18,7 @@ jobs:
       CUSTOM_GIT_BRANCH: jax_py3.12_nightly
       # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
     container:
-      # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-post-cmd-nightly:latest
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
