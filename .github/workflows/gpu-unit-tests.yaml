@@ -12,6 +12,7 @@ jobs:
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
         CUSTOM_GIT_BRANCH: jax_py3.12_nightly
+        POST_SETUP_CMD: pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
     steps:
       - name: Persist the run id
         run: echo ${{ github.run_id }} > /var/arc/run_id
