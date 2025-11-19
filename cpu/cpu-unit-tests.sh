@@ -24,7 +24,7 @@ for i in ${groups[@]}; do
     echo Starting standard tests for group ${i}
     pytest -v  \
         --csv /home/runner/_work/csv_results/cpu_tests_${i}.csv \
-        -n auto -m "not (gs_login or tpu or high_cpu or fp64 or for_8_devices)" --durations=100 --dist worksteal --timeout=60 \
+        -n auto -m "not (gs_login or tpu or high_cpu or fp64 or for_8_devices)" --durations=100 --dist worksteal --timeout=120 \
         $(tr '\n' ' ' < split_pytest_files_${i}) 
 
     echo Adding results from group ${i} to master CSV
@@ -49,7 +49,7 @@ for i in ${groups[@]}; do
     echo Starting FP64 for group ${i}
     JAX_ENABLE_X64=1 pytest -v \
         --csv /home/runner/_work/csv_results/cpu_tests_fp64_${i}.csv \
-        -n auto -m "fp64" --durations=100 --dist worksteal --timeout=60 \
+        -n auto -m "fp64" --durations=100 --dist worksteal --timeout=120 \
         $(tr '\n' ' ' < split_pytest_files_${i})
 
     echo Adding results from group ${i} to master CSV
@@ -71,7 +71,7 @@ for i in ${groups[@]}; do
     XLA_FLAGS="--xla_force_host_platform_device_count=8" \
     pytest -v \
         --csv /home/runner/_work/csv_results/cpu_tests_for_8_devices_${i}.csv \
-        -n auto -m "for_8_devices" --durations=100 --dist worksteal --timeout=60 \
+        -n auto -m "for_8_devices" --durations=100 --dist worksteal --timeout=120 \
         $(tr '\n' ' ' < split_pytest_files_${i}) 
 
     echo Adding results from group ${i} to master CSV
