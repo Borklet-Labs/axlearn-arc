@@ -19,7 +19,7 @@ jobs:
         CUSTOM_GIT_BRANCH: jax_0.8.0_py3.12
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         SCHEDULE_TIMEOUT: 1500 # Seconds to wait for job to be scheduled. Default = 900
-        POST_SETUP_CMD: uv pip install --no-deps 'libtpu==0.0.29'
+        POST_SETUP_CMD: uv pip install --no-deps 'libtpu==0.0.27'
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
