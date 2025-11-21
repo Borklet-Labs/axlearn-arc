@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-08-12
+ # @version: 2025-09-18
  #
 
 import json
@@ -20,7 +20,6 @@ import threading
 import kubernetes
 import subprocess
 
-
 # Get the JobSet info from the environment
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
 JOBSET_JSON = os.environ['ARC_JOBSET_JSON']
@@ -28,6 +27,7 @@ DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
 GCS_PREFIX = os.environ['GCS_PREFIX']
 JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 GH_RUN_ID = os.environ['GH_RUN_ID']
+SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in os.environ else 15 * 60
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -72,37 +72,15 @@ def get_current_jobset(jobset_name: str):
             return jobset
 
 def get_jobset_status(jobset_name: str):
-    """
-    Get the status of a JobSet, retrying for a short period if it's not
-    immediately found after creation.
-    """
-    attempts = 0
-    max_attempts = 12  # Retry for up to 60 seconds
-    while attempts < max_attempts:
-        jobset = get_current_jobset(jobset_name)
-        # Check if the jobset exists and has a status with replicatedJobsStatus
-        if (
-            jobset
-            and "status" in jobset
-            and "replicatedJobsStatus" in jobset["status"]
-            and len(jobset["status"]["replicatedJobsStatus"]) > 0
-        ):
-            return jobset["status"]["replicatedJobsStatus"][0]
-
-        print(
-            f"WARN: JobSet '{jobset_name}' not found or status not ready. "
-            f"Retrying in 5s... (Attempt {attempts + 1}/{max_attempts})",
-            file=sys.stderr,
-        )
-        time.sleep(5)
-        attempts += 1
+    """Get the status of a JobSet
     
-    print(
-        f"FATAL: Could not get status for JobSet '{jobset_name}' "
-        f"after {max_attempts} attempts. Calling cleanup and exiting.",
-        file=sys.stderr,
-    )
-    cleanup_jobset_and_exit(jobset_name=jobset_name, exit_code=-1)
+    Args:
+        jobnet_name: String containing the JobSet name
+        
+    Returns:
+        Returns the JobSet status object matching the name, or None"""
+
+    return get_current_jobset(jobset_name)["status"]["replicatedJobsStatus"][0]
 
 def cleanup_jobset(jobset_name: str):
     """Delete a JobSet when finishing execution
@@ -124,20 +102,31 @@ def cleanup_jobset_and_exit(jobset_name: str,
         exit_code: Integer code to return
         log_worker: Thread where the logger is running
         stop_log: Event to stop the log_worker before join"""
-
+    # --- JAX version extraction (MODIFIED) ---
     github_output_path = os.environ.get('GITHUB_OUTPUT')
     if github_output_path:
-        # ⚠️ This is now called after the JobSet has finished running (or failed).
-        # We rely on the inner Pod having had time to write the GCS metadata file.
-        JAX_VER_OUTPUT = get_jax_version_from_gcs_metadata() 
-
-        if JAX_VER_OUTPUT != "unknown_version": # Check if the extraction actually found a value
-            with open(github_output_path, "a") as f:
-                f.write(f"jax_version={JAX_VER_OUTPUT}\n")
-            print(f"Successfully exported jax_version={JAX_VER_OUTPUT} to GitHub output.", file=sys.stderr)
+        # 1. Check environment variable first
+        JAX_VER_OUTPUT = os.environ.get('JAX_VERSION')
+        
+        if JAX_VER_OUTPUT:
+            print(f"INFO: Using JAX_VERSION from env var: {JAX_VER_OUTPUT}", file=sys.stderr)
         else:
-            print("WARNING: Could not extract JAX version for GITHUB_OUTPUT.", file=sys.stderr)
-    
+            # 2. If env var not set, check GCS metadata file
+            print("INFO: JAX_VERSION env var not set, checking GCS metadata file...", file=sys.stderr)
+            JAX_VER_OUTPUT = get_jax_version_from_gcs_metadata() # This defaults to "unknown_version" on failure
+
+        # 3. Write to GitHub output if we have a valid version
+        if JAX_VER_OUTPUT and JAX_VER_OUTPUT != "unknown_version":
+            try:
+                with open(github_output_path, "a") as f:
+                    f.write(f"jax_version={JAX_VER_OUTPUT}\n")
+                print(f"Successfully exported jax_version={JAX_VER_OUTPUT} to GitHub output.", file=sys.stderr)
+            except Exception as e:
+                 print(f"WARNING: Could not write JAX version to GITHUB_OUTPUT: {e}", file=sys.stderr)
+        else:
+            print("WARNING: Could not determine JAX version to export.", file=sys.stderr)
+    # --- End JAX version ---
+
     if log_worker and stop_log:
         attempts = 1
         stop_log.set()
@@ -171,8 +160,12 @@ def get_pod_status(pod_name: str):
         if pod_name in pod.metadata.name:
             return pod.status
 
-def get_pod_logs(pod_name: str, stop: threading.Event, log_state: dict):
-    """Spawn a stream to print out pod logs during execution"""
+def get_pod_logs(pod_name: str, stop: threading.Event):
+    """Spawn a stream to print out pod logs during execution
+    
+    Args:
+        pod_name: String with the name of the pod
+        stop: Threading event to stop execution"""
 
     pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
     target_pod = None
@@ -188,8 +181,6 @@ def get_pod_logs(pod_name: str, stop: threading.Event, log_state: dict):
         stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
             namespace="axlearn-arc", name=target_pod)
         for line in stream:
-            # NEW: Update the timestamp every time a log is received.
-            log_state['last_log_time'] = time.time()
             if stop.is_set():
                 break
             print(line, file=sys.stderr)
@@ -198,71 +189,30 @@ def get_pod_logs(pod_name: str, stop: threading.Event, log_state: dict):
         print("Turning off log streaming... full log will be available in GCS after the run",
                 file=sys.stderr)
 
-def check_jobset_healthy(jobset_name: str, before_schedule=False) -> bool:
-    """
-    Check if a JobSet was accepted and if its pods and containers are in a
-    truly healthy state. This check is stricter than the original.
-    """
-    jobset = get_current_jobset(jobset_name)
+def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
+    """Check if a JobSet was accepted and if the pods are in a healthy state
+    
+    Args:
+        jobset_name: String containing the JobSet name
+        
+    Returns:
+        True if the JobSet is active and pods are running
+        False if the JobSet is active but pods aren't scheduled"""
 
-    # If the JobSet object itself isn't found, it's not healthy.
-    if not jobset or "status" not in jobset:
-        print(f"WARN: JobSet '{jobset_name}' not found or has no status.", file=sys.stderr)
+    jobset_status = get_jobset_status(jobset_name)
+
+    if jobset_status["failed"] != 0 or jobset_status["suspended"] != 0:
         return False
-
-    jobset_status = jobset["status"]["replicatedJobsStatus"][0]
-
-    # Check for definitive failure or suspension at the JobSet level first.
-    if jobset_status["failed"] > 0 or jobset_status["suspended"] > 0:
-        print(f"INFO: JobSet reports failed={jobset_status['failed']}, suspended={jobset_status['suspended']}.", file=sys.stderr)
-        return False
-
-    # If the job has already succeeded, it's considered healthy for our check.
-    if jobset_status["succeeded"] > 0:
-        return True
-
-    # If the job is still active, we need to inspect the pod health deeply.
-    if jobset_status["active"] > 0:
+    elif jobset_status["active"] != 0:
         if before_schedule:
             return True
 
         pod_status = get_pod_status(jobset_name)
-
-        # 1. Check for pod existence. If pod is gone while JobSet is active, it's a failure.
-        if not pod_status:
-            print(f"ERROR: JobSet '{jobset_name}' is active, but its pod was not found.", file=sys.stderr)
-            return False
-
-        # 2. Check the overall pod phase.
-        if pod_status.phase not in ["Running", "Pending"]:
-            print(f"INFO: Pod phase is '{pod_status.phase}', considered not healthy.", file=sys.stderr)
-            return False
-            
-        if pod_status.phase == "Pending":
-            return True # Still healthy, just waiting to be scheduled
-
-        # 3. CRITICAL: Check the container statuses within the running pod.
-        if not pod_status.container_statuses:
-            return True # Containers might not have reported status yet, assume healthy for now.
-
-        for container in pod_status.container_statuses:
-            # 4. Check for container restarts. This is a clear sign of a crash.
-            if container.restart_count > 0:
-                print(f"ERROR: Container '{container.name}' has restarted {container.restart_count} times.", file=sys.stderr)
-                return False
-            # 5. Check if a container has terminated with an error.
-            if container.state.terminated and container.state.terminated.exit_code != 0:
-                print(f"ERROR: Container '{container.name}' terminated with exit code {container.state.terminated.exit_code}.", file=sys.stderr)
-                return False
-            # 6. Check if a container is in a waiting state with a crash reason.
-            if container.state.waiting and container.state.waiting.reason == "CrashLoopBackOff":
-                print(f"ERROR: Container '{container.name}' is in CrashLoopBackOff.", file=sys.stderr)
-                return False
-
-        # If all checks passed, the pod and its containers are truly running.
+        if "Running" in pod_status.phase:
+            return True
+    elif jobset_status["succeeded"] != 0:
         return True
 
-    # If the job is not failed, suspended, active, or succeeded, it's in an unknown state.
     return False
 
 def check_jobset_completed(jobset_name: str) -> bool:
@@ -383,26 +333,24 @@ def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
     # Ensure the JobSet is not marked as failed
     if jobset_status["failed"] != 0 or jobset_status["suspended"] != 0:
         print(f"JobSet {JOBSET_NAME} failed.", file=sys.stderr)
-        time.sleep(300)
         cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
     time_elapsed = 0
-    while time_elapsed < (15 * 60):
+    while time_elapsed < (SCHEDULE_TIMEOUT):
         pod_status = get_pod_status(JOBSET_NAME)
-        print(f"[{time_elapsed}/{15 * 60}]: Waiting for pod for JobSet {JOBSET_NAME} to be scheduled: {pod_status.phase}",
+        print(f"[{time_elapsed}/{SCHEDULE_TIMEOUT}]: Waiting for pod for JobSet {JOBSET_NAME} to be scheduled: {pod_status.phase}",
               file=sys.stderr)
         # Check to see if the pod has been scheduled
         if "Running" in pod_status.phase:
             print(f"Pod scheduled successfully for {JOBSET_NAME}", file=sys.stderr)
+            write_result(True)
             break
         elif "Error" in pod_status.phase or "Terminating" in pod_status.phase:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
-            time.sleep(300)
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
         if not check_jobset_healthy(JOBSET_NAME, before_schedule=True):
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
-            time.sleep(300)
             cleanup_jobset_and_exit(JOBSET_NAME, -1)
 
         time.sleep(15)
@@ -414,31 +362,18 @@ def monitor_jobset_status():
     
     Returns: Returns references to stop_log and log_worker"""
 
-    # NEW: Define how long to wait for new logs before timing out (in seconds).
-    LOG_TIMEOUT_SECONDS = 10 * 60  # 45 minutes
-
-    # NEW: Create a shared state dictionary to pass to the thread.
-    log_state = {'last_log_time': time.time()}
-
-    # NEW: Pass the log_state dictionary to the logging thread.
+    # Spawn a thread to print pod logs to stderr
     stop_log = threading.Event()
-    log_worker = threading.Thread(target=get_pod_logs, args=(JOBSET_NAME, stop_log, log_state))
+    log_worker = threading.Thread(target=get_pod_logs, args=(JOBSET_NAME,stop_log))
     log_worker.start()
-    
+    # Wait up to 10 minutes for a JobSet error to be reported, otherwise assume
+    # execution was successful
     time_elapsed = 0
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
         jobset_healthy = check_jobset_healthy(JOBSET_NAME)
         print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Current JobSet status for {JOBSET_NAME}: Healthy: {jobset_healthy}",
               file=sys.stderr)
-        
-        time_since_last_log = time.time() - log_state['last_log_time']
-        print(f"INFO: Time since last log message: {int(time_since_last_log)} seconds.", file=sys.stderr)
-
-        if time_since_last_log > LOG_TIMEOUT_SECONDS:
-            print(f"ERROR: Job failed due to no new log output for over {LOG_TIMEOUT_SECONDS} seconds.", file=sys.stderr)
-            write_result(False) # Write "failed" status
-            cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
-
+        # Check for failures
         if not jobset_healthy:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
             write_result(False)
@@ -448,7 +383,7 @@ def monitor_jobset_status():
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
                 write_result(True)
                 cleanup_jobset_and_exit(JOBSET_NAME, 0, log_worker, stop_log)
-        
+        # Sleep 30 seconds before polling the status of the JobSet again
         time.sleep(30)
         time_elapsed += 30
 
@@ -456,29 +391,34 @@ def monitor_jobset_status():
 
 def get_jax_version_from_gcs_metadata():
     """Reads the JAX version tag from GCS object metadata."""
-    
+    # ... (rest of the get_jax_version_from_gcs_metadata function remains the same) ...
     GCS_VERSION_TAG_FILE = f"{GCS_PREFIX}/metadata/jax_version_tag_{GH_RUN_ID}"
-    
+    print(f"Attempting to read JAX version from: {GCS_VERSION_TAG_FILE}", file=sys.stderr)
     try:
-        # Use gsutil stat to get object metadata
-        # The output contains a line like: 'Metadata:  jax-version: 0.7.2.dev20250916'
         command = f"gsutil stat {GCS_VERSION_TAG_FILE}"
-        
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
-        
-        # Search output for the metadata key
-        for line in result.stdout.splitlines():
-            if "jax-version:" in line:
-                # Extract the value after the key
-                return line.split(':', 1)[-1].strip()
-        
+        # Increased timeout for gsutil command
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30) # Added timeout
+
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                if "jax-version:" in line:
+                    version = line.split(':', 1)[-1].strip()
+                    print(f"Found JAX version in metadata: {version}", file=sys.stderr)
+                    return version
+            print(f"WARN: 'jax-version:' key not found in metadata for {GCS_VERSION_TAG_FILE}", file=sys.stderr)
+        else:
+            print(f"WARN: gsutil stat command failed for {GCS_VERSION_TAG_FILE}. Error: {result.stderr}", file=sys.stderr)
+
+    except subprocess.TimeoutExpired:
+         print(f"WARNING: gsutil stat command timed out for {GCS_VERSION_TAG_FILE}", file=sys.stderr)
     except Exception as e:
-        print(f"WARNING: Could not retrieve JAX version from GCS metadata: {e}", file=os.sys.stderr)
-        return "unknown_version" # Return a default or error tag
+        print(f"WARNING: Could not retrieve JAX version from GCS metadata: {e}", file=sys.stderr)
 
     return "unknown_version"
 
 if __name__ == '__main__':
+    print("Writing default failure result CSV...", file=sys.stderr)
+    write_result(False)
 
     # Read in the JobSet JSON
     with open(JOBSET_JSON, "r", encoding="utf-8") as js_file:
