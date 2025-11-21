@@ -17,7 +17,7 @@ fi
 echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
 # Grab the latest AXLearn from upstream
-git init /root && cd /root 
+git init /root && cd /root
 git remote add origin $GIT_ORIGIN
 git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin
 git checkout $GIT_BRANCH
@@ -30,9 +30,11 @@ echo "UV links: ${UV_FIND_LINKS}"
 
 uv pip install --find-links https://storage.googleapis.com/axlearn-wheels/wheels.html .[core,gpu,gcp]
 pip uninstall -y jax jaxlib jax-cuda12-plugin
-pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
-echo "Installing JAX nightly"
+# Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
+if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
+    eval "$POST_SETUP_CMD"
+fi
 
 # Modify the batch size to account for B200
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')

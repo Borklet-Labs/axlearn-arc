@@ -1,15 +1,15 @@
- #  ________   ___   __    ______   ______   ______    ______   ______   ___   __    ______   ________   ___ __ __     
- # /_______/\ /__/\ /__/\ /_____/\ /_____/\ /_____/\  /_____/\ /_____/\ /__/\ /__/\ /_____/\ /_______/\ /__//_//_/\    
- # \::: _  \ \\::\_\\  \ \\:::_ \ \\::::_\/_\:::_ \ \ \::::_\/_\::::_\/_\::\_\\  \ \\::::_\/_\::: _  \ \\::\| \| \ \   
- #  \::(_)  \ \\:. `-\  \ \\:\ \ \ \\:\/___/\\:(_) ) )_\:\/___/\\:\/___/\\:. `-\  \ \\:\/___/\\::(_)  \ \\:.      \ \  
- #   \:: __  \ \\:. _    \ \\:\ \ \ \\::___\/_\: __ `\ \\_::._\:\\::___\/_\:. _    \ \\_::._\:\\:: __  \ \\:.\-/\  \ \ 
+ #  ________   ___   __    ______   ______   ______    ______   ______   ___   __    ______   ________   ___ __ __
+ # /_______/\ /__/\ /__/\ /_____/\ /_____/\ /_____/\  /_____/\ /_____/\ /__/\ /__/\ /_____/\ /_______/\ /__//_//_/\
+ # \::: _  \ \\::\_\\  \ \\:::_ \ \\::::_\/_\:::_ \ \ \::::_\/_\::::_\/_\::\_\\  \ \\::::_\/_\::: _  \ \\::\| \| \ \
+ #  \::(_)  \ \\:. `-\  \ \\:\ \ \ \\:\/___/\\:(_) ) )_\:\/___/\\:\/___/\\:. `-\  \ \\:\/___/\\::(_)  \ \\:.      \ \
+ #   \:: __  \ \\:. _    \ \\:\ \ \ \\::___\/_\: __ `\ \\_::._\:\\::___\/_\:. _    \ \\_::._\:\\:: __  \ \\:.\-/\  \ \
  #    \:.\ \  \ \\. \`-\  \ \\:\/.:| |\:\____/\\ \ `\ \ \ /____\:\\:\____/\\. \`-\  \ \ /____\:\\:.\ \  \ \\. \  \  \ \
- #     \__\/\__\/ \__\/ \__\/ \____/_/ \_____\/ \_\/ \_\/ \_____\/ \_____\/ \__\/ \__\/ \_____\/ \__\/\__\/ \__\/ \__\/    
- #                                                                                                               
+ #     \__\/\__\/ \__\/ \__\/ \____/_/ \_____\/ \_\/ \_\/ \_____\/ \_____\/ \__\/ \__\/ \_____\/ \__\/\__\/ \__\/ \__\/
+ #
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-09-18
- #
+ # @version: 2025-11-07-nightly
+
 
 import json
 import sys
@@ -28,6 +28,8 @@ GCS_PREFIX = os.environ['GCS_PREFIX']
 JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 GH_RUN_ID = os.environ['GH_RUN_ID']
 SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in os.environ else 15 * 60
+POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
+print(f"POST_SETUP_CMD: {POST_SETUP_CMD}")
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -43,7 +45,7 @@ KUBE_API = kubernetes.client.CoreV1Api()
 
 def receive_signal(signum, signal):
     """Receive a signal from Github and exit
-    
+
     Args:
         signum: Number of signal
         signal: Signal"""
@@ -57,10 +59,10 @@ signal.signal(signal.SIGINT, receive_signal)
 def get_current_jobset(jobset_name: str):
     """Fetch a list of active JobSets in a predefined namespace, returning the JobSet
     that matches the name provided
-    
+
     Args:
         jobnet_name: String containing the JobSet name
-        
+
     Returns:
         Returns the JobSet object matching the name, or None"""
 
@@ -84,7 +86,7 @@ def get_jobset_status(jobset_name: str):
 
 def cleanup_jobset(jobset_name: str):
     """Delete a JobSet when finishing execution
-    
+
     Args:
         jobset_name: String containing the JobSet to delete"""
 
@@ -96,7 +98,7 @@ def cleanup_jobset_and_exit(jobset_name: str,
                             log_worker: threading.Thread = None,
                             stop_log: threading.Event = None):
     """Delete a JobSet and exit
-    
+
     Args:
         jobset_name: String containing the JobSet to delete
         exit_code: Integer code to return
@@ -147,10 +149,10 @@ def cleanup_jobset_and_exit(jobset_name: str,
 
 def get_pod_status(pod_name: str):
     """Get the status of a pod
-    
+
     Args:
         pod_name: String with the name of the pod
-        
+
     Returns:
         Returns the current status of the pod"""
 
@@ -217,10 +219,10 @@ def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
 
 def check_jobset_completed(jobset_name: str) -> bool:
     """Check to see if a JobSet completed
-    
+
     Args:
         jobset_name: String with the JobSet name
-        
+
     Returns:
         True if completed
         False if not completed"""
@@ -237,10 +239,10 @@ def check_jobset_completed(jobset_name: str) -> bool:
 def update_jobset(jobset_base_config: dict) -> dict:
     """Take in a JobSet config dict and update with new Git info
     and information about the owner to handle proper termination
-    
+
     Args:
         jobset_base_config: Dict containing the JobSet config
-        
+
     Returns:
         Returns a new dict for the JobSet"""
 
@@ -294,11 +296,16 @@ def update_jobset(jobset_base_config: dict) -> dict:
     else:
         updated_jobset = updated_jobset.replace('"INSERT_MAX_RESTARTS"', str(0))
 
+    # Add any additional setup commands if defined
+    if POST_SETUP_CMD:
+        print(f'Detected post-setup command: {POST_SETUP_CMD}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_POST_SETUP_CMD", POST_SETUP_CMD)
+
     return json.loads(updated_jobset)
 
 def write_result(success: bool):
     """Write the result of a test to a CSV
-    
+
     Args:
         success: True if the loop ended successful"""
 
@@ -313,7 +320,7 @@ def write_result(success: bool):
 
 def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
     """Create a JobSet using the CRD API and ensure its completion happens
-    
+
     Args:
         jobset_config: A config to submit to the kube API
         skip_creation: Don't create the JobSet, just wait for creation"""
@@ -359,7 +366,7 @@ def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
 def monitor_jobset_status():
     """Monitor the progression of a JobSet, looking at the health of the pod and counting down
     to JOBSET_HEALTHY_TIMEOUT
-    
+
     Returns: Returns references to stop_log and log_worker"""
 
     # Spawn a thread to print pod logs to stderr
