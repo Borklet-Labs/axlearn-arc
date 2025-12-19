@@ -1,0 +1,74 @@
+name: unit-tests-scheduler
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-cpu-unit-tests:
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      actions: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run Unit Tests on CPU
+        env: 
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          echo "Triggering workflow: cpu-unit-tests.yaml"
+          gh workflow run cpu-unit-tests.yaml --ref jax_0.8.0_py3.12
+
+          echo "Waiting 30 seconds for the new run to be registered with the API..."
+          sleep 30
+
+          echo "Fetching the ID of the new run..."
+          RUN_ID=$(gh run list --workflow="cpu-unit-tests.yaml" --branch jax_0.8.0_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+
+          if [ -z "$RUN_ID" ]; then
+            echo "Error: Could not find a recent run for the workflow."
+            exit 1
+          fi
+
+          echo "Found run ID: $RUN_ID. Waiting for it to complete... every 3 mins"
+          gh run watch "$RUN_ID" --interval 180
+  
+  run-gpu-unit-tests:
+    runs-on: ubuntu-latest
+    needs: run-cpu-unit-tests
+    if: always()
+    permissions:
+      actions: write
+
+    if: always()
+    permissions:
+      actions: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run Unit Tests on GPU
+        env: 
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          echo "Triggering workflow: gpu-unit-tests.yaml"
+          gh workflow run gpu-unit-tests.yaml --ref jax_0.8.0_py3.12
+
+          echo "Waiting 30 seconds for the new run to be registered with the API..."
+          sleep 30
+
+          echo "Fetching the ID of the new run..."
+          RUN_ID=$(gh run list --workflow="gpu-unit-tests.yaml" --branch jax_0.8.0_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+
+          if [ -z "$RUN_ID" ]; then
+            echo "Error: Could not find a recent run for the workflow."
+            exit 1
+          fi
+
+          echo "Found run ID: $RUN_ID. Waiting for it to complete... every 3 mins"
+          gh run watch "$RUN_ID" --interval 180
