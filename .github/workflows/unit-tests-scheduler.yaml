@@ -44,9 +44,6 @@ jobs:
     permissions:
       actions: write
 
-    if: always()
-    permissions:
-      actions: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -72,3 +69,5 @@ jobs:
 
           echo "Found run ID: $RUN_ID. Waiting for it to complete... every 3 mins"
           gh run watch "$RUN_ID" --interval 180
+
+          gh run view "$RUN_ID" --exit-status
