@@ -1,6 +1,7 @@
 name: cpu-unit-tests
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  workflow_call:
 jobs:
   cpu-unit-tests-job:
     runs-on: jobset

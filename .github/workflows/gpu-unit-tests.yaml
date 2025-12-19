@@ -1,6 +1,7 @@
 name: gpu-unit-tests
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  workflow_call:
 jobs:
   gpu-unit-tests-job:
     runs-on: gpu
