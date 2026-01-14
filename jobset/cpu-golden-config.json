@@ -1,0 +1,101 @@
+{
+  "apiVersion": "jobset.x-k8s.io/v1alpha2",
+  "kind": "JobSet",
+  "metadata": {
+    "name": "golden-config-test",
+    "annotations": {
+      "kueue.x-k8s.io/queue-name": "cpu-worker"
+    }
+  },
+  "spec": {
+    "failurePolicy": {
+      "maxRestarts": "INSERT_MAX_RESTARTS"
+    },
+    "replicatedJobs": [
+      {
+        "name": "job",
+        "replicas": 1,
+        "template": {
+          "spec": {
+            "parallelism": 1,
+            "completions": 1,
+            "backoffLimit": 0,
+            "template": {
+              "metadata": {
+                "annotations": {
+                  "kubectl.kubernetes.io/default-container": "golden-config-test"
+                }
+              },
+              "spec": {
+                "terminationGracePeriodSeconds": 60,
+                "restartPolicy": "Never",
+                "initContainers": [],
+                "hostNetwork": true,
+                "dnsPolicy": "ClusterFirstWithHostNet",
+                "nodeSelector": {
+                  "cloud.google.com/gke-nodepool": "worker-pool"
+                },
+                "containers": [
+                  {
+                    "name": "golden-config-test",
+                    "image": "INSERT_DOCKER_IMAGE",
+                    "imagePullPolicy": "Always",
+                    "securityContext": {
+                      "privileged": true
+                    },
+                    
+                    "command": [
+                      "bash",
+                      "/var/arc/golden-config-test-startup.sh"
+                    ],
+                    "resources": {
+                      "requests": {
+                        "cpu": "30",
+                        "memory": "128Gi"
+                      }
+                    },
+                    "env": [
+                      {
+                        "name": "NUM_PROCESSES",
+                        "value": "1"
+                      },
+                      {
+                        "name": "PROCESS_ID",
+                        "valueFrom": {
+                          "fieldRef": {
+                            "fieldPath": "metadata.annotations['batch.kubernetes.io/job-completion-index']"
+                          }
+                        }
+                      },
+                      {
+                        "name": "GCS_PREFIX",
+                        "value": "INSERT_GCS_PREFIX"
+                      },
+                      {
+                        "name": "CUSTOM_GIT_ORIGIN",
+                        "value": "INSERT_GIT_ORIGIN"
+                      },
+                      {
+                        "name": "CUSTOM_GIT_BRANCH",
+                        "value": "INSERT_GIT_BRANCH"
+                      },
+                      {
+                        "name": "GH_RUN_ID",
+                        "value": "INSERT_GH_RUN_ID"
+                      },
+                      {
+                        "name": "POST_SETUP_CMD",
+                        "value": "INSERT_POST_SETUP_CMD"
+                      }
+                    ]
+                  }
+                ],
+                "serviceAccountName": "default"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
