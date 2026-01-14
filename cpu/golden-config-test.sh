@@ -2,11 +2,13 @@
 
 cd /root
 
+echo "Starting Golden Config test... gathering environment information"
 # Get the timestamp of when the tests started
 TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 
+echo "Launching pytest..."
 pytest -v  \
     --csv /home/runner/_work/csv_results/golden_config_test.csv \
     -n auto --durations=100 --dist worksteal --timeout=60 \

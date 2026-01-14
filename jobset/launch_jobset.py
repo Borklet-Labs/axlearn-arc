@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-11-07
+ # @version: 2026-01-14
  #
 
 import json
@@ -178,6 +178,11 @@ def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
 
     if jobset_status["failed"] != 0 or jobset_status["suspended"] != 0:
         return False
+
+    # Ensure we check for success before seeing if it is still active
+    elif jobset_status["succeeded"] != 0:
+        return True
+
     elif jobset_status["active"] != 0:
         if before_schedule:
             return True
@@ -185,8 +190,6 @@ def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
         pod_status = get_pod_status(jobset_name)
         if "Running" in pod_status.phase:
             return True
-    elif jobset_status["succeeded"] != 0:
-        return True
 
     return False
 
