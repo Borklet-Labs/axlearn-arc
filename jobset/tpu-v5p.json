@@ -33,8 +33,8 @@
             }
           },
           "spec": {
-            "parallelism": 4,
-            "completions": 4,
+            "parallelism": 1,
+            "completions": 1,
             "backoffLimit": 0,
             "template": {
               "metadata": {
@@ -97,7 +97,7 @@
                       },
                       {
                         "name": "TPU_TYPE",
-                        "value": "v5p-4"
+                        "value": "v5p-8"
                       },
                       {
                         "name": "NUM_TPU_SLICES",

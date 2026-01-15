@@ -1,0 +1,77 @@
+diff --git a/axlearn/experiments/text/gpt/fuji.py b/axlearn/experiments/text/gpt/fuji.py
+index 879b2d6..655e8f4 100644
+--- a/axlearn/experiments/text/gpt/fuji.py
++++ b/axlearn/experiments/text/gpt/fuji.py
+@@ -511,6 +511,72 @@ def get_trainer_kwargs(
+                         ],
+                     ),
+                 ),
++                (
++                    "arc-tpu-v5p-.*",
++                    ChainConfigModifier.default_config().set(
++                        config_modifiers=[
++                            MeshShapeModifier.default_config().set(
++                                mesh_shape=mesh_shape_from_axes(data=-1, fsdp=4)
++                            ),
++                            RematSpecModifier.default_config().set(
++                                remat_policies={
++                                    "model.decoder.transformer.layer": RematSpec(
++                                        prevent_cse=False,
++                                        policy=config_for_function(
++                                            save_and_offload_only_these_names_regex
++                                        ).set(
++                                            names_which_can_be_saved=None,
++                                            names_which_can_be_offloaded="|".join(
++                                                [
++                                                    RematRegexSavePatterns.INPUT.value,
++                                                ]
++                                            ),
++                                            offload_src="device",
++                                            offload_dst="pinned_host",
++                                        ),
++                                    ),
++                                }
++                            ),
++                        ],
++                    ),
++                ),
++                (
++                    "arc-tpu-7x-.*",
++                    ChainConfigModifier.default_config().set(
++                        config_modifiers=[
++                            MeshShapeModifier.default_config().set(
++                                mesh_shape=mesh_shape_from_axes(data=-1, fsdp=8)
++                            ),
++                            # Ensure we set the default tpu_block_size=2048 on v7x
++                            # With the 70B model, MaxText also modifies block_q
++                            # and block_kv_compute to 4096 and 1024 respectively
++                            V7xFlashConfigModifier.default_config(),
++                            SplashAttentionConfigModifier.default_config().set(
++                                splash_block_q=4096,
++                                splash_block_kv_compute=1024,
++                            ),
++                            RematSpecModifier.default_config().set(
++                                remat_policies={
++                                    "model.decoder.transformer.layer": RematSpec(
++                                        prevent_cse=False,
++                                        policy=config_for_function(
++                                            save_and_offload_only_these_names_regex
++                                        ).set(
++                                            names_which_can_be_saved=None,
++                                            names_which_can_be_offloaded="|".join(
++                                                [
++                                                    RematRegexSavePatterns.INPUT.value,
++                                                ]
++                                            ),
++                                            offload_src="device",
++                                            offload_dst="pinned_host",
++                                        ),
++                                    ),
++                                }
++                            ),
++                        ],
++                    ),
++                ),
+                 # H100/A100 80G.
+                 # Maximum per-node batch size = 64, hence need >= 32 nodes.
+                 # Without sequence sharding, the maximum number of devices <= batch_size,

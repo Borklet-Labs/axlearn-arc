@@ -32,7 +32,12 @@ if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
     eval "$POST_SETUP_CMD"
 fi
 
+# Patch fuji.py to add new mesh selectors
+echo "Applying patch to axlearn/experiments/text/gpt/fuji.py"
+git apply /var/arc/fuji.patch
+
 # Modify the batch size to account for TPU 7x 2x2x1
+echo "Updating global batch size to 32"
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn/experiments/text/gpt/fuji.py
 
 # Start the training loop
@@ -41,5 +46,5 @@ python3 -m axlearn.common.launch_trainer_main \
     --trainer_dir=${GCS_PREFIX} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
     --jax_backend=tpu \
-    --mesh_selector=tpu-7x-8 \
+    --mesh_selector=arc-tpu-7x-8 \
     --trace_at_steps=5
