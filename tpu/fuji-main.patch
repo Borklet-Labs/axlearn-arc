@@ -1,8 +1,8 @@
 diff --git a/axlearn/experiments/text/gpt/fuji.py b/axlearn/experiments/text/gpt/fuji.py
-index 96b45a0..7bc6790 100644
+index 96b45a0..75e3f82 100644
 --- a/axlearn/experiments/text/gpt/fuji.py
 +++ b/axlearn/experiments/text/gpt/fuji.py
-@@ -520,6 +520,72 @@ def get_trainer_kwargs(
+@@ -520,6 +520,35 @@ def get_trainer_kwargs(
                          ],
                      ),
                  ),
