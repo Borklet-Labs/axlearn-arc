@@ -45,6 +45,7 @@ echo "Updating global batch size to 32"
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn/experiments/text/gpt/fuji.py
 
 # Start the training loop
+# Ensure we either use the patched mesh selector, or use a non-existent one with default fsdp=8
 python3 -m axlearn.common.launch_trainer_main \
     --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
     --trainer_dir=${GCS_PREFIX} \
