@@ -281,7 +281,7 @@ def update_jobset(jobset_base_config: dict) -> dict:
     # Add any mesh selector patches for fuji.py
     if FUJI_PATCH_FILE:
         print(f'Detected fuji mesh selector patch at: {FUJI_PATCH_FILE}', file=sys.stderr)
-        updated_jobset = updated_jobset.replace("INSERT_FUJI_PATCH_FILE", POST_SETUP_CMD)
+        updated_jobset = updated_jobset.replace("INSERT_FUJI_PATCH_FILE", FUJI_PATCH_FILE)
 
     return json.loads(updated_jobset)
 
