@@ -35,7 +35,7 @@ fi
 # Patch fuji.py to add new mesh selectors
 if [ "$FUJI_PATCH_FILE" != "INSERT_FUJI_PATCH_FILE" ]; then
     echo "Applying patch to axlearn/experiments/text/gpt/fuji.py"
-    git apply $FUJI_PATCH_FILE
+    git apply $FUJI_PATCH_FILE || exit 1
 else
     echo "Not applying any mesh selector patches to fuji.py"
 fi
