@@ -166,6 +166,10 @@
                       {
                         "name": "POST_SETUP_CMD",
                         "value": "INSERT_POST_SETUP_CMD"
+                      },
+                      {
+                        "name": "FUJI_PATCH_FILE",
+                        "value": "INSERT_FUJI_PATCH_FILE"
                       }
                     ],
                     "volumeMounts": [

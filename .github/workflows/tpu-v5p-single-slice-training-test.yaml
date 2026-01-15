@@ -14,6 +14,7 @@ jobs:
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.10
         JOBSET_HEALTHY_TIMEOUT: 600
         ACCELERATOR: v5p_2x2x1_1
+        FUJI_PATCH_FILE: /var/arc/fuji-main.patch
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch

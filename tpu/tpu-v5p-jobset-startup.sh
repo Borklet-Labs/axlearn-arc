@@ -33,8 +33,12 @@ if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
 fi
 
 # Patch fuji.py to add new mesh selectors
-echo "Applying patch to axlearn/experiments/text/gpt/fuji.py"
-git apply /var/arc/fuji.patch
+if [ "$FUJI_PATCH_FILE" != "INSERT_FUJI_PATCH_FILE" ]; then
+    echo "Applying patch to axlearn/experiments/text/gpt/fuji.py"
+    git apply $FUJI_PATCH_FILE
+else
+    echo "Not applying any mesh selector patches to fuji.py"
+fi
 
 # Modify the batch size to account for TPU v5p 2x2x1
 echo "Updating global batch size to 32"
