@@ -2,10 +2,10 @@
   "apiVersion": "jobset.x-k8s.io/v1alpha2",
   "kind": "JobSet",
   "metadata": {
-    "name": "arc-tpu-training",
+    "name": "arc-tpu-training-7x",
     "annotations": {
       "alpha.jobset.sigs.k8s.io/exclusive-topology": "cloud.google.com/gke-nodepool",
-      "kueue.x-k8s.io/queue-name": "tpu-v6e-spot"
+      "kueue.x-k8s.io/queue-name": "tpu-v7x"
     },
     "ownerReferences": [
         {
@@ -27,7 +27,7 @@
         "template": {
           "metadata": {
             "annotations": {
-              "axlearn/replicatedjob-load-balancer-service-name": "arc-tpu-training-job-service",
+              "axlearn/replicatedjob-load-balancer-service-name": "arc-tpu-7x-training-job-service",
               "axlearn/replicatedjob-load-balancer-target-port": "9000",
               "axlearn/replicatedjob-load-balancer-port": "80"
             }
@@ -79,15 +79,11 @@
                     },
                     "command": [
                       "bash",
-                      "/var/arc/tpu-jobset-startup.sh"
+                      "/var/arc/tpu-7x-jobset-startup.sh"
                     ],
                     "resources": {
                       "limits": {
-                        "google.com/tpu": 4,
-                        "memory": "720Gi"
-                      },
-                      "requests": {
-                        "memory": "576Gi"
+                        "google.com/tpu": 4
                       }
                     },
                     "env": [
@@ -97,7 +93,7 @@
                       },
                       {
                         "name": "TPU_TYPE",
-                        "value": "v6e-16"
+                        "value": "7x-4"
                       },
                       {
                         "name": "NUM_TPU_SLICES",
