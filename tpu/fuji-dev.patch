@@ -23,7 +23,7 @@ index 879b2d6..655e8f4 100644
 +                                            names_which_can_be_saved=None,
 +                                            names_which_can_be_offloaded="|".join(
 +                                                [
-+                                                    RematRegexSavePatterns.INPUT.value,
++                                                    r".*input",
 +                                                ]
 +                                            ),
 +                                            offload_src="device",
@@ -60,7 +60,7 @@ index 879b2d6..655e8f4 100644
 +                                            names_which_can_be_saved=None,
 +                                            names_which_can_be_offloaded="|".join(
 +                                                [
-+                                                    RematRegexSavePatterns.INPUT.value,
++                                                    r".*input",
 +                                                ]
 +                                            ),
 +                                            offload_src="device",
