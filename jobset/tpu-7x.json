@@ -97,7 +97,7 @@
                       },
                       {
                         "name": "TPU_TYPE",
-                        "value": "tpu7x-8"
+                        "value": "7x-8"
                       },
                       {
                         "name": "NUM_TPU_SLICES",
