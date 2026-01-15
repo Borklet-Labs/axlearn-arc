@@ -1,0 +1,31 @@
+name: tpu-v5p-multislice-training-test
+on:
+  workflow_dispatch
+jobs:
+  tpu-v5p-multislice-training-test:
+    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
+    container:
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
+      env:
+        # Required environmental variables for a successful run
+        ARC_JOBSET_NAME: arc-tpu-multislice-v5p
+        ARC_JOBSET_JSON: /var/arc/tpu-v5p-multislice.json
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.10
+        JOBSET_HEALTHY_TIMEOUT: 600
+        ACCELERATOR: v5p_2x2x1_2
+        # Optional flags
+        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
+        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
+        # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
+        # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
+    steps:
+      - name: Install the Kubernetes Python SDK
+        run: uv pip install kubernetes
+      - name: Launch the multislice TPU training job
+        run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+      - name: Upload the training result to GCS
+        if: always()
+        run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh
