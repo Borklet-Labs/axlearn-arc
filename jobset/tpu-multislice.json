@@ -55,6 +55,10 @@
                     ]
                   }
                 ],
+                "nodeSelector": {
+                  "cloud.google.com/gke-tpu-accelerator": "tpu-v6e-slice",
+                  "cloud.google.com/gke-tpu-topology": "4x4"
+                },
                 "tolerations": [],
                 "containers": [
                   {
