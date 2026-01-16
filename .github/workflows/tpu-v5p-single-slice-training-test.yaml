@@ -15,12 +15,13 @@ jobs:
         JOBSET_HEALTHY_TIMEOUT: 600
         ACCELERATOR: v5p_2x2x1_1
         # Optional flags
-        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
+        CUSTOM_GIT_BRANCH: jax_py3.12_nightly # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
         # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
+        POST_SETUP_CMD: pip install -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
