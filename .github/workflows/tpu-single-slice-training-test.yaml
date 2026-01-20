@@ -17,11 +17,11 @@ jobs:
         JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_1
         # Optional flags
-        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: jax_py3.12_nightly
+        CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn # Optionally point to another repo
+        CUSTOM_GIT_BRANCH: jw/fix-pallas-nonetype
         # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
-        POST_SETUP_CMD: pip install -U --pre jax==0.8.3.dev20260107 jaxlib==0.8.3.dev20260107 libtpu==0.0.30 requests -f https://storage.googleapis.com/libtpu-wheels/index.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
+        POST_SETUP_CMD: pip install -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
