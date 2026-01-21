@@ -17,7 +17,7 @@ jobs:
         JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_2
         # Optional flags
-        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
+        CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn  # Optionally point to another repo
         CUSTOM_GIT_BRANCH: jw/fix-pallas-nonetype
         # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
