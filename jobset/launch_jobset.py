@@ -180,20 +180,18 @@ def get_pod_logs(pod_name: str, stop: threading.Event):
     if not target_pod:
         return "Unable to infer pod name. Returning empty result"
 
-    while not stop.is_set():
-        try:
-            stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
-                namespace="axlearn-arc", name=target_pod, timeout_seconds=60)
-            for line in stream:
-                if stop.is_set():
-                    break
-                print(line, file=sys.stderr)
-            print("INFO: Waiting for more logs from workers...", file=sys.stderr)
-        except Exception as e:
+    try:
+        stream = kubernetes.watch.Watch().stream(KUBE_API.read_namespaced_pod_log,
+            namespace="axlearn-arc", name=target_pod)
+        for line in stream:
             if stop.is_set():
                 break
-            print(f"Error in streaming logs and retrying, Exception: {e}", file=sys.stderr)
-            time.sleep(5)
+            print(line, file=sys.stderr)
+    except Exception as e:
+        print(f"Error in streaming logs, Exception: {e}", file=sys.stderr)
+        print("Turning off log streaming... full log will be available in GCS after the run",
+                file=sys.stderr)
+
 
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state
