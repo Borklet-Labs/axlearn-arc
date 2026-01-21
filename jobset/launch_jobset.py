@@ -193,7 +193,7 @@ def get_pod_logs(pod_name: str, stop: threading.Event):
             if stop.is_set():
                 break
             print(f"Error in streaming logs and retrying, Exception: {e}", file=sys.stderr)
-            sleep(5)
+            time.sleep(5)
 
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state
