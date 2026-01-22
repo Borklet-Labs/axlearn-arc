@@ -85,7 +85,11 @@
                       },
                       {
                         "name": "XLA_PYTHON_CLIENT_MEM_FRACTION",
-                        "value": "0.92"
+                        "value": "0.85"
+                      },
+                      {
+                        "name": "XLA_PYTHON_CLIENT_PREALLOCATE",
+                        "value": "false"
                       },
                       {
                         "name": "TF_FORCE_GPU_ALLOW_GROWTH",
@@ -138,6 +142,10 @@
                       {
                         "name": "NCCL_IB_FIFO_TC",
                         "value": "84"
+                      },
+                      {
+                        "name": "NCCL_GRAPH_MIXED_PRECISION",
+                        "value": "1"
                       },
                       {
                         "name": "NCCL_SHIMNET_GUEST_CONFIG_CHECKER_CONFIG_FILE",
