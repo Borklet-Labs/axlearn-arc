@@ -19,7 +19,7 @@ jobs:
         CUSTOM_GIT_BRANCH: jax_0.8.0_py3.12
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
-        # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
+        POST_SETUP_CMD: uv pip uninstall libtpu && uv pip install --prerelease=allow libtpu==0.0.35.1.dev20260121
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
     steps:
       - name: Install the Kubernetes Python SDK
