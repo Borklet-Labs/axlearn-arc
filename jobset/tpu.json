@@ -2,7 +2,7 @@
   "apiVersion": "jobset.x-k8s.io/v1alpha2",
   "kind": "JobSet",
   "metadata": {
-    "name": "arc-tpu-training",
+    "name": "arc-tpu-training-v6e",
     "annotations": {
       "alpha.jobset.sigs.k8s.io/exclusive-topology": "cloud.google.com/gke-nodepool",
       "kueue.x-k8s.io/queue-name": "tpu-v6e-spot"
@@ -27,7 +27,7 @@
         "template": {
           "metadata": {
             "annotations": {
-              "axlearn/replicatedjob-load-balancer-service-name": "arc-tpu-training-job-service",
+              "axlearn/replicatedjob-load-balancer-service-name": "arc-tpu-training-v6e-job-service",
               "axlearn/replicatedjob-load-balancer-target-port": "9000",
               "axlearn/replicatedjob-load-balancer-port": "80"
             }
