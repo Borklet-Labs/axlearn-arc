@@ -12,7 +12,7 @@ jobs:
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
         CUSTOM_GIT_BRANCH: jax_py3.12_nightly
-        POST_SETUP_CMD: pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+        # POST_SETUP_CMD: pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
     steps:
       - name: Persist the run id
         run: echo ${{ github.run_id }} > /var/arc/run_id
@@ -20,6 +20,8 @@ jobs:
         run: /bin/bash /var/arc/git-setup.sh
       - name: Install AXLearn and pytest dependiencies with uv
         run: cd /root && uv pip install --find-links https://storage.googleapis.com/axlearn-wheels/wheels.html .[core,gpu,gcp] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
+      - name: Install JAX nigthly
+        run: pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
       - name: Create output directories
         run: mkdir -p /home/runner/_work/csv_results
       - name: Run unit tests
