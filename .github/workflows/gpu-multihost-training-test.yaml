@@ -11,7 +11,7 @@ jobs:
       ARC_JOBSET_JSON: /var/arc/gpu-multi-hosts.json
       GCS_PREFIX: gs://axlearn-arc-testing/testing
       JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
-      JOBSET_HEALTHY_TIMEOUT: 900
+      JOBSET_HEALTHY_TIMEOUT: 1200
       ACCELERATOR: b200_16
       # Optional flags
       CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
