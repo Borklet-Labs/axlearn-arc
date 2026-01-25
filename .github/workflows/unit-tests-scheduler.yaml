@@ -21,13 +21,13 @@ jobs:
         run: |
           set -e
           echo "Triggering workflow: cpu-unit-tests.yaml"
-          gh workflow run cpu-unit-tests.yaml --ref jax_0.8.0_py3.12
+          gh workflow run cpu-unit-tests.yaml --ref jax_nightly_py3.12
 
           echo "Waiting 30 seconds for the new run to be registered with the API..."
           sleep 30
 
           echo "Fetching the ID of the new run..."
-          RUN_ID=$(gh run list --workflow="cpu-unit-tests.yaml" --branch jax_0.8.0_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow="cpu-unit-tests.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "Error: Could not find a recent run for the workflow."
@@ -54,13 +54,13 @@ jobs:
         run: |
           set -e
           echo "Triggering workflow: gpu-unit-tests.yaml"
-          gh workflow run gpu-unit-tests.yaml --ref jax_0.8.0_py3.12
+          gh workflow run gpu-unit-tests.yaml --ref jax_nightly_py3.12
 
           echo "Waiting 30 seconds for the new run to be registered with the API..."
           sleep 30
 
           echo "Fetching the ID of the new run..."
-          RUN_ID=$(gh run list --workflow="gpu-unit-tests.yaml" --branch jax_0.8.0_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow="gpu-unit-tests.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "Error: Could not find a recent run for the workflow."
