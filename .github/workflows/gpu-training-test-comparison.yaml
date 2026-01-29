@@ -1,4 +1,4 @@
-name: gpu-training-test
+name: gpu-training-test-comparison
 on:
   workflow_dispatch:
   workflow_call:
