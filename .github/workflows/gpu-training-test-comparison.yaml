@@ -3,39 +3,63 @@ on:
   workflow_dispatch:
   workflow_call:
 jobs:
-  gpu-training-test-job:
-    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to GPU
+  gpu-unit-tests-job:
+    runs-on: gpu
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
-      # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-post-cmd-nightly:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu:python3.12
       env:
-        # Required environmental variables for a successful run
-        ARC_JOBSET_NAME: axlearn-gpu-training-single
-        ARC_JOBSET_JSON: /var/arc/gpu-single.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
-        JOBSET_HEALTHY_TIMEOUT: 1200
-        ACCELERATOR: b200_8
         # Optional flags
         CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn # Optionally point to another repo
         CUSTOM_GIT_BRANCH: jw/pallas-attention-test-0.8.2
-        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
-        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
-        # POST_SETUP_CMD: pip install -v -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html || echo setup_failed
     steps:
-      - name: Install the Kubernetes Python SDK
-        run: uv pip install kubernetes
-      - name: Launch the GPU training job
-        id: launch_job
-        run: |
-          export GITHUB_OUTPUT=$GITHUB_OUTPUT
+      - name: Persist the run id
+        run: echo ${{ github.run_id }} > /var/arc/run_id
+      - name: Fetch the target AXLearn origin and branch
+        run: /bin/bash /var/arc/git-setup.sh
+      - name: Install AXLearn and pytest dependiencies with uv
+        run: cd /root && uv pip install .[core,gpu,gcp] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
+      - name: Create output directories
+        run: mkdir -p /home/runner/_work/csv_results
+      - name: Run unit tests
+        run: /bin/bash /var/arc/gpu-unit-tests.sh && echo "All tests passed successfully"
+# on:
+#   workflow_dispatch:
+#   workflow_call:
+# jobs:
+#   gpu-training-test-job:
+#     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to GPU
+#     container:
+#       image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
+#       # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-post-cmd-nightly:latest
+#       env:
+#         # Required environmental variables for a successful run
+#         ARC_JOBSET_NAME: axlearn-gpu-training-single
+#         ARC_JOBSET_JSON: /var/arc/gpu-single.json
+#         GCS_PREFIX: gs://axlearn-arc-testing/testing
+#         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-gpu-py312-jax-nightly:latest
+#         JOBSET_HEALTHY_TIMEOUT: 1200
+#         ACCELERATOR: b200_8
+#         # Optional flags
+#         CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn # Optionally point to another repo
+#         CUSTOM_GIT_BRANCH: jw/pallas-attention-test-0.8.2
+#         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+#         # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
+#         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
+#         POST_SETUP_CMD: pip install -v -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html || echo setup_failed
+#     steps:
+#       - name: Install the Kubernetes Python SDK
+#         run: uv pip install kubernetes
+#       - name: Launch the GPU training job
+#         id: launch_job
+#         run: |
+#           export GITHUB_OUTPUT=$GITHUB_OUTPUT
 
-          GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
-      - name: Upload the training result to GCS
-        if: always()
-        env:
-          GCS_PREFIX: gs://axlearn-arc-testing/testing
-        run: |
-          JAX_VER=${{ steps.launch_job.outputs.jax_version }}
-          GH_RUN_ID=${{ github.run_id }} JAX_VER="${JAX_VER}" bash /var/arc/upload-result.sh
+#           GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+#       - name: Upload the training result to GCS
+#         if: always()
+#         env:
+#           GCS_PREFIX: gs://axlearn-arc-testing/testing
+#         run: |
+#           JAX_VER=${{ steps.launch_job.outputs.jax_version }}
+#           GH_RUN_ID=${{ github.run_id }} JAX_VER="${JAX_VER}" bash /var/arc/upload-result.sh
