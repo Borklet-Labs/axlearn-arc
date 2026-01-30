@@ -44,7 +44,7 @@ sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main \
     --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
-    --trainer_dir=${GCS_PREFIX} \
+    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
     --jax_backend=tpu \
     --mesh_selector=tpu-v6e-16 \

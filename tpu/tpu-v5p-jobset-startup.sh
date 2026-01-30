@@ -57,7 +57,7 @@ sed -i 's/fsdp=8/fsdp=4/g' /root/axlearn/experiments/text/gpt/fuji.py
 # Ensure we either use the patched mesh selector, or use a non-existent one with default fsdp=4
 python3 -m axlearn.common.launch_trainer_main \
     --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
-    --trainer_dir=${GCS_PREFIX} \
+    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
     --jax_backend=tpu \
     --mesh_selector=arc-tpu-v5p-8 \
