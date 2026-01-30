@@ -16,7 +16,7 @@ jobs:
         ACCELERATOR: b200_8
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        CUSTOM_GIT_BRANCH: jax_0.9.1_dev
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
     steps:
