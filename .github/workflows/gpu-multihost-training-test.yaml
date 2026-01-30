@@ -20,6 +20,7 @@ jobs:
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
         # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
+        # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
