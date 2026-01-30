@@ -172,8 +172,8 @@
                         "value": "INSERT_FUJI_PATCH_FILE"
                       },
                       {
-                        "name": "ALLOW_JAX_DEV",
-                        "value": "INSERT_ALLOW_JAX_DEV"
+                        "name": "ENABLE_JAX_DEV",
+                        "value": "INSERT_ENABLE_JAX_DEV"
                       }
                     ],
                     "volumeMounts": [
