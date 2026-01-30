@@ -19,7 +19,7 @@ jobs:
         CUSTOM_GIT_BRANCH: jax_0.9.1_dev
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
-        # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
+        ENABLE_JAX_DEV: true
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
