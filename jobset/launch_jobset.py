@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2026-01-14
+ # @version: 2026-01-30
  #
 
 import json
@@ -29,6 +29,7 @@ GH_RUN_ID = os.environ['GH_RUN_ID']
 SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in os.environ else 15 * 60
 POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
 FUJI_PATCH_FILE = os.environ['FUJI_PATCH_FILE'] if "FUJI_PATCH_FILE" in os.environ else None
+ENABLE_JAX_DEV = os.environ['ENABLE_JAX_DEV'] if "ENABLE_JAX_DEV" in os.environ else None
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -282,6 +283,12 @@ def update_jobset(jobset_base_config: dict) -> dict:
     if FUJI_PATCH_FILE:
         print(f'Detected fuji mesh selector patch at: {FUJI_PATCH_FILE}', file=sys.stderr)
         updated_jobset = updated_jobset.replace("INSERT_FUJI_PATCH_FILE", FUJI_PATCH_FILE)
+
+    # Enable pre-release Jax dev mode
+    if ENABLE_JAX_DEV:
+        if ENABLE_JAX_DEV == "true":
+            print('Detected Jax pre-release dev mode', file=sys.stderr)
+            updated_jobset = updated_jobset.replace("INSERT_ENABLE_JAX_DEV", ENABLE_JAX_DEV)
 
     return json.loads(updated_jobset)
 

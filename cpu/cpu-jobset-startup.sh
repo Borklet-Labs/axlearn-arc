@@ -6,14 +6,14 @@ mkdir -p /home/runner/_work/csv_results
 # Run the git configuration
 bash /var/arc/git-setup.sh
 
+if [ "$ENABLE_JAX_DEV" == "true" ]; then
+    echo "Enabling prerelease Jax and specifying extra idnex"
+    export UV_PRELEASE=allow
+    export UV_INDEX=https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
+fi
+
 # Install dependencies
 cd /root && uv pip install .[core,dev,gcp,open_api,audio,orbax] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
-
-# Remove CUDA-enabled TensorFlow and install CPU-only variant
-TF_VER=$(pip freeze | grep -w tensorflow= | awk -F '==' {'print $2'}) && \
-    pip uninstall -y -qq tensorflow && \
-    uv pip install --no-deps tensorflow-cpu==$TF_VER && \
-    uv cache clean
 
 # Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
 if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then

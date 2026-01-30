@@ -86,6 +86,10 @@
                       {
                         "name": "POST_SETUP_CMD",
                         "value": "INSERT_POST_SETUP_CMD"
+                      },
+                      {
+                        "name": "ALLOW_JAX_DEV",
+                        "value": "INSERT_ALLOW_JAX_DEV"
                       }
                     ]
                   }

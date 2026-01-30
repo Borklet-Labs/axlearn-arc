@@ -25,6 +25,12 @@ git checkout $GIT_BRANCH
 # Show the commit information
 git log -1 --stat --pretty=format:"%H" --no-patch
 
+if [ "$ENABLE_JAX_DEV" == "true" ]; then
+    echo "Enabling prerelease Jax and specifying extra idnex"
+    export UV_PRELEASE=allow
+    export UV_INDEX=https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
+fi
+
 uv pip install .[core,gpu]
 
 # Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
