@@ -19,8 +19,8 @@ jobs:
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
-        # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
-        # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
+        POST_SETUP_CMD: uv pip install libtpu==0.0.32.2
+        FUJI_PATCH_FILE: /var/arc/fuji-main.patch
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
