@@ -287,7 +287,7 @@ def update_jobset(jobset_base_config: dict) -> dict:
     # Enable pre-release Jax dev mode
     if ENABLE_JAX_DEV:
         if ENABLE_JAX_DEV == "true":
-            print(f'Detected Jax pre-release dev mode', file=sys.stderr)
+            print('Detected Jax pre-release dev mode', file=sys.stderr)
             updated_jobset = updated_jobset.replace("INSERT_ENABLE_JAX_DEV", ENABLE_JAX_DEV)
 
     return json.loads(updated_jobset)
