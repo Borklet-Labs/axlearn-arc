@@ -18,6 +18,7 @@ jobs:
         # Optional flags
         CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn # Optionally point to another repo
         CUSTOM_GIT_BRANCH: jw/pallas-attention-test-0.8.2
+        POST_SETUP_CMD: pip install -v -U --pre jax==0.8.2 jaxlib==0.8.2 jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html || echo setup_failed
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
     steps:
