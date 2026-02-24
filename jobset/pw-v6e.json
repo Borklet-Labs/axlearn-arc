@@ -401,5 +401,25 @@
         "pwhd"
       ]
     }
+  },
+  "status": {
+    "replicatedJobsStatus": [
+      {
+        "active": 1,
+        "failed": 0,
+        "name": "pwwk",
+        "ready": 1,
+        "succeeded": 0,
+        "suspended": 0
+      },
+      {
+        "active": 1,
+        "failed": 0,
+        "name": "pwhd",
+        "ready": 1,
+        "succeeded": 0,
+        "suspended": 0
+      }
+    ]
   }
 }
