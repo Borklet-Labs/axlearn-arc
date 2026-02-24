@@ -398,6 +398,7 @@ if __name__ == '__main__':
     jobset_resumed = False
     # Check to see if the JobSet already exists
     print(f"Checking to see if JobSet {JOBSET_NAME} already exists", file=sys.stderr)
+    print(jobset_config)
     if get_current_jobset(JOBSET_NAME):
         jobset_status = get_jobset_status(JOBSET_NAME)
         if jobset_status["active"] != 0:
@@ -417,7 +418,6 @@ if __name__ == '__main__':
 
     # Create the JobSet and wait for creation to complete
     if not jobset_resumed:
-        print("JobSet: ", jobset_config)
         create_jobset_and_wait(jobset_config)
         if not check_jobset_healthy(JOBSET_NAME):
             print(f"Error: Pod for JobSet {JOBSET_NAME} was unable to be scheduled or crashed",
