@@ -1,11 +1,6 @@
 {
   "apiVersion": "jobset.x-k8s.io/v1alpha2",
   "kind": "JobSet",
-  "metadata": {
-    "generation": 1,
-    "name": "qmpathwaystest",
-    "namespace": "default"
-  },
   "spec": {
     "coordinator": {
       "jobIndex": 0,
