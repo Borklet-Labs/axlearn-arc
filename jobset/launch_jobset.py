@@ -398,7 +398,7 @@ if __name__ == '__main__':
     jobset_resumed = False
     # Check to see if the JobSet already exists
     print(f"Checking to see if JobSet {JOBSET_NAME} already exists", file=sys.stderr)
-    print(jobset_config)
+    #print(jobset_config)
     
     
     # For PW assuming the job is not being resumed
