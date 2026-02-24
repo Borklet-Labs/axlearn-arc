@@ -1,0 +1,32 @@
+name: pw-tpu-single-slice-training-test
+on:
+  workflow_dispatch
+jobs:
+  pw-tpu-single-slice-training-test-job:
+    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
+    container:
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
+      env:
+        # Required environmental variables for a successful run
+        ARC_JOBSET_NAME: arc-pw-training-v6e
+        ARC_JOBSET_JSON: /var/arc/pw-v6e.json
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.12
+        JOBSET_HEALTHY_TIMEOUT: 600
+        ACCELERATOR: v6e_4x4_1
+        # Optional flags
+        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
+        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
+        POST_SETUP_CMD: uv pip install libtpu==0.0.32.2
+        # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
+        # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
+    steps:
+      - name: Install the Kubernetes Python SDK
+        run: uv pip install kubernetes
+      - name: Launch the TPU training job
+        run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+      - name: Upload the training result to GCS
+        if: always()
+        run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh
