@@ -48,29 +48,16 @@
                     "name": "qmpathwaystest-hd",
                     "image": "INSERT_DOCKER_IMAGE",
                     "ports": [
-                      {
-                        "containerPort": 8471
-                      },
-                      {
-                        "containerPort": 8080
-                      },
-                      {
-                        "containerPort": 8431
-                      },
-                      {
-                        "containerPort": 9000
-                      }
+                      { "containerPort": 8471 },
+                      { "containerPort": 8080 },
+                      { "containerPort": 8431 },
+                      { "containerPort": 9000 }
                     ],
-                    "securityContext": {
-                      "privileged": true
-                    },
-                    "command": [
-                      "bash",
-                      "/var/arc/pw-jobset-startup.sh"
-                    ],
+                    "securityContext": { "privileged": true },
+                    "command": [ "bash", "/var/arc/pw-jobset-startup.sh" ],
                     "resources": {
                       "requests": {
-                        "cpu:": "1",
+                        "cpu": "1",
                         "memory": "16Gi"
                       }
                     },
@@ -93,34 +80,13 @@
                         "name": "NODE_NAME",
                         "valueFrom": { "fieldRef": { "fieldPath": "spec.nodeName" } }
                       },
-                     {
-                        "name": "GCS_PREFIX",
-                        "value": "INSERT_GCS_PREFIX"
-                      },
-                      {
-                        "name": "CUSTOM_GIT_ORIGIN",
-                        "value": "INSERT_GIT_ORIGIN"
-                      },
-                      {
-                        "name": "CUSTOM_GIT_BRANCH",
-                        "value": "INSERT_GIT_BRANCH"
-                      },
-                      {
-                        "name": "GH_RUN_ID",
-                        "value": "INSERT_GH_RUN_ID"
-                      },
-                      {
-                        "name": "POST_SETUP_CMD",
-                        "value": "INSERT_POST_SETUP_CMD"
-                      },
-                      {
-                        "name": "FUJI_PATCH_FILE",
-                        "value": "INSERT_FUJI_PATCH_FILE"
-                      },
-                      {
-                        "name": "ENABLE_JAX_DEV",
-                        "value": "INSERT_ENABLE_JAX_DEV"
-                      },
+                      { "name": "GCS_PREFIX", "value": "INSERT_GCS_PREFIX" },
+                      { "name": "CUSTOM_GIT_ORIGIN", "value": "INSERT_GIT_ORIGIN" },
+                      { "name": "CUSTOM_GIT_BRANCH", "value": "INSERT_GIT_BRANCH" },
+                      { "name": "GH_RUN_ID", "value": "INSERT_GH_RUN_ID" },
+                      { "name": "POST_SETUP_CMD", "value": "INSERT_POST_SETUP_CMD" },
+                      { "name": "FUJI_PATCH_FILE", "value": "INSERT_FUJI_PATCH_FILE" },
+                      { "name": "ENABLE_JAX_DEV", "value": "INSERT_ENABLE_JAX_DEV" },
                       {
                         "name": "NUM_REPLICAS",
                         "valueFrom": { "fieldRef": { "fieldPath": "metadata.annotations['jobset.sigs.k8s.io/replicatedjob-replicas']" } }
@@ -153,10 +119,7 @@
                 "dnsPolicy": "ClusterFirstWithHostNet",
                 "hostAliases": [
                   {
-                    "hostnames": [
-                      "metadata",
-                      "metadata.google.internal"
-                    ],
+                    "hostnames": [ "metadata", "metadata.google.internal" ],
                     "ip": "169.254.169.254"
                   }
                 ],
@@ -177,9 +140,7 @@
                     ],
                     "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260128-jax_0.9.0",
                     "name": "pathways-proxy",
-                    "ports": [
-                      { "containerPort": 29000, "protocol": "TCP" }
-                    ],
+                    "ports": [ { "containerPort": 29000, "protocol": "TCP" } ],
                     "resources": {},
                     "restartPolicy": "Always",
                     "volumeMounts": [
@@ -195,25 +156,16 @@
                       "--instance_type=tpuv6e:4x4",
                       "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/qmpathwaystest/pathways-staging"
                     ],
-                    "env": [
-                      { "name": "TPU_SKIP_MDS_QUERY", "value": "true" }
-                    ],
+                    "env": [ { "name": "TPU_SKIP_MDS_QUERY", "value": "true" } ],
                     "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260128-jax_0.9.0",
                     "name": "pathways-rm",
                     "resources": {},
                     "restartPolicy": "Always",
-                    "volumeMounts": [
-                      { "mountPath": "/output", "name": "shared-output" }
-                    ]
+                    "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   },
                   {
-                    "args": [
-                      "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/qmpathwaystest/output/$HOSTNAME/; sleep 60; done"
-                    ],
-                    "command": [
-                      "/bin/sh",
-                      "-c"
-                    ],
+                    "args": [ "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/qmpathwaystest/output/$HOSTNAME/; sleep 60; done" ],
+                    "command": [ "/bin/sh", "-c" ],
                     "image": "google/cloud-sdk:alpine",
                     "name": "output-uploader",
                     "resources": {
@@ -221,14 +173,10 @@
                       "requests": { "cpu": "100m", "memory": "128Mi" }
                     },
                     "restartPolicy": "Always",
-                    "volumeMounts": [
-                      { "mountPath": "/output", "name": "shared-output" }
-                    ]
+                    "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   }
                 ],
-                "nodeSelector": {
-                  "axlearn/nodepool_type": "workload"
-                },
+                "nodeSelector": { "axlearn/nodepool_type": "workload" },
                 "restartPolicy": "Never",
                 "serviceAccountName": "default",
                 "terminationGracePeriodSeconds": 60,
@@ -266,9 +214,7 @@
                   "tpu-provisioner.cloud.google.com/disable-autoprovisioning": "false",
                   "tpu-provisioner.cloud.google.com/node-service-account": "630405687483-compute@developer.gserviceaccount.com"
                 },
-                "labels": {
-                  "num-replicas": "1"
-                }
+                "labels": { "num-replicas": "1" }
               },
               "spec": {
                 "containers": [
@@ -328,41 +274,24 @@
                       { "containerPort": 29001, "protocol": "TCP" }
                     ],
                     "resources": {
-                      "limits": {
-                        "google.com/tpu": "4",
-                        "memory": "720Gi"
-                      },
-                      "requests": {
-                        "memory": "576Gi"
-                      }
+                      "limits": { "google.com/tpu": "4", "memory": "720Gi" },
+                      "requests": { "memory": "576Gi" }
                     },
-                    "securityContext": {
-                      "privileged": true
-                    },
-                    "volumeMounts": [
-                      { "mountPath": "/output", "name": "shared-output" }
-                    ]
+                    "securityContext": { "privileged": true },
+                    "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   }
                 ],
                 "dnsPolicy": "ClusterFirstWithHostNet",
                 "hostAliases": [
                   {
-                    "hostnames": [
-                      "metadata",
-                      "metadata.google.internal"
-                    ],
+                    "hostnames": [ "metadata", "metadata.google.internal" ],
                     "ip": "169.254.169.254"
                   }
                 ],
                 "initContainers": [
                   {
-                    "args": [
-                      "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/qmpathwaystest/output/$HOSTNAME/; sleep 60; done"
-                    ],
-                    "command": [
-                      "/bin/sh",
-                      "-c"
-                    ],
+                    "args": [ "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/qmpathwaystest/output/$HOSTNAME/; sleep 60; done" ],
+                    "command": [ "/bin/sh", "-c" ],
                     "image": "google/cloud-sdk:alpine",
                     "name": "output-uploader",
                     "resources": {
@@ -370,9 +299,7 @@
                       "requests": { "cpu": "100m", "memory": "128Mi" }
                     },
                     "restartPolicy": "Always",
-                    "volumeMounts": [
-                      { "mountPath": "/output", "name": "shared-output" }
-                    ]
+                    "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   }
                 ],
                 "nodeSelector": {
@@ -383,23 +310,17 @@
                 "serviceAccountName": "default",
                 "terminationGracePeriodSeconds": 60,
                 "tolerations": [],
-                "volumes": [
-                  { "emptyDir": {}, "name": "shared-output" }
-                ]
+                "volumes": [ { "emptyDir": {}, "name": "shared-output" } ]
               }
             }
           }
         }
       }
     ],
-    "startupPolicy": {
-      "startupPolicyOrder": "AnyOrder"
-    },
+    "startupPolicy": { "startupPolicyOrder": "AnyOrder" },
     "successPolicy": {
       "operator": "All",
-      "targetReplicatedJobs": [
-        "pwhd"
-      ]
+      "targetReplicatedJobs": [ "pwhd" ]
     }
   },
   "status": {
