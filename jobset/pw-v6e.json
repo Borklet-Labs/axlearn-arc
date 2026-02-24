@@ -45,7 +45,7 @@
               "spec": {
                 "containers": [
                   {
-                    "name": "qmpathwaystest",
+                    "name": "qmpathwaystest-hd",
                     "image": "INSERT_DOCKER_IMAGE",
                     "ports": [
                       {
@@ -319,7 +319,7 @@
                     ],
                     "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260128-jax_0.9.0",
                     "imagePullPolicy": "Always",
-                    "name": "qmpathwaystest",
+                    "name": "qmpathwaystest-wk",
                     "ports": [
                       { "containerPort": 8471, "protocol": "TCP" },
                       { "containerPort": 8080, "protocol": "TCP" },
