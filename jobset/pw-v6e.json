@@ -3,7 +3,7 @@
   "kind": "JobSet",
   "metadata": {
     "generation": 1,
-    "name": "qmpathwaystest",
+    "name": "arc-pw-training-v6e",
     "namespace": "axlearn-arc"
   },
   "spec": {
