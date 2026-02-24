@@ -417,6 +417,7 @@ if __name__ == '__main__':
 
     # Create the JobSet and wait for creation to complete
     if not jobset_resumed:
+        print("JobSet: ", jobset_config)
         create_jobset_and_wait(jobset_config)
         if not check_jobset_healthy(JOBSET_NAME):
             print(f"Error: Pod for JobSet {JOBSET_NAME} was unable to be scheduled or crashed",
