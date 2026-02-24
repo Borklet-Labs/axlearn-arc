@@ -400,6 +400,7 @@ if __name__ == '__main__':
     print(f"Checking to see if JobSet {JOBSET_NAME} already exists", file=sys.stderr)
     print(jobset_config)
     if get_current_jobset(JOBSET_NAME):
+        print(get_current_jobset(JOBSET_NAME))
         jobset_status = get_jobset_status(JOBSET_NAME)
         if jobset_status["active"] != 0:
             if "RESUME_JOBSET" in os.environ:
