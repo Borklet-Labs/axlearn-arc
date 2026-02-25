@@ -398,11 +398,7 @@ if __name__ == '__main__':
     jobset_resumed = False
     # Check to see if the JobSet already exists
     print(f"Checking to see if JobSet {JOBSET_NAME} already exists", file=sys.stderr)
-    #print(jobset_config)
-    
-    
-    # For PW assuming the job is not being resumed
-    '''
+
     if get_current_jobset(JOBSET_NAME):
         print(get_current_jobset(JOBSET_NAME))
         jobset_status = get_jobset_status(JOBSET_NAME)
@@ -420,7 +416,6 @@ if __name__ == '__main__':
         elif jobset_status["failed"] != 0 or jobset_status["succeeded"] != 0 or jobset_status["suspended"] != 0:
             print(f"JobSet {JOBSET_NAME} is stale. Deleting and exiting", file=sys.stderr)
             cleanup_jobset_and_exit(JOBSET_NAME, 1)
-    '''
 
     # Create the JobSet and wait for creation to complete
     if not jobset_resumed:
