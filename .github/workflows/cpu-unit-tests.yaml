@@ -21,7 +21,7 @@ jobs:
         CUSTOM_GIT_BRANCH: jw/fix-pallas-nonetype
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: pip install -U --pre jax jaxlib requests  -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
-        POST_SETUP_CMD: pip install -U --pre jax jaxlib requests tensorflow-cpu -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple
+        POST_SETUP_CMD: pip install -U --pre jax jaxlib tensorflow -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
