@@ -1,11 +1,11 @@
- #  ________   ___   __    ______   ______   ______    ______   ______   ___   __    ______   ________   ___ __ __     
- # /_______/\ /__/\ /__/\ /_____/\ /_____/\ /_____/\  /_____/\ /_____/\ /__/\ /__/\ /_____/\ /_______/\ /__//_//_/\    
- # \::: _  \ \\::\_\\  \ \\:::_ \ \\::::_\/_\:::_ \ \ \::::_\/_\::::_\/_\::\_\\  \ \\::::_\/_\::: _  \ \\::\| \| \ \   
- #  \::(_)  \ \\:. `-\  \ \\:\ \ \ \\:\/___/\\:(_) ) )_\:\/___/\\:\/___/\\:. `-\  \ \\:\/___/\\::(_)  \ \\:.      \ \  
- #   \:: __  \ \\:. _    \ \\:\ \ \ \\::___\/_\: __ `\ \\_::._\:\\::___\/_\:. _    \ \\_::._\:\\:: __  \ \\:.\-/\  \ \ 
+ #  ________   ___   __    ______   ______   ______    ______   ______   ___   __    ______   ________   ___ __ __
+ # /_______/\ /__/\ /__/\ /_____/\ /_____/\ /_____/\  /_____/\ /_____/\ /__/\ /__/\ /_____/\ /_______/\ /__//_//_/\
+ # \::: _  \ \\::\_\\  \ \\:::_ \ \\::::_\/_\:::_ \ \ \::::_\/_\::::_\/_\::\_\\  \ \\::::_\/_\::: _  \ \\::\| \| \ \
+ #  \::(_)  \ \\:. `-\  \ \\:\ \ \ \\:\/___/\\:(_) ) )_\:\/___/\\:\/___/\\:. `-\  \ \\:\/___/\\::(_)  \ \\:.      \ \
+ #   \:: __  \ \\:. _    \ \\:\ \ \ \\::___\/_\: __ `\ \\_::._\:\\::___\/_\:. _    \ \\_::._\:\\:: __  \ \\:.\-/\  \ \
  #    \:.\ \  \ \\. \`-\  \ \\:\/.:| |\:\____/\\ \ `\ \ \ /____\:\\:\____/\\. \`-\  \ \ /____\:\\:.\ \  \ \\. \  \  \ \
- #     \__\/\__\/ \__\/ \__\/ \____/_/ \_____\/ \_\/ \_\/ \_____\/ \_____\/ \__\/ \__\/ \_____\/ \__\/\__\/ \__\/ \__\/    
- #                                                                                                               
+ #     \__\/\__\/ \__\/ \__\/ \____/_/ \_____\/ \_\/ \_\/ \_____\/ \_____\/ \__\/ \__\/ \_____\/ \__\/\__\/ \__\/ \__\/
+ #
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
  # @version: 2026-01-30
@@ -47,7 +47,7 @@ KUBE_API = kubernetes.client.CoreV1Api()
 
 def receive_signal(signum, signal):
     """Receive a signal from Github and exit
-    
+
     Args:
         signum: Number of signal
         signal: Signal"""
@@ -61,10 +61,10 @@ signal.signal(signal.SIGINT, receive_signal)
 def get_current_jobset(jobset_name: str):
     """Fetch a list of active JobSets in a predefined namespace, returning the JobSet
     that matches the name provided
-    
+
     Args:
         jobnet_name: String containing the JobSet name
-        
+
     Returns:
         Returns the JobSet object matching the name, or None"""
 
@@ -77,10 +77,10 @@ def get_current_jobset(jobset_name: str):
 
 def get_jobset_status(jobset_name: str):
     """Get the status of a JobSet
-    
+
     Args:
         jobnet_name: String containing the JobSet name
-        
+
     Returns:
         Returns the JobSet status object matching the name, or None"""
 
@@ -88,7 +88,7 @@ def get_jobset_status(jobset_name: str):
 
 def cleanup_jobset(jobset_name: str):
     """Delete a JobSet when finishing execution
-    
+
     Args:
         jobset_name: String containing the JobSet to delete"""
 
@@ -100,7 +100,7 @@ def cleanup_jobset_and_exit(jobset_name: str,
                             log_worker: threading.Thread = None,
                             stop_log: threading.Event = None):
     """Delete a JobSet and exit
-    
+
     Args:
         jobset_name: String containing the JobSet to delete
         exit_code: Integer code to return
@@ -126,10 +126,10 @@ def cleanup_jobset_and_exit(jobset_name: str,
 
 def get_pod_status(pod_name: str):
     """Get the status of a pod
-    
+
     Args:
         pod_name: String with the name of the pod
-        
+
     Returns:
         Returns the current status of the pod"""
 
@@ -141,7 +141,7 @@ def get_pod_status(pod_name: str):
 
 def get_pod_logs(pod_name: str, stop: threading.Event):
     """Spawn a stream to print out pod logs during execution
-    
+
     Args:
         pod_name: String with the name of the pod
         stop: Threading event to stop execution"""
@@ -170,10 +170,10 @@ def get_pod_logs(pod_name: str, stop: threading.Event):
 
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state
-    
+
     Args:
         jobset_name: String containing the JobSet name
-        
+
     Returns:
         True if the JobSet is active and pods are running
         False if the JobSet is active but pods aren't scheduled"""
@@ -199,10 +199,10 @@ def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
 
 def check_jobset_completed(jobset_name: str) -> bool:
     """Check to see if a JobSet completed
-    
+
     Args:
         jobset_name: String with the JobSet name
-        
+
     Returns:
         True if completed
         False if not completed"""
@@ -219,10 +219,10 @@ def check_jobset_completed(jobset_name: str) -> bool:
 def update_jobset(jobset_base_config: dict) -> dict:
     """Take in a JobSet config dict and update with new Git info
     and information about the owner to handle proper termination
-    
+
     Args:
         jobset_base_config: Dict containing the JobSet config
-        
+
     Returns:
         Returns a new dict for the JobSet"""
 
@@ -302,7 +302,7 @@ def update_jobset(jobset_base_config: dict) -> dict:
 
 def write_result(success: bool):
     """Write the result of a test to a CSV
-    
+
     Args:
         success: True if the loop ended successful"""
 
@@ -317,7 +317,7 @@ def write_result(success: bool):
 
 def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
     """Create a JobSet using the CRD API and ensure its completion happens
-    
+
     Args:
         jobset_config: A config to submit to the kube API
         skip_creation: Don't create the JobSet, just wait for creation"""
@@ -362,7 +362,7 @@ def create_jobset_and_wait(jobset_config, skip_creation: bool = False):
 def monitor_jobset_status():
     """Monitor the progression of a JobSet, looking at the health of the pod and counting down
     to JOBSET_HEALTHY_TIMEOUT
-    
+
     Returns: Returns references to stop_log and log_worker"""
 
     # Spawn a thread to print pod logs to stderr
