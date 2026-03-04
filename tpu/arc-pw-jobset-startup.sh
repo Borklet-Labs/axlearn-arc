@@ -41,12 +41,22 @@ fi
 # Modify the batch size to account for TPU v6e 4x4
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn/experiments/text/gpt/fuji.py
 
+LOG_FILE="training_output.log"
+
+cleanup_logs() {
+    if [ -f "$LOG_FILE" ]; then
+        echo "Uploading captured logs to GCS before exiting..."
+        gsutil cp "$LOG_FILE" ${GCS_PREFIX}/runs/pw-logs/${GH_RUN_ID}/training_output.log
+    fi
+}
+trap cleanup_logs EXIT
+
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main \
     --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
-    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
+    --trainer_dir=${GCS_PREFIX}/runs/pw-logs/${GH_RUN_ID} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
     --jax_backend=proxy \
     --mesh_selector=tpu-v6e-16 \
     --trace_at_steps=5 \
-    --trainer_log_every_n_steps=1
+    --trainer_log_every_n_steps=1 2>&1 | tee ${LOG_FILE}
