@@ -3,8 +3,8 @@
   "kind": "JobSet",
   "metadata": {
     "generation": 1,
-    "name": "qmpathwaystest",
-    "namespace": "default"
+    "name": "arc-pw-multislice-training",
+    "namespace": "axlearn-arc"
   },
   "spec": {
     "coordinator": {
@@ -28,7 +28,7 @@
           "metadata": {
             "annotations": {
               "axlearn/replicatedjob-load-balancer-port": "80",
-              "axlearn/replicatedjob-load-balancer-service-name": "qmpathwaystest-pwhd-service",
+              "axlearn/replicatedjob-load-balancer-service-name": "arc-pw-multislice-training-pwhd-service",
               "axlearn/replicatedjob-load-balancer-target-port": "9000"
             }
           },
@@ -45,15 +45,26 @@
               "spec": {
                 "containers": [
                   {
-                    "command": [
-                      "bash",
-                      "-c",
-                      "python3 -m axlearn.common.launch_trainer_main --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash --trainer_dir=gs://qmcgarry-axlearn/qmpathwaystest --data_dir=gs://tpu-prod-env-multipod-axlearn/tensorflow-datasets/tensorflow_datasets --jax_backend=proxy --trace_at_steps=10 --mesh_selector=tpu-v6e-16"
+                    "name": "arc-pw-multislice-training-hd",
+                    "image": "INSERT_DOCKER_IMAGE",
+                    "ports": [
+                      { "containerPort": 8471 },
+                      { "containerPort": 8080 },
+                      { "containerPort": 8431 },
+                      { "containerPort": 9000 }
                     ],
+                    "securityContext": { "privileged": true },
+                    "command": [ "bash", "/var/arc/tpu-jobset-multislice-startup.sh" ],
+                    "resources": {
+                      "requests": {
+                        "cpu": "1",
+                        "memory": "16Gi"
+                      }
+                    },
                     "env": [
                       { "name": "GCS_RESOLVE_REFRESH_SECS", "value": "600" },
                       { "name": "TPU_TYPE", "value": "v6e-16" },
-                      { "name": "NUM_TPU_SLICES", "value": "1" },
+                      { "name": "NUM_TPU_SLICES", "value": "2" },
                       { "name": "XLA_FLAGS", "value": "--xla_dump_to=/output/arc-tpu-training/xla" },
                       { "name": "TF_CPP_MIN_LOG_LEVEL", "value": "0" },
                       { "name": "TPU_STDERR_LOG_LEVEL", "value": "0" },
@@ -69,6 +80,13 @@
                         "name": "NODE_NAME",
                         "valueFrom": { "fieldRef": { "fieldPath": "spec.nodeName" } }
                       },
+                      { "name": "GCS_PREFIX", "value": "INSERT_GCS_PREFIX" },
+                      { "name": "CUSTOM_GIT_ORIGIN", "value": "INSERT_GIT_ORIGIN" },
+                      { "name": "CUSTOM_GIT_BRANCH", "value": "INSERT_GIT_BRANCH" },
+                      { "name": "GH_RUN_ID", "value": "INSERT_GH_RUN_ID" },
+                      { "name": "POST_SETUP_CMD", "value": "INSERT_POST_SETUP_CMD" },
+                      { "name": "FUJI_PATCH_FILE", "value": "INSERT_FUJI_PATCH_FILE" },
+                      { "name": "ENABLE_JAX_DEV", "value": "INSERT_ENABLE_JAX_DEV" },
                       {
                         "name": "NUM_REPLICAS",
                         "valueFrom": { "fieldRef": { "fieldPath": "metadata.annotations['jobset.sigs.k8s.io/replicatedjob-replicas']" } }
@@ -91,37 +109,17 @@
                         "valueFrom": { "fieldRef": { "fieldPath": "metadata.labels['jobset.sigs.k8s.io/coordinator']" } }
                       }
                     ],
-                    "image": "us-central2-docker.pkg.dev/tpu-prod-env-one-vm/quinn-tpu/qmcgarry-axlearn-0.9.1dev:latest",
-                    "imagePullPolicy": "Always",
-                    "name": "qmpathwaystest",
-                    "ports": [
-                      { "containerPort": 8471, "protocol": "TCP" },
-                      { "containerPort": 8080, "protocol": "TCP" },
-                      { "containerPort": 8431, "protocol": "TCP" },
-                      { "containerPort": 9000, "protocol": "TCP" }
-                    ],
-                    "resources": {
-                      "requests": {
-                        "cpu": "1",
-                        "memory": "16Gi"
-                      }
-                    },
-                    "securityContext": {
-                      "privileged": true
-                    },
                     "volumeMounts": [
                       { "mountPath": "/output", "name": "shared-output" },
                       { "mountPath": "/tmp/ifrt_proxy", "name": "shared-memory" }
-                    ]
+                    ],
+                    "imagePullPolicy": "Always"
                   }
                 ],
                 "dnsPolicy": "ClusterFirstWithHostNet",
                 "hostAliases": [
                   {
-                    "hostnames": [
-                      "metadata",
-                      "metadata.google.internal"
-                    ],
+                    "hostnames": [ "metadata", "metadata.google.internal" ],
                     "ip": "169.254.169.254"
                   }
                 ],
@@ -130,7 +128,7 @@
                     "args": [
                       "--resource_manager_address=localhost:29001",
                       "--server_port=29000",
-                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/qmpathwaystest/pathways-staging",
+                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-training/pathways-staging",
                       "--xla_tpu_spmd_rng_bit_generator_unsafe=1",
                       "--xla_tpu_enable_latency_hiding_scheduler=true",
                       "--xla_tpu_perform_spmd_cse_prevention=false"
@@ -140,11 +138,9 @@
                       { "name": "XLA_FLAGS", "value": "--xla_dump_to=/output/arc-tpu-training/xla" },
                       { "name": "IFRT_PROXY_LARGE_TRANSFER_OPTIMIZATION_DIRECTORY", "value": "/tmp/ifrt_proxy" }
                     ],
-                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260128-jax_0.9.0",
+                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2",
                     "name": "pathways-proxy",
-                    "ports": [
-                      { "containerPort": 29000, "protocol": "TCP" }
-                    ],
+                    "ports": [ { "containerPort": 29000, "protocol": "TCP" } ],
                     "resources": {},
                     "restartPolicy": "Always",
                     "volumeMounts": [
@@ -156,29 +152,20 @@
                     "args": [
                       "--server_port=29001",
                       "--node_type=resource_manager",
-                      "--instance_count=1",
+                      "--instance_count=2",
                       "--instance_type=tpuv6e:4x4",
-                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/qmpathwaystest/pathways-staging"
+                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-training/pathways-staging"
                     ],
-                    "env": [
-                      { "name": "TPU_SKIP_MDS_QUERY", "value": "true" }
-                    ],
-                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260128-jax_0.9.0",
+                    "env": [ { "name": "TPU_SKIP_MDS_QUERY", "value": "true" } ],
+                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2",
                     "name": "pathways-rm",
                     "resources": {},
                     "restartPolicy": "Always",
-                    "volumeMounts": [
-                      { "mountPath": "/output", "name": "shared-output" }
-                    ]
+                    "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   },
                   {
-                    "args": [
-                      "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/qmpathwaystest/output/$HOSTNAME/; sleep 60; done"
-                    ],
-                    "command": [
-                      "/bin/sh",
-                      "-c"
-                    ],
+                    "args": [ "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/arc-pw-multislice-training/output/$HOSTNAME/; sleep 60; done" ],
+                    "command": [ "/bin/sh", "-c" ],
                     "image": "google/cloud-sdk:alpine",
                     "name": "output-uploader",
                     "resources": {
@@ -186,14 +173,10 @@
                       "requests": { "cpu": "100m", "memory": "128Mi" }
                     },
                     "restartPolicy": "Always",
-                    "volumeMounts": [
-                      { "mountPath": "/output", "name": "shared-output" }
-                    ]
+                    "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   }
                 ],
-                "nodeSelector": {
-                  "axlearn/nodepool_type": "workload"
-                },
+                "nodeSelector": { "axlearn/nodepool_type": "workload" },
                 "restartPolicy": "Never",
                 "serviceAccountName": "default",
                 "terminationGracePeriodSeconds": 60,
@@ -209,13 +192,12 @@
       },
       {
         "name": "pwwk",
-        "replicas": 1,
+        "replicas": 2,
         "template": {
           "metadata": {
             "annotations": {
-              "alpha.jobset.sigs.k8s.io/exclusive-topology": "cloud.google.com/gke-nodepool",
               "axlearn/replicatedjob-load-balancer-port": "80",
-              "axlearn/replicatedjob-load-balancer-service-name": "qmpathwaystest-pwhd-service",
+              "axlearn/replicatedjob-load-balancer-service-name": "arc-pw-multislice-training-pwhd-service",
               "axlearn/replicatedjob-load-balancer-target-port": "9000"
             },
             "labels": {}
@@ -231,24 +213,22 @@
                   "tpu-provisioner.cloud.google.com/disable-autoprovisioning": "false",
                   "tpu-provisioner.cloud.google.com/node-service-account": "630405687483-compute@developer.gserviceaccount.com"
                 },
-                "labels": {
-                  "num-replicas": "1"
-                }
+                "labels": { "num-replicas": "2" }
               },
               "spec": {
                 "containers": [
                   {
                     "args": [
                       "--server_port=29001",
-                      "--resource_manager_address=qmpathwaystest-pwhd-0-0.qmpathwaystest:29001",
-                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/qmpathwaystest/pathways-staging",
+                      "--resource_manager_address=arc-pw-multislice-training-pwhd-0-0.arc-pw-multislice-training:29001",
+                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-training/pathways-staging",
                       "--tpu_pinned_host_allocation_recycle=true",
                       "--tpu_premapped_buffer_size=68719476736"
                     ],
                     "env": [
                       { "name": "GCS_RESOLVE_REFRESH_SECS", "value": "600" },
                       { "name": "TPU_TYPE", "value": "v6e-16" },
-                      { "name": "NUM_TPU_SLICES", "value": "1" },
+                      { "name": "NUM_TPU_SLICES", "value": "2" },
                       { "name": "XLA_FLAGS", "value": "--xla_dump_to=/output/arc-tpu-training/xla" },
                       { "name": "TF_CPP_MIN_LOG_LEVEL", "value": "0" },
                       { "name": "TPU_STDERR_LOG_LEVEL", "value": "0" },
@@ -272,19 +252,16 @@
                         "name": "REPLICA_ID",
                         "valueFrom": { "fieldRef": { "fieldPath": "metadata.annotations['jobset.sigs.k8s.io/job-index']" } }
                       },
-                      { "name": "MEGASCALE_COORDINATOR_ADDRESS", "value": "qmpathwaystest-pwhd-0-0.qmpathwaystest" },
-                      {
-                        "name": "MEGASCALE_NUM_SLICES",
-                        "valueFrom": { "fieldRef": { "fieldPath": "metadata.labels['jobset.sigs.k8s.io/replicatedjob-replicas']" } }
-                      },
+                      { "name": "MEGASCALE_COORDINATOR_ADDRESS", "value": "arc-pw-multislice-training-pwhd-0-0.arc-pw-multislice-training" },
+                      { "name": "MEGASCALE_NUM_SLICES", "value": "2"},
                       {
                         "name": "MEGASCALE_SLICE_ID",
                         "valueFrom": { "fieldRef": { "fieldPath": "metadata.labels['jobset.sigs.k8s.io/job-index']" } }
                       }
                     ],
-                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260128-jax_0.9.0",
+                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2",
                     "imagePullPolicy": "Always",
-                    "name": "qmpathwaystest",
+                    "name": "arc-pw-multislice-training-wk",
                     "ports": [
                       { "containerPort": 8471, "protocol": "TCP" },
                       { "containerPort": 8080, "protocol": "TCP" },
@@ -293,41 +270,24 @@
                       { "containerPort": 29001, "protocol": "TCP" }
                     ],
                     "resources": {
-                      "limits": {
-                        "google.com/tpu": "4",
-                        "memory": "720Gi"
-                      },
-                      "requests": {
-                        "memory": "576Gi"
-                      }
+                      "limits": { "google.com/tpu": "4", "memory": "720Gi" },
+                      "requests": { "memory": "576Gi" }
                     },
-                    "securityContext": {
-                      "privileged": true
-                    },
-                    "volumeMounts": [
-                      { "mountPath": "/output", "name": "shared-output" }
-                    ]
+                    "securityContext": { "privileged": true },
+                    "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   }
                 ],
                 "dnsPolicy": "ClusterFirstWithHostNet",
                 "hostAliases": [
                   {
-                    "hostnames": [
-                      "metadata",
-                      "metadata.google.internal"
-                    ],
+                    "hostnames": [ "metadata", "metadata.google.internal" ],
                     "ip": "169.254.169.254"
                   }
                 ],
                 "initContainers": [
                   {
-                    "args": [
-                      "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/qmpathwaystest/output/$HOSTNAME/; sleep 60; done"
-                    ],
-                    "command": [
-                      "/bin/sh",
-                      "-c"
-                    ],
+                    "args": [ "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/arc-pw-multislice-training/output/$HOSTNAME/; sleep 60; done" ],
+                    "command": [ "/bin/sh", "-c" ],
                     "image": "google/cloud-sdk:alpine",
                     "name": "output-uploader",
                     "resources": {
@@ -335,9 +295,7 @@
                       "requests": { "cpu": "100m", "memory": "128Mi" }
                     },
                     "restartPolicy": "Always",
-                    "volumeMounts": [
-                      { "mountPath": "/output", "name": "shared-output" }
-                    ]
+                    "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   }
                 ],
                 "nodeSelector": {
@@ -348,23 +306,37 @@
                 "serviceAccountName": "default",
                 "terminationGracePeriodSeconds": 60,
                 "tolerations": [],
-                "volumes": [
-                  { "emptyDir": {}, "name": "shared-output" }
-                ]
+                "volumes": [ { "emptyDir": {}, "name": "shared-output" } ]
               }
             }
           }
         }
       }
     ],
-    "startupPolicy": {
-      "startupPolicyOrder": "AnyOrder"
-    },
+    "startupPolicy": { "startupPolicyOrder": "AnyOrder" },
     "successPolicy": {
       "operator": "All",
-      "targetReplicatedJobs": [
-        "pwhd"
-      ]
+      "targetReplicatedJobs": [ "pwhd" ]
     }
+  },
+  "status": {
+    "replicatedJobsStatus": [
+      {
+        "active": 2,
+        "failed": 0,
+        "name": "pwwk",
+        "ready": 2,
+        "succeeded": 0,
+        "suspended": 0
+      },
+      {
+        "active": 1,
+        "failed": 0,
+        "name": "pwhd",
+        "ready": 1,
+        "succeeded": 0,
+        "suspended": 0
+      }
+    ]
   }
 }

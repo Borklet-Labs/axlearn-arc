@@ -30,6 +30,8 @@ SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in 
 POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
 FUJI_PATCH_FILE = os.environ['FUJI_PATCH_FILE'] if "FUJI_PATCH_FILE" in os.environ else None
 ENABLE_JAX_DEV = os.environ['ENABLE_JAX_DEV'] if "ENABLE_JAX_DEV" in os.environ else None
+PW_PROXY_IMAGE = os.environ['PW_PROXY_IMAGE'] if "PW_PROXY_IMAGE" in os.environ else None
+PW_SERVER_IMAGE = os.environ['PW_SERVER_IMAGE'] if "PW_SERVER_IMAGE" in os.environ else None
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -289,6 +291,12 @@ def update_jobset(jobset_base_config: dict) -> dict:
         if ENABLE_JAX_DEV == "true":
             print('Detected Jax pre-release dev mode', file=sys.stderr)
             updated_jobset = updated_jobset.replace("INSERT_ENABLE_JAX_DEV", ENABLE_JAX_DEV)
+
+    # Add a Pathways image
+    if PW_PROXY_IMAGE:
+        print('Using Pathways image {PW_PROXY_IMAGE}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_PROXY_IMAGE", PW_PROXY_IMAGE)
+        updated_jobset = updated_jobset.replace("INSERT_SERVER_IMAGE", PW_SERVER_IMAGE)
 
     return json.loads(updated_jobset)
 
