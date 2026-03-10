@@ -19,11 +19,11 @@ jobs:
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
-        # POST_SETUP_CMD: uv pip install libtpu==0.0.32.2
+        POST_SETUP_CMD: uv pip install jax==0.9.1
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
         # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
-        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
-        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
+        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260305-jax_0.9.0
+        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260305-jax_0.9.0
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
