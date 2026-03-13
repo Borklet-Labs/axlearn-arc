@@ -291,6 +291,11 @@ def update_jobset(jobset_base_config: dict) -> dict:
         if ENABLE_JAX_DEV == "true":
             print('Detected Jax pre-release dev mode', file=sys.stderr)
             updated_jobset = updated_jobset.replace("INSERT_ENABLE_JAX_DEV", ENABLE_JAX_DEV)
+                # Add a Pathways image
+    if PW_PROXY_IMAGE:
+        print('Using Pathways image {PW_PROXY_IMAGE}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_PROXY_IMAGE", PW_PROXY_IMAGE)
+        updated_jobset = updated_jobset.replace("INSERT_SERVER_IMAGE", PW_SERVER_IMAGE)
 
     # Add a Pathways image
     if PW_PROXY_IMAGE:
@@ -381,6 +386,7 @@ def monitor_jobset_status():
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
             write_result(False)
             cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
+
         else:
             if check_jobset_completed(JOBSET_NAME):
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)

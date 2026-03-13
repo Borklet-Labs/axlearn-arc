@@ -29,6 +29,7 @@ RUN pip install --upgrade pip && pip install uv flit && pip cache purge
 
 # Necessary for gcp logging api
 RUN uv pip install google-cloud-logging
+RUN uv pip install google-cloud-storage
 
 # Copy the test setup to the image
 COPY . .

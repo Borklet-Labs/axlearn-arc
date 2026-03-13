@@ -17,7 +17,10 @@ from google.cloud import logging as logging_api
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from typing import List
+from google.cloud import storage
 import re
+
 
 # 1. Constants  Axlearn-arc project
 PROJECT_ID = "tpu-prod-env-one-vm"
@@ -26,7 +29,6 @@ CLUSTER_NAME = "axlearn-arc-cluster"
 NAMESPACE = "axlearn-arc"
 POD_PATTERN = "arc-pw-training-pwhd-0-.*"
 CONTAINER_NAME = "arc-pw-training-hd"
-LOG_PATTERN = r"^Serialization.*?step_(?P<step>\d+).*"
 
 LOG_CONFIG = {
     "project_id": PROJECT_ID,
@@ -35,7 +37,6 @@ LOG_CONFIG = {
     "namespace": NAMESPACE,
     "pod_pattern": POD_PATTERN,
     "container_name": CONTAINER_NAME,
-    "log_pattern": LOG_PATTERN,
 }
 
 # Environment variables
@@ -45,6 +46,62 @@ END_TIME = os.environ['END_TIME'] # End time of the launch job task
 GCS_PREFIX = os.environ['GCS_PREFIX']
 GIT_BRANCH = os.environ['CUSTOM_GIT_BRANCH'] if "CUSTOM_GIT_BRANCH" in os.environ else "main"
 GH_RUN_ID = os.environ['GH_RUN_ID']
+
+def get_files_gcs(gcs_path: str) -> List[str]:
+    """
+    Lists files in a GCS bucket at a specified path using the standard GCS Client.
+    """
+    # 1. Initialize the GCS Client
+    # It will automatically use your environment credentials
+    client = storage.Client()
+
+    # 2. Parse the GCS path
+    pattern = re.compile(r"^gs://(?P<bucket>[^/]+)/(?P<prefix>.+)$")
+    m = pattern.match(gcs_path)
+
+    if not m:
+        logging.error(f"Invalid GCS path format: {gcs_path}")
+        return []
+
+    bucket_name = m.group("bucket")
+    prefix = m.group("prefix")
+
+    # 3. Query the bucket
+    try:
+        bucket = client.bucket(bucket_name)
+        # list_blobs returns an iterator of blob objects
+        blobs = bucket.list_blobs(prefix=prefix, delimiter='/')
+
+        for _ in blobs:
+          pass
+
+        valid_checkpoints = []
+        for folder_path in blobs.prefixes:
+          # 2. Check for the existence of the 'index' file inside this folder
+          # We limit max_results=1 because we only need to know if it exists
+          index_check = bucket.list_blobs(
+              prefix=f"{folder_path}index",
+              max_results=1
+          )
+
+          # If the iterator has at least one item, the index exists
+          # Checkpoint was successfully commit.
+          if any(index_check):
+              # Extract the folder name (e.g., 'step_00000100')
+              folder_name = folder_path.rstrip('/').split('/')[-1]
+              valid_checkpoints.append(folder_name)
+
+        steps_chkp = []
+        for file in valid_checkpoints:
+            step = int(file.split("_")[-1])
+            steps_chkp.append(step)
+        print(f"Querying GCS path: {gcs_path}")
+        print(f"Found {len(steps_chkp)} checkpoints.")
+        return steps_chkp
+
+    except Exception as e:
+        print(f"Failed to list GCS files: {e}")
+        return []
 
 def list_log_entries(
     project_id: str,
@@ -118,81 +175,6 @@ def list_log_entries(
   print(f"Log filter constructed: {log_filter}")
   return list(logging_client.list_entries(filter_=log_filter))
 
-def validate_checkpoint_at_steps_are_saved(
-    project_id: str,
-    location: str,
-    cluster_name: str,
-    steps_to_validate: list[int],
-    ram_disk: str = "/local",
-    pod_pattern: Optional[str] = ".*",
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
-) -> None:
-  """
-  Validates that a workload is training correctly by checking for specific log
-  steps.
-
-  This function queries logs from a specified GKE cluster and namespace.
-  It searches for a log entry containing the string '(blocking + background)'
-  and then compares the number of steps found against an expected list of
-  steps.
-
-  A mismatch in the number of steps will cause the validation to fail. This can
-  happen if, for example, a restore operation causes the step count to restart
-  from zero, leading to `len(steps_to_validate) != len(found_steps)`.
-
-  Args:
-    project_id: The Google Cloud project ID
-    location: GKE cluster location
-    cluster_name: GKE cluster name
-    start_time: Optional start time for log retrieval
-      (defaults to 12 hours ago)
-    end_time: Optional end time for log retrieval (defaults to now)
-    steps_to_validate: Optional to validate list of steps
-  Returns:
-    None: This function does not return a value.
-  """
-
-  directory_pattern = (
-      rf"{re.escape(ram_disk)}/(\d+)"
-      if ram_disk != "gcs"
-      else r"gs://[^/]+/[^/]+/[^/]+/checkpoints/(\d+)"
-  )
-  log_pattern = (
-      rf"Finished async_save \(blocking \+ background\)\. "
-      rf"Time taken: \d+\.\d+s\. directory={directory_pattern}"
-  )
-
-  complied_pattern = re.compile(log_pattern)
-  entries = list_log_entries(
-      project_id=project_id,
-      location=location,
-      cluster_name=cluster_name,
-      pod_pattern=pod_pattern,
-      text_filter=f'textPayload=~"{log_pattern}"',
-      start_time=start_time,
-      end_time=end_time,
-  )
-
-  steps_are_saved: set[int] = set()  # Use a set for faster lookup.
-  for entry in entries:
-    if not isinstance(entry, logging_api.TextEntry):
-      raise Exception(
-          "Log entry must be contain a textPayload attribute."
-      )
-
-    message = entry.payload
-    m = complied_pattern.search(message)
-    if m:
-      steps_are_saved.add(int(m.group(1)))
-
-  for step in steps_to_validate:
-    if step not in steps_are_saved:
-      logging.info(f"Found entries: {entries}")
-      raise Exception(
-          f"Failed to validate. Expect steps are saved: {steps_to_validate}; "
-          f"got: {steps_are_saved}"
-      )
 
 if __name__ == '__main__':
 
@@ -212,27 +194,23 @@ if __name__ == '__main__':
             f"Error details: {e}"
     ) from None
 
-  # We validate first 100 steps were stored
-  steps_to_validate = [100]
-
   # Gcs bucket to later compare if indeed is being store.
-  trainer_dir = f"{GCS_PREFIX}/runs/{GIT_BRANCH}/{GH_RUN_ID}"
+  trainer_dir = f"{GCS_PREFIX}/runs/{GIT_BRANCH}/{GH_RUN_ID}/checkpoints/"
 
   # This log pattern will be looged in a random pod of the first slice.
-  log_pattern = LOG_CONFIG["log_pattern"]
+  log_pattern = r"^Serialization.*?step_(?P<step>\d+).*"
   complied_pattern = re.compile(log_pattern)
 
   # Fetch logs from Cloud Logging API for the specified time window.
   entries = list_log_entries(
         **LOG_CONFIG,
-        namespace="axlearn-arc",
         text_filter=f'jsonPayload.message=~"{log_pattern}"',
         start_time=start_dt,
         end_time=end_dt,
     )
 
-  # Compare if expected steps with found steps in logs.
-  steps_are_saved: set[int] = set()
+  # Get saved steps in the logs.
+  chkp_in_lgs: set[int] = set()
   for entry in entries:
     if not isinstance(entry, logging_api.StructEntry):
       raise ValueError(
@@ -244,17 +222,17 @@ if __name__ == '__main__':
 
     m = complied_pattern.search(message)
     if m:
-      steps_are_saved.add(int(m.group(1)))
+      chkp_in_lgs.add(int(m.group(1)))
 
-  for step in steps_to_validate:
-    if step not in steps_are_saved:
-      print(f"Found entries: {entries}")
-      raise ValueError(
-          f"Failed to validate. Expect steps are saved: {steps_to_validate}; "
-          f"got: {steps_are_saved}"
-      )
-    print(
-      f"Successful Validation.\nExpected  Steps:{steps_to_validate}"
-      f"\tFound Steps:{steps_are_saved}"
+  # Get saved steps in GCS Bucket.
+  chkp_in_gcs = get_files_gcs(trainer_dir)
+
+  # Failed if does not match
+  if len(chkp_in_gcs) != len(chkp_in_lgs):
+    raise ValueError(
+        f"Failed to validate checkpoints of the run. Checkp in Logs: {chkp_in_lgs} "
+        f"Checkp in GCS Bucket: {chkp_in_gcs}"
     )
+  print(f"Successfully validated {len(chkp_in_gcs)} checkpoints.")
+  print(f"Checkpoints found: {sorted(list(chkp_in_lgs))}")
 

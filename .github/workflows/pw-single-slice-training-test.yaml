@@ -12,13 +12,12 @@ jobs:
         ARC_JOBSET_JSON: /var/arc/arc-pw.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python:latest
-        JOBSET_HEALTHY_TIMEOUT: 800
+        JOBSET_HEALTHY_TIMEOUT: 900 # ~15 min to finish
         ACCELERATOR: v6e_4x4_1
         # Optional flags
         STEPS_CHECKPOINT: 100
         MAX_STEPS: 500
         # CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: cienet_jax_py3.12_nightly
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)

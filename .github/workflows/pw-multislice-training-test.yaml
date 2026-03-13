@@ -5,13 +5,13 @@ jobs:
   pw-tpu-single-slice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
-      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/quinn-tpu/pw-arc-jobset:latest
+      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset:latest
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: arc-pw-multislice-training
         ARC_JOBSET_JSON: /var/arc/arc-pw-multislice.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/quinn-tpu/pw-arc:latest
+        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python:latest
         JOBSET_HEALTHY_TIMEOUT: 600
         ACCELERATOR: v6e_4x4_2
         # Optional flags
@@ -28,7 +28,26 @@ jobs:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
       - name: Launch the TPU training job
-        run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+        id: launch_step
+        run: |
+          START_TIME=$(date +%s)
+          echo "START_TIME=$START_TIME" >> $GITHUB_ENV
+
+          GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+
+          echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
+          echo "end_time=$END_TIME" >> $GITHUB_OUTPUT
+      - name: Checkpoint Validation
+        if: always()
+        env:
+          GH_RUN_ID: ${{ github.run_id }}
+          START_TIME: ${{ steps.launch_step.outputs.start_time}}
+          END_TIME: ${{ steps.launch_step.outputs.end_time}}
+        run: |
+          python /var/arc/checkpoint_validation.py
       - name: Upload the training result to GCS
         if: always()
         run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh

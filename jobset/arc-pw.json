@@ -13,7 +13,7 @@
       "replicatedJob": "pwhd"
     },
     "failurePolicy": {
-      "maxRestarts": 9,
+      "maxRestarts": 15,
       "restartStrategy": "Recreate"
     },
     "network": {
