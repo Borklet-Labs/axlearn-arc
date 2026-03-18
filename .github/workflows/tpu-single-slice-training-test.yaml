@@ -24,7 +24,7 @@ jobs:
         # CUSTOM_GIT_BRANCH: jax_0.9.1_dev # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
-        POST_SETUP_CMD: pip install -v -U --pre jax==0.8.3 jaxlib==0.8.3 requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
+        POST_SETUP_CMD: pip install -v -U --pre jax==0.9.0 jaxlib==0.9.0 requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
