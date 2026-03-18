@@ -22,7 +22,7 @@ jobs:
         CUSTOM_GIT_BRANCH: jw/fix-explicit-axis-type
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: pip install -U --pre jax jaxlib requests  -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
-        POST_SETUP_CMD: pip install -U --pre jax==0.8.3 jaxlib==0.8.3 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
+        POST_SETUP_CMD: pip install -U --pre jax==0.9.0 jaxlib==0.9.0 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
