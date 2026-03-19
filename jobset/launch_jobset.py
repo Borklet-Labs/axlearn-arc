@@ -32,6 +32,7 @@ FUJI_PATCH_FILE = os.environ['FUJI_PATCH_FILE'] if "FUJI_PATCH_FILE" in os.envir
 ENABLE_JAX_DEV = os.environ['ENABLE_JAX_DEV'] if "ENABLE_JAX_DEV" in os.environ else None
 PW_PROXY_IMAGE = os.environ['PW_PROXY_IMAGE'] if "PW_PROXY_IMAGE" in os.environ else None
 PW_SERVER_IMAGE = os.environ['PW_SERVER_IMAGE'] if "PW_SERVER_IMAGE" in os.environ else None
+RESTORE_MODE = os.environ['RESTORE_MODE'] if "RESTORE_MODE" in os.environ else None
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -383,6 +384,9 @@ def monitor_jobset_status():
               file=sys.stderr)
         # Check for failures
         if not jobset_healthy:
+          if RESTORE_MODE:
+            print(f"Error detected but skipped since RESTORE_MODE: ${RESTORE_MODE}.", file=sys.stderr)
+          else:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
             write_result(False)
             cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
