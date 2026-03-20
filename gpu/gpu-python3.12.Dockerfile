@@ -26,9 +26,6 @@ RUN python3.12 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies.
 RUN pip install --upgrade pip && pip install uv flit && pip cache purge
-# Prepare CUDA and ensure we can install the correct Jax release with uv later
-# Ensure we are pulling the custom wheels required for Python 3.12
-ENV UV_FIND_LINKS="https://storage.googleapis.com/jax-releases/jax_cuda_releases.html,https://storage.googleapis.com/axlearn-wheels/wheels.html"
 # Enable the CUDA repository and install the required libraries (libnvrtc.so)
 RUN curl -o cuda-keyring_1.1-1_all.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb && \
     dpkg -i cuda-keyring_1.1-1_all.deb && \

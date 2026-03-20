@@ -22,7 +22,7 @@ fi
 
 # Run the unit tests
 if [ $? -eq 0 ]; then
-    bash /var/arc/cpu-unit-tests.sh 2>&1 | tee -a /home/runner/_work/csv_results/full_output.log
+    bash /var/arc/golden-config-test.sh 2>&1 | tee -a /home/runner/_work/csv_results/full_output.log
 else
     exit 1
 fi

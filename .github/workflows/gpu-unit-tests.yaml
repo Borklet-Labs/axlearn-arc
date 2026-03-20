@@ -19,7 +19,7 @@ jobs:
       - name: Fetch the target AXLearn origin and branch
         run: /bin/bash /var/arc/git-setup.sh
       - name: Install AXLearn and pytest dependiencies with uv
-        run: cd /root && uv pip install --find-links https://storage.googleapis.com/axlearn-wheels/wheels.html .[core,gpu,gcp] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
+        run: cd /root && uv pip install .[core,gpu,gcp] pytest pytest-instafail pytest-xdist pytest-csv pytest-timeout
       - name: Install JAX nigthly
         run: pip install -U --pre jax jaxlib jax-cuda12-plugin -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
       - name: Create output directories

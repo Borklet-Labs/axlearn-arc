@@ -8,7 +8,7 @@
  #
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2025-11-07-nightly
+ # @version: 2026-03-21-nightly
 
 
 import json
@@ -29,7 +29,11 @@ JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT'])
 GH_RUN_ID = os.environ['GH_RUN_ID']
 SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in os.environ else 15 * 60
 POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
+FUJI_PATCH_FILE = os.environ['FUJI_PATCH_FILE'] if "FUJI_PATCH_FILE" in os.environ else None
+ENABLE_JAX_DEV = os.environ['ENABLE_JAX_DEV'] if "ENABLE_JAX_DEV" in os.environ else None
 print(f"POST_SETUP_CMD: {POST_SETUP_CMD}")
+print(f"FUJI_PATCH_FILE: {FUJI_PATCH_FILE}")
+print(f"ENABLE_JAX_DEV: {ENABLE_JAX_DEV}")
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -207,6 +211,9 @@ def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
 
     if jobset_status["failed"] != 0 or jobset_status["suspended"] != 0:
         return False
+    # Ensure we check for success before seeing if it is still active
+    elif jobset_status["succeeded"] != 0:
+        return True
     elif jobset_status["active"] != 0:
         if before_schedule:
             return True
@@ -214,8 +221,6 @@ def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
         pod_status = get_pod_status(jobset_name)
         if "Running" in pod_status.phase:
             return True
-    elif jobset_status["succeeded"] != 0:
-        return True
 
     return False
 
@@ -302,6 +307,17 @@ def update_jobset(jobset_base_config: dict) -> dict:
     if POST_SETUP_CMD:
         print(f'Detected post-setup command: {POST_SETUP_CMD}', file=sys.stderr)
         updated_jobset = updated_jobset.replace("INSERT_POST_SETUP_CMD", POST_SETUP_CMD)
+
+    # Add any mesh selector patches for fuji.py
+    if FUJI_PATCH_FILE:
+        print(f'Detected fuji mesh selector patch at: {FUJI_PATCH_FILE}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_FUJI_PATCH_FILE", FUJI_PATCH_FILE)
+
+    # Enable pre-release Jax dev mode
+    if ENABLE_JAX_DEV:
+        if ENABLE_JAX_DEV == "true":
+            print('Detected Jax pre-release dev mode', file=sys.stderr)
+            updated_jobset = updated_jobset.replace("INSERT_ENABLE_JAX_DEV", ENABLE_JAX_DEV)
 
     return json.loads(updated_jobset)
 

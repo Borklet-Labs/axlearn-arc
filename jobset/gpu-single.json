@@ -158,6 +158,10 @@
                       {
                         "name": "POST_SETUP_CMD",
                         "value": "INSERT_POST_SETUP_CMD"
+                      },
+                      {
+                        "name": "ENABLE_JAX_DEV",
+                        "value": "INSERT_ENABLE_JAX_DEV"
                       }
                     ],
                     "volumeMounts": [

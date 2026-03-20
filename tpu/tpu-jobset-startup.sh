@@ -25,7 +25,13 @@ git checkout $GIT_BRANCH
 # Show the commit information
 git log -1 --stat --pretty=format:"%H" --no-patch
 
-uv pip install --prerelease=allow .[core,tpu]
+if [ "$ENABLE_JAX_DEV" == "true" ]; then
+    echo "Enabling prerelease Jax and specifying extra idnex"
+    export UV_PRELEASE=allow
+    export UV_INDEX=https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
+fi
+
+uv pip install .[core,tpu]
 
 # Run any post-setup command if defined and not set to INSERT_POST_SETUP_CMD
 if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
@@ -42,8 +48,9 @@ sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main \
     --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
-    --trainer_dir=${GCS_PREFIX} \
+    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
     --jax_backend=tpu \
     --mesh_selector=tpu-v6e-16 \
-    --trace_at_steps=5
+    --trace_at_steps=5 \
+    --trainer_log_every_n_steps=1
