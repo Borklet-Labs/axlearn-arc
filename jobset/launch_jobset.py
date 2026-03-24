@@ -33,6 +33,9 @@ ENABLE_JAX_DEV = os.environ['ENABLE_JAX_DEV'] if "ENABLE_JAX_DEV" in os.environ 
 PW_PROXY_IMAGE = os.environ['PW_PROXY_IMAGE'] if "PW_PROXY_IMAGE" in os.environ else None
 PW_SERVER_IMAGE = os.environ['PW_SERVER_IMAGE'] if "PW_SERVER_IMAGE" in os.environ else None
 RESTORE_MODE = os.environ['RESTORE_MODE'] if "RESTORE_MODE" in os.environ else None
+COLOCATED_PY_IMAGE = os.environ['COLOCATED_PY_IMAGE'] if "COLOCATED_PY_IMAGE" in os.environ else None
+BENCHMARK_MODE = os.environ['BENCHMARK_MODE'] if "BENCHMARK_MODE" in os.environ else None
+
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -292,18 +295,19 @@ def update_jobset(jobset_base_config: dict) -> dict:
         if ENABLE_JAX_DEV == "true":
             print('Detected Jax pre-release dev mode', file=sys.stderr)
             updated_jobset = updated_jobset.replace("INSERT_ENABLE_JAX_DEV", ENABLE_JAX_DEV)
-                # Add a Pathways image
-    if PW_PROXY_IMAGE:
-        print('Using Pathways image {PW_PROXY_IMAGE}', file=sys.stderr)
-        updated_jobset = updated_jobset.replace("INSERT_PROXY_IMAGE", PW_PROXY_IMAGE)
-        updated_jobset = updated_jobset.replace("INSERT_SERVER_IMAGE", PW_SERVER_IMAGE)
 
     # Add a Pathways image
     if PW_PROXY_IMAGE:
-        print('Using Pathways image {PW_PROXY_IMAGE}', file=sys.stderr)
+        print(f'Using Pathways image {PW_PROXY_IMAGE}', file=sys.stderr)
         updated_jobset = updated_jobset.replace("INSERT_PROXY_IMAGE", PW_PROXY_IMAGE)
         updated_jobset = updated_jobset.replace("INSERT_SERVER_IMAGE", PW_SERVER_IMAGE)
 
+    # Inserted Colocated Python image if aviable.
+    if COLOCATED_PY_IMAGE:
+        print(f'Using Colocated Python image {COLOCATED_PY_IMAGE}', file=sys.stderr)
+        print(f'Using Benchmark Mode {BENCHMARK_MODE}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_COLOCATED_IMAGE", COLOCATED_PY_IMAGE)
+        updated_jobset = updated_jobset.replace("INSERT_BENCHMARK_MODE", BENCHMARK_MODE)
     return json.loads(updated_jobset)
 
 def write_result(success: bool):

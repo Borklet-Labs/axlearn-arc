@@ -7,6 +7,20 @@ else
     GIT_ORIGIN="$CUSTOM_GIT_ORIGIN"
 fi
 
+# Colocated Python
+echo "BENCHMARK_MODE ENV: $BENCHMARK_MODE"
+if [ -z "$BENCHMARK_MODE" ]; then
+    echo "ERROR: BENCHMARK_MODE is not set. Please provide 'colocated' or 'default'." >&2
+    exit 1
+elif [ "$BENCHMARK_MODE" == "colocated" ]; then
+    MODE="colocated"
+elif [[ "$BENCHMARK_MODE" == "default" ]]; then
+    MODE="default"
+else
+    echo "ERROR: BENCHMARK_MODE need to be 'colocated' or 'default'." >&2
+    exit 1
+fi
+
 # Check for branch name
 if [ -z "$CUSTOM_GIT_BRANCH" ]; then
     GIT_BRANCH="main"
@@ -40,4 +54,5 @@ fi
 
 # Run the colocated python benchmark script to calculate Data loading time.
 python3 axlearn/cloud/gcp/examples/colocated_python_benchmark.py \
-    --ckpt_path gs://axlearn-arc-testing/testing/runs/main/22747426067/checkpoints/step_00000100 --method colocated
+    --ckpt_path gs://axlearn-arc-testing/testing/runs/${GIT_BRANCH}/${GH_RUN_ID}/checkpoints/step_00000100 --method ${MODE}
+    # --ckpt_path gs://axlearn-arc-testing/testing/runs/main/23529741527/checkpoints/step_00000100 --method ${MODE}

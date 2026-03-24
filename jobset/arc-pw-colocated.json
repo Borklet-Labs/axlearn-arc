@@ -14,7 +14,16 @@
     },
     "failurePolicy": {
       "maxRestarts": 9,
-      "restartStrategy": "Recreate"
+      "restartStrategy": "Recreate",
+      "rules": [
+        {
+          "action": "FailJobSet",
+          "onJobFailurePolicy": "Any",
+          "targetReplicatedJobs": [
+            "pwhd"
+          ]
+        }
+      ]
     },
     "network": {
       "enableDNSHostnames": true,
@@ -84,6 +93,7 @@
                       { "name": "CUSTOM_GIT_ORIGIN", "value": "INSERT_GIT_ORIGIN" },
                       { "name": "CUSTOM_GIT_BRANCH", "value": "INSERT_GIT_BRANCH" },
                       { "name": "GH_RUN_ID", "value": "INSERT_GH_RUN_ID" },
+                      { "name": "BENCHMARK_MODE", "value": "INSERT_BENCHMARK_MODE" },
                       { "name": "POST_SETUP_CMD", "value": "INSERT_POST_SETUP_CMD" },
                       { "name": "FUJI_PATCH_FILE", "value": "INSERT_FUJI_PATCH_FILE" },
                       { "name": "ENABLE_JAX_DEV", "value": "INSERT_ENABLE_JAX_DEV" },
@@ -139,7 +149,7 @@
                       { "name": "XLA_FLAGS", "value": "--xla_dump_to=/output/arc-tpu-training/xla" },
                       { "name": "IFRT_PROXY_LARGE_TRANSFER_OPTIMIZATION_DIRECTORY", "value": "/tmp/ifrt_proxy" }
                     ],
-                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest",
+                    "image": "INSERT_PROXY_IMAGE",
                     "name": "pathways-proxy",
                     "ports": [ { "containerPort": 29000, "protocol": "TCP" }],
                     "resources": {},
@@ -158,7 +168,7 @@
                       "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-training/pathways-staging"
                     ],
                     "env": [ { "name": "TPU_SKIP_MDS_QUERY", "value": "true" } ],
-                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest",
+                    "image": "INSERT_SERVER_IMAGE",
                     "name": "pathways-rm",
                     "resources": {},
                     "restartPolicy": "Always",
@@ -266,7 +276,7 @@
                         "valueFrom": { "fieldRef": { "fieldPath": "metadata.labels['jobset.sigs.k8s.io/job-index']" } }
                       }
                     ],
-                    "image": "us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest",
+                    "image": "INSERT_SERVER_IMAGE",
                     "imagePullPolicy": "Always",
                     "name": "arc-pw-training-wk",
                     "ports": [
@@ -293,7 +303,8 @@
                 ],
                 "initContainers": [
                   {
-                    "image": "us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-colocated:latest",
+
+                    "image": "INSERT_COLOCATED_IMAGE",
                     "name": "colocated-python-sidecar",
                     "env": [
                       { "name": "GRPC_SERVER_ADDRESS", "value": "0.0.0.0:50051" },

@@ -31,16 +31,12 @@ PROJECT_ID = "tpu-prod-env-one-vm"
 LOCATION = "us-central1"
 CLUSTER_NAME = "axlearn-arc-cluster"
 NAMESPACE = "axlearn-arc"
-POD_PATTERN = "arc-pw-training-pwhd-0-.*"
-CONTAINER_NAME = "arc-pw-training-hd"
 
 LOG_CONFIG = {
     "project_id": PROJECT_ID,
     "location": LOCATION,
     "cluster_name": CLUSTER_NAME,
     "namespace": NAMESPACE,
-    "pod_pattern": POD_PATTERN,
-    "container_name": CONTAINER_NAME,
 }
 
 # Common Environment variables
@@ -102,56 +98,6 @@ def delete_pod_pw(dry_run: bool = False):
         print(f"Exception when calling CoreV1Api->delete_namespaced_pod: {e}", file=sys.stderr)
     print(f"No head pod found for JobSet: {JOBSET_NAME_TARGET}", file=sys.stderr)
     sys.exit(1)
-
-
-def get_chkp_gcs(gcs_path: str) -> List[str]:
-    """
-    Lists files in a GCS bucket at a specified path using the standard GCS Client.
-    """
-    client = storage.Client()
-
-    pattern = re.compile(r"^gs://(?P<bucket>[^/]+)/(?P<prefix>.+)$")
-    m = pattern.match(gcs_path)
-
-    if not m:
-        logging.error(f"Invalid GCS path format: {gcs_path}")
-        return []
-
-    bucket_name = m.group("bucket")
-    prefix = m.group("prefix")
-
-    try:
-        bucket = client.bucket(bucket_name)
-        blobs = bucket.list_blobs(prefix=prefix, delimiter='/')
-
-        for _ in blobs:
-          pass
-
-        valid_checkpoints = []
-        for folder_path in blobs.prefixes:
-          index_check = bucket.list_blobs(
-              prefix=f"{folder_path}index",
-              max_results=1
-          )
-
-          # If the iterator has at least one item, the index exists
-          # Checkpoint was successfully commit.
-          if any(index_check):
-              # Extract the folder name (e.g., 'step_00000100')
-              folder_name = folder_path.rstrip('/').split('/')[-1]
-              valid_checkpoints.append(folder_name)
-
-        steps_chkp = []
-        for file in valid_checkpoints:
-            step = int(file.split("_")[-1])
-            steps_chkp.append(step)
-        print(f"Querying GCS path: {gcs_path}")
-        print(f"Found {len(steps_chkp)} checkpoints.")
-        return steps_chkp
-
-    except Exception as e:
-        print(f"Failed to list GCS files: {e}")
-        return []
 
 def list_log_entries(
     project_id: str,
@@ -249,7 +195,58 @@ def convert_unix_timestamps(start_time:str = None, end_time:str = None)->tuple[d
     ) from None
   return start_dt, end_dt
 
-def get_chkp_logs(log_pattern:str,start_time:datetime = None, end_time:datetime = None)-> set[int]:
+def get_chkp_gcs(gcs_path: str) -> List[str]:
+    """
+    Lists files in a GCS bucket at a specified path using the standard GCS Client.
+    """
+    client = storage.Client()
+
+    pattern = re.compile(r"^gs://(?P<bucket>[^/]+)/(?P<prefix>.+)$")
+    m = pattern.match(gcs_path)
+
+    if not m:
+        logging.error(f"Invalid GCS path format: {gcs_path}")
+        return []
+
+    bucket_name = m.group("bucket")
+    prefix = m.group("prefix")
+
+    try:
+        bucket = client.bucket(bucket_name)
+        blobs = bucket.list_blobs(prefix=prefix, delimiter='/')
+
+        for _ in blobs:
+          pass
+
+        valid_checkpoints = []
+        for folder_path in blobs.prefixes:
+          index_check = bucket.list_blobs(
+              prefix=f"{folder_path}index",
+              max_results=1
+          )
+
+          # If the iterator has at least one item, the index exists
+          # Checkpoint was successfully commit.
+          if any(index_check):
+              # Extract the folder name (e.g., 'step_00000100')
+              folder_name = folder_path.rstrip('/').split('/')[-1]
+              valid_checkpoints.append(folder_name)
+
+        steps_chkp = []
+        for file in valid_checkpoints:
+            step = int(file.split("_")[-1])
+            steps_chkp.append(step)
+        print(f"Querying GCS path: {gcs_path}")
+        print(f"Found {len(steps_chkp)} checkpoints.")
+        return steps_chkp
+
+    except Exception as e:
+        print(f"Failed to list GCS files: {e}")
+        return []
+
+def extract_log_metrics(log_pattern:str, pod_pattern:str="arc-pw-training-pwhd-0-.*",
+                        container_name:str="arc-pw-training-hd", start_time:datetime = None,
+                        end_time:datetime = None,is_benchmark:bool = False)-> set[int]:
   """
   Retrieves checkpoint step numbers from Cloud Logging based on a specific pattern.
   Args:
@@ -265,12 +262,19 @@ def get_chkp_logs(log_pattern:str,start_time:datetime = None, end_time:datetime 
   entries = list_log_entries(
         **LOG_CONFIG,
         text_filter=f'jsonPayload.message=~"{log_pattern}"',
+        pod_pattern=pod_pattern,
+        container_name=container_name,
         start_time=start_time,
         end_time=end_time,
     )
 
   # Get checkpoint steps given the log pattern
   chkp_in_lgs: set[int] = set()
+
+  # Get times. (For benchmarking colocated python )
+  chkp_in_lgs: set[float] = set()
+
+  # Get times or steps depending of flag benchmark
   for entry in entries:
     if not isinstance(entry, logging_api.StructEntry):
       raise ValueError(
@@ -282,8 +286,26 @@ def get_chkp_logs(log_pattern:str,start_time:datetime = None, end_time:datetime 
 
     m = complied_pattern.search(message)
     if m:
-      chkp_in_lgs.add(int(m.group(1)))
+      if is_benchmark:
+        chkp_in_lgs.add(float(m.group(1)))
+      else:
+        chkp_in_lgs.add(int(m.group(1)))
+
   return chkp_in_lgs
+
+def get_logs_benchmark(start_time:str = None, end_time:str = None):
+  time_pattern = r"Deserialize took (?P<duration>\d+\.?\d*) seconds"
+  pod_pttr_colocated = "arc-pw-colocated-pwhd-0-0-.*"
+  container_name_colocated = ".*"
+  duartion = extract_log_metrics(time_pattern,pod_pttr_colocated,container_name_colocated
+                                 ,start_time, end_time, is_benchmark=True)
+  print(f"Times from logs --> {duartion}", file=sys.stderr)
+  if len(duartion) > 0:
+    return True
+  raise ValueError(
+        f"Benchmark validation failed: No 'Deserialize took' entries found in logs "
+        f"between {start_time} and {end_time}."
+    )
 
 def validate_restore(target_step:int, start_time:str = None, end_time:str = None)-> bool:
     """
@@ -299,7 +321,7 @@ def validate_restore(target_step:int, start_time:str = None, end_time:str = None
 
     # We need to pass a <step> group so it can return the chckp step found.
     restore_pattern = r"Restoring.*step_(?P<step>\d{8})"
-    chkp_in_logs = get_chkp_logs(restore_pattern, start_time, end_time)
+    chkp_in_logs = extract_log_metrics(restore_pattern, start_time, end_time)
     print(f"Checkpoints found on Restore: {list(chkp_in_logs)}")
     if len(chkp_in_logs) > 0 and target_step in chkp_in_logs:
       print(f"Successfully validated restoration from steps: {list(chkp_in_logs)}")
@@ -308,11 +330,14 @@ def validate_restore(target_step:int, start_time:str = None, end_time:str = None
 
 
 if __name__ == '__main__':
+
+  # TODO: Need to pass this variable from the yaml file.
   # This is the target step we are aiming for deleting the pod and
   # validating the restored step checkpoint.
   target_step = 110
 
-  ## Trigger interruption via pod deletion.
+  # Trigger the pod deletion of the pathways head pod. This will make the jobset
+  # restarts again. First step in the restore cycle workflow
   if DELETE_POD:
     time_elapsed = 0
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
@@ -338,15 +363,20 @@ if __name__ == '__main__':
     raise ValueError(f"Timeout reached: Target step {target_step} not found in logs "
               f"within {JOBSET_HEALTHY_TIMEOUT} seconds.")
 
-  if VALIDATION_METHOD == "save":
-    print("Enter Save Validation Worklfow")
+  # Validation method for "default" and "colocated python" benchmarking.
+  # Using axlearn/cloud/gcp/examples/colocated_python_benchmark.py script.
+  if VALIDATION_METHOD == "benchmark":
+    print("START_TIME: {START_TIME}, END_TIME: {END_TIME}", file=sys.stderr)
     start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=END_TIME)
-    # On save mode then just validate the stored checkpoints logs and bucket
-    # are the same. Get saved checkpoints in logs
+    get_logs_benchmark(start_dt, end_dt)
+
+  # Validation for save cycle from checkpoint. Validated <step> is save in gcs bucket.
+  if VALIDATION_METHOD == "save":
+    start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=END_TIME)
 
     # We need to pass a <step> group so it can return the chckp step found.
     log_pattern = r"^Serialization.*?step_(?P<step>\d+).*"
-    chkp_in_logs = get_chkp_logs(log_pattern, start_dt, end_dt)
+    chkp_in_logs = extract_log_metrics(log_pattern, start_dt, end_dt)
 
     # Get saved checkpoints in GCS Bucket.
     trainer_dir = f"{GCS_PREFIX}/runs/{GIT_BRANCH}/{GH_RUN_ID}/checkpoints/"
@@ -361,8 +391,8 @@ if __name__ == '__main__':
     print(f"Successfully validated {len(chkp_in_gcs)} checkpoints.")
     print(f"Checkpoints found: {sorted(list(chkp_in_logs))}")
 
+  # Validation for restory from checkpoint cycle after pod interruption
   if VALIDATION_METHOD == "restore":
-    print("Waiting...  Giving time to restore (90 seconds)...",file=sys.stderr)
     time.sleep(90) # ~2 minutes of buffer time so the jobset can restore.
     time_elapsed = 0
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
@@ -371,17 +401,20 @@ if __name__ == '__main__':
       now = str(int(datetime.now(timezone.utc).timestamp()))
       start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
 
-      # We need to check that all pods are in Running state
+      # Query 'ONLY' axlearn-arc namespace pods.
       label_selector = f"jobset.sigs.k8s.io/jobset-name={JOBSET_NAME_TARGET}"
       pods_pw = KUBE_API.list_namespaced_pod(
           namespace="axlearn-arc",
           label_selector=label_selector
       )
 
+      # We need to check that all pods 'axlearn-arc' namespace  are in RUNNING state.
       all_running = all(pod.status.phase == "Running" for pod in pods_pw.items)
       if all_running and len(pods_pw.items) > 0:
           print(f"All pods for {JOBSET_NAME_TARGET} are Running. Proceeding with restore validation.", file=sys.stderr)
           restore_step_target = 100
+
+          # Validates step from pathways head logs matches the GCS bucket stored step.
           if validate_restore(restore_step_target, start_dt, end_dt):
              sys.exit(0)
           raise ValueError(
