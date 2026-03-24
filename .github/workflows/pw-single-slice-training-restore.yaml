@@ -1,4 +1,4 @@
-name: pw-single-slice-training-test
+name: pw-single-slice-training-test-restore
 on:
   workflow_dispatch
 jobs:
