@@ -16,8 +16,20 @@ fi
 
 echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
+# Check if Checkpoint Steps were passed. If not 100 default.
+if [ -z "$STEPS_CHECKPOINT" ]; then
+    STEPS_CHECKPOINT=100
+else
+    STEPS_CHECKPOINT="$STEPS_CHECKPOINT"
+fi
+
+# Check Max Steps. Default 500.
+if [ -z "$MAX_STEPS" ]; then
+    MAX_STEPS=500
+fi
+
 # Grab the latest AXLearn from upstream
-git init /root && cd /root 
+git init /root && cd /root
 git remote add origin $GIT_ORIGIN
 git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin
 git checkout $GIT_BRANCH
@@ -46,15 +58,20 @@ LOG_FILE="training_log_dump.log"
 cleanup_logs() {
     if [ -f "$LOG_FILE" ]; then
         echo "Uploading captured logs to GCS before exiting..."
-        gsutil cp "$LOG_FILE" ${GCS_PREFIX}/runs/pw-logs/${GH_RUN_ID}/training_log_dump.log
+        gsutil cp "$LOG_FILE" ${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID}/training_log_dump.log
     fi
 }
 trap cleanup_logs EXIT
 
+# Modify checkpointing steps
+sed -i 's/lr_warmup_steps: int = 2000/lr_warmup_steps: int = 50/g' /root/axlearn/experiments/text/gpt/common.py
+sed -i "/trn2_config = _generate_trn2_custom_configs/a \    max_step=$MAX_STEPS" /root/axlearn/experiments/text/gpt/fuji.py
+sed -i "/max_step=max_step,/a \            save_every_n_steps=$STEPS_CHECKPOINT," /root/axlearn/experiments/text/gpt/fuji.py
+
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main \
     --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
-    --trainer_dir=${GCS_PREFIX}/runs/pw-logs/${GH_RUN_ID} \
+    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
     --jax_backend=proxy \
     --mesh_selector=tpu-v6e-16 \

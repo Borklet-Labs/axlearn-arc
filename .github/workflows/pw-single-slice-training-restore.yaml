@@ -1,4 +1,4 @@
-name: pw-single-slice-training-test
+name: pw-single-slice-training-test-restore
 on:
   workflow_dispatch
 jobs:
@@ -17,13 +17,14 @@ jobs:
         # Optional flags
         STEPS_CHECKPOINT: 100
         MAX_STEPS: 500
-        # POST_SETUP_CMD: uv pip install jax==0.9.0
+        RESTORE_MODE: True
         # CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: cienet_jax_py3.12_nightly
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
+        # POST_SETUP_CMD: uv pip install libtpu==0.0.32.2
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
         # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
@@ -53,3 +54,36 @@ jobs:
       - name: Upload the training result to GCS
         if: always()
         run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh
+
+  interruption-jobset:
+    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
+    container:
+      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset-val:latest
+      env:
+        # Required environmental variables for a successful run
+        JOBSET_HEALTHY_TIMEOUT: 1000
+        CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
+    steps:
+      - name: Install the Kubernetes Python SDK
+        run: |
+          uv pip install kubernetes
+      - name: Launch Pod deletion
+        id: launch_deletion
+        env:
+          GH_RUN_ID: ${{ github.run_id }}
+          ARC_JOBSET_NAME_TARGET: arc-pw-training
+          DELETE_POD: True
+        run: |
+          START_TIME=$(date +%s)
+          echo "START_TIME=$START_TIME" >> $GITHUB_ENV
+          START_TIME=$START_TIME GH_RUN_ID=${{ github.run_id }} python /var/arc/validation_utils.py
+          echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
+      - name: Launch the restore Validation
+        env:
+          GH_RUN_ID: ${{ github.run_id }}
+          START_TIME: ${{ steps.launch_deletion.outputs.start_time}}
+          ARC_JOBSET_NAME_TARGET: arc-pw-training
+          VALIDATION_METHOD: restore
+        run: |
+          START_TIME=$START_TIME GH_RUN_ID=${{ github.run_id }} python /var/arc/validation_utils.py

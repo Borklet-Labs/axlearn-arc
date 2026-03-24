@@ -13,7 +13,7 @@
       "replicatedJob": "pwhd"
     },
     "failurePolicy": {
-      "maxRestarts": 9,
+      "maxRestarts": 15,
       "restartStrategy": "Recreate"
     },
     "network": {
@@ -140,7 +140,7 @@
                     ],
                     "image": "INSERT_PROXY_IMAGE",
                     "name": "pathways-proxy",
-                    "ports": [ { "containerPort": 29000, "protocol": "TCP" } ],
+                    "ports": [ { "containerPort": 29000, "protocol": "TCP" }],
                     "resources": {},
                     "restartPolicy": "Always",
                     "volumeMounts": [

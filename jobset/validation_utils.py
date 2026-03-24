@@ -1,0 +1,399 @@
+
+ #  ________   ___   __    ______   ______   ______    ______   ______   ___   __    ______   ________   ___ __ __
+ # /_______/\ /__/\ /__/\ /_____/\ /_____/\ /_____/\  /_____/\ /_____/\ /__/\ /__/\ /_____/\ /_______/\ /__//_//_/\
+ # \::: _  \ \\::\_\\  \ \\:::_ \ \\::::_\/_\:::_ \ \ \::::_\/_\::::_\/_\::\_\\  \ \\::::_\/_\::: _  \ \\::\| \| \ \
+ #  \::(_)  \ \\:. `-\  \ \\:\ \ \ \\:\/___/\\:(_) ) )_\:\/___/\\:\/___/\\:. `-\  \ \\:\/___/\\::(_)  \ \\:.      \ \
+ #   \:: __  \ \\:. _    \ \\:\ \ \ \\::___\/_\: __ `\ \\_::._\:\\::___\/_\:. _    \ \\_::._\:\\:: __  \ \\:.\-/\  \ \
+ #    \:.\ \  \ \\. \`-\  \ \\:\/.:| |\:\____/\\ \ `\ \ \ /____\:\\:\____/\\. \`-\  \ \ /____\:\\:.\ \  \ \\. \  \  \ \
+ #     \__\/\__\/ \__\/ \__\/ \____/_/ \_____\/ \_\/ \_\/ \_____\/ \_____\/ \__\/ \__\/ \_____\/ \__\/\__\/ \__\/ \__\/
+ #
+ # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
+ # @author : Samuel Andersen
+ # @version: 2026-01-30
+ #
+
+import os
+import logging
+import re
+from datetime import datetime, timedelta, timezone
+import kubernetes
+import sys
+import time
+
+from typing import Optional
+from typing import List
+from google.cloud import storage
+from google.cloud import logging as logging_api
+
+
+# Constants  Axlearn-arc project
+PROJECT_ID = "tpu-prod-env-one-vm"
+LOCATION = "us-central1"
+CLUSTER_NAME = "axlearn-arc-cluster"
+NAMESPACE = "axlearn-arc"
+POD_PATTERN = "arc-pw-training-pwhd-0-.*"
+CONTAINER_NAME = "arc-pw-training-hd"
+
+LOG_CONFIG = {
+    "project_id": PROJECT_ID,
+    "location": LOCATION,
+    "cluster_name": CLUSTER_NAME,
+    "namespace": NAMESPACE,
+    "pod_pattern": POD_PATTERN,
+    "container_name": CONTAINER_NAME,
+}
+
+# Common Environment variables
+JOBSET_NAME = os.environ['ARC_JOBSET_NAME'] if "ARC_JOBSET_NAME" in os.environ else None
+JOBSET_NAME_TARGET = os.environ['ARC_JOBSET_NAME_TARGET'] if "ARC_JOBSET_NAME_TARGET" in os.environ else JOBSET_NAME
+JOBSET_HEALTHY_TIMEOUT = int(os.environ['JOBSET_HEALTHY_TIMEOUT']) if "JOBSET_HEALTHY_TIMEOUT" in os.environ else 15 * 60
+GH_RUN_ID = os.environ['GH_RUN_ID'] if "GH_RUN_ID" in os.environ else None
+START_TIME = os.environ['START_TIME'] if "START_TIME" in os.environ else None
+END_TIME = os.environ['END_TIME'] if "END_TIME" in os.environ else None
+GCS_PREFIX = os.environ['GCS_PREFIX'] if "GCS_PREFIX" in os.environ else None
+GIT_BRANCH = os.environ['CUSTOM_GIT_BRANCH'] if "CUSTOM_GIT_BRANCH" in os.environ else "main"
+VALIDATION_METHOD = os.environ['VALIDATION_METHOD'] if "VALIDATION_METHOD" in os.environ else None
+DELETE_POD= os.environ['DELETE_POD'] if "DELETE_POD" in os.environ else None
+
+
+# Use the dynamic client to leverage the JobSet API
+CLIENT = kubernetes.dynamic.DynamicClient(
+    kubernetes.client.ApiClient(
+        configuration=kubernetes.config.load_incluster_config()))
+# Custom objects API
+CUSTOM_OBJECT_API = kubernetes.client.CustomObjectsApi()
+# Import the JobSet API into our k8s client
+JOBSET_API = CLIENT.resources.get(api_version = "jobset.x-k8s.io/v1alpha2", kind = "JobSet")
+# Prepare the standard API for use
+kubernetes.config.load_incluster_config()
+KUBE_API = kubernetes.client.CoreV1Api()
+
+
+
+def delete_pod_pw(dry_run: bool = False):
+    """ Delete Pathways head pod
+
+    Returns:
+        True if completed
+        False if not completed"""
+
+    # This way we only query the pods related with <JOBSET_NAME>
+    label_selector = f"jobset.sigs.k8s.io/jobset-name={JOBSET_NAME_TARGET}"
+    try:
+      pods_pw = KUBE_API.list_namespaced_pod(
+          namespace="axlearn-arc",
+          label_selector=label_selector
+      )
+      for pod in pods_pw.items:
+          if "-pwhd-0" in pod.metadata.name:
+            if dry_run:
+                print(f"[DRY RUN] Would delete pod: {pod.metadata.name}", file=sys.stderr)
+                sys.exit(0)
+            else:
+              print(f"Found and deleting: {pod.metadata.name}", file=sys.stderr)
+              KUBE_API.delete_namespaced_pod(
+                  name=pod.metadata.name,
+                  namespace="axlearn-arc",
+                  grace_period_seconds=0
+              )
+              print(f"Deleting succeded for: {pod.metadata.name}", file=sys.stderr)
+              sys.exit(0)
+    except ValueError as e:
+        print(f"Exception when calling CoreV1Api->delete_namespaced_pod: {e}", file=sys.stderr)
+    print(f"No head pod found for JobSet: {JOBSET_NAME_TARGET}", file=sys.stderr)
+    sys.exit(1)
+
+
+def get_chkp_gcs(gcs_path: str) -> List[str]:
+    """
+    Lists files in a GCS bucket at a specified path using the standard GCS Client.
+    """
+    client = storage.Client()
+
+    pattern = re.compile(r"^gs://(?P<bucket>[^/]+)/(?P<prefix>.+)$")
+    m = pattern.match(gcs_path)
+
+    if not m:
+        logging.error(f"Invalid GCS path format: {gcs_path}")
+        return []
+
+    bucket_name = m.group("bucket")
+    prefix = m.group("prefix")
+
+    try:
+        bucket = client.bucket(bucket_name)
+        blobs = bucket.list_blobs(prefix=prefix, delimiter='/')
+
+        for _ in blobs:
+          pass
+
+        valid_checkpoints = []
+        for folder_path in blobs.prefixes:
+          index_check = bucket.list_blobs(
+              prefix=f"{folder_path}index",
+              max_results=1
+          )
+
+          # If the iterator has at least one item, the index exists
+          # Checkpoint was successfully commit.
+          if any(index_check):
+              # Extract the folder name (e.g., 'step_00000100')
+              folder_name = folder_path.rstrip('/').split('/')[-1]
+              valid_checkpoints.append(folder_name)
+
+        steps_chkp = []
+        for file in valid_checkpoints:
+            step = int(file.split("_")[-1])
+            steps_chkp.append(step)
+        print(f"Querying GCS path: {gcs_path}")
+        print(f"Found {len(steps_chkp)} checkpoints.")
+        return steps_chkp
+
+    except Exception as e:
+        print(f"Failed to list GCS files: {e}")
+        return []
+
+def list_log_entries(
+    project_id: str,
+    location: str,
+    cluster_name: str,
+    namespace: str = "default",
+    pod_pattern: str = ".*",
+    container_name: Optional[str] = None,
+    text_filter: Optional[str] = None,
+    start_time: Optional[datetime] = None,
+    end_time: Optional[datetime] = None,
+) -> list[logging_api.LogEntry]:
+  """
+  List log entries for the specified Google Cloud project.
+  This function connects to Google Cloud Logging,
+  constructs a filter for Kubernetes container logs
+  within a specific project, location, cluster, namespace,
+  and pod name pattern, and retrieves log
+  entries from the specified time range.
+  It prints the timestamp, severity, resource information,
+  and payload for each log entry found.
+
+  Args:
+    project_id: The Google Cloud project ID
+    location: GKE cluster location
+    cluster_name: GKE cluster name
+    namespace: Kubernetes namespace (defaults to "default")
+    pod_pattern: Pattern to match pod names (defaults to "*")
+    container_name: Optional container name to filter logs
+    text_filter: Optional comma-separated string to
+      filter log entries by textPayload content
+    start_time: Optional start time for log retrieval
+      (defaults to 12 hours ago)
+    end_time: Optional end time for log retrieval (defaults to now)
+  Returns:
+    bool: Number of log entries found
+  """
+
+  logging_client = logging_api.Client(project=project_id)
+
+  # Set the time window for log retrieval:
+  # default to last 12 hours if not provided
+  if end_time is None:
+    end_time = datetime.now(timezone.utc)
+  if start_time is None:
+    start_time = end_time - timedelta(hours=12)
+
+  # Format times as RFC3339 UTC "Zulu" format required by the Logging API
+  start_time_str = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+  end_time_str = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+  conditions = [
+      f'resource.labels.project_id="{project_id}"',
+      f'resource.labels.location="{location}"',
+      f'resource.labels.cluster_name="{cluster_name}"',
+      f'resource.labels.namespace_name="{namespace}"',
+      f'resource.labels.pod_name=~"{pod_pattern}"',
+      "severity>=DEFAULT",
+      f'timestamp>="{start_time_str}"',
+      f'timestamp<="{end_time_str}"',
+
+  ]
+  if container_name:
+    conditions.append(f'resource.labels.container_name="{container_name}"')
+  if text_filter:
+    conditions.append(f"{text_filter}")
+
+  log_filter = " AND ".join(conditions)
+
+  print(f"Log filter constructed: {log_filter}",file=sys.stderr)
+  return list(logging_client.list_entries(filter_=log_filter))
+
+
+def convert_unix_timestamps(start_time:str = None, end_time:str = None)->tuple[datetime, datetime]:
+  """
+  Converts start_time and end_time environment variables from unix timestamps
+  to UTC datetime objects.
+
+  Returns:
+      tuple: (start_dt, end_dt) as timezone-aware datetime objects.
+  """
+  if start_time is None or end_time is None:
+    raise EnvironmentError(
+        f"Missing required environment variables. "
+        f"start_time: {start_time}, end_time: {end_time}. "
+        "Ensure 'id: launch_step' is set in your YAML."
+    )
+  try:
+    start_dt = datetime.fromtimestamp(int(start_time), tz=timezone.utc)
+    end_dt = datetime.fromtimestamp(int(end_time), tz=timezone.utc)
+  except (TypeError, ValueError) as e:
+    raise ValueError(
+            f"Could not parse timestamps (START='{start_time}', END='{end_time}'). "
+            f"Error details: {e}"
+    ) from None
+  return start_dt, end_dt
+
+def get_chkp_logs(log_pattern:str,start_time:datetime = None, end_time:datetime = None)-> set[int]:
+  """
+  Retrieves checkpoint step numbers from Cloud Logging based on a specific pattern.
+  Args:
+      log_pattern: Regex pattern to search for in logs.
+      start_time: Start of the time window.
+      end_time: End of the time window.
+
+  Returns:
+      set[int]: A set of step numbers found in the logs.
+  """
+
+  complied_pattern = re.compile(log_pattern)
+  entries = list_log_entries(
+        **LOG_CONFIG,
+        text_filter=f'jsonPayload.message=~"{log_pattern}"',
+        start_time=start_time,
+        end_time=end_time,
+    )
+
+  # Get checkpoint steps given the log pattern
+  chkp_in_lgs: set[int] = set()
+  for entry in entries:
+    if not isinstance(entry, logging_api.StructEntry):
+      raise ValueError(
+          "Log entry must be contain a jsonPayload attribute."
+      )
+    message = entry.payload.get("message")
+    if not message:
+      raise ValueError(f"Failed to parse entry {entry}")
+
+    m = complied_pattern.search(message)
+    if m:
+      chkp_in_lgs.add(int(m.group(1)))
+  return chkp_in_lgs
+
+def validate_restore(target_step:int, start_time:str = None, end_time:str = None)-> bool:
+    """
+    Validates that the training has restored from a specific target step.
+    Args:
+        target_step: The step number to verify restoration from.
+        start_time: Start of the time window.
+        end_time: End of the time window.
+
+    Returns:
+        bool: True if validation succeeds.
+    """
+
+    # We need to pass a <step> group so it can return the chckp step found.
+    restore_pattern = r"Restoring.*step_(?P<step>\d{8})"
+    chkp_in_logs = get_chkp_logs(restore_pattern, start_time, end_time)
+    print(f"Checkpoints found on Restore: {list(chkp_in_logs)}")
+    if len(chkp_in_logs) > 0 and target_step in chkp_in_logs:
+      print(f"Successfully validated restoration from steps: {list(chkp_in_logs)}")
+      return True
+    return False
+
+
+if __name__ == '__main__':
+  # This is the target step we are aiming for deleting the pod and
+  # validating the restored step checkpoint.
+  target_step = 110
+
+  ## Trigger interruption via pod deletion.
+  if DELETE_POD:
+    time_elapsed = 0
+    while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
+      now = str(int(datetime.now(timezone.utc).timestamp()))
+      start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
+      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{target_step}\]"
+      complied_pattern = re.compile(log_pattern)
+      # Fetch logs from Cloud Logging API for the specified time window.
+      entries = list_log_entries(
+            **LOG_CONFIG,
+            text_filter=f'jsonPayload.message=~"{log_pattern}"',
+            start_time=start_dt,
+            end_time=end_dt,
+        )
+      print(f"Entries ==>  {entries}",file=sys.stderr)
+      if entries:
+        print(f"Target step {target_step} reached. Triggering pod deletion...")
+        delete_pod_pw(dry_run=False)
+        sys.exit(0)
+      print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for target step {target_step} in logs...", file=sys.stderr)
+      time.sleep(60)
+      time_elapsed += 60
+    raise ValueError(f"Timeout reached: Target step {target_step} not found in logs "
+              f"within {JOBSET_HEALTHY_TIMEOUT} seconds.")
+
+  if VALIDATION_METHOD == "save":
+    print("Enter Save Validation Worklfow")
+    start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=END_TIME)
+    # On save mode then just validate the stored checkpoints logs and bucket
+    # are the same. Get saved checkpoints in logs
+
+    # We need to pass a <step> group so it can return the chckp step found.
+    log_pattern = r"^Serialization.*?step_(?P<step>\d+).*"
+    chkp_in_logs = get_chkp_logs(log_pattern, start_dt, end_dt)
+
+    # Get saved checkpoints in GCS Bucket.
+    trainer_dir = f"{GCS_PREFIX}/runs/{GIT_BRANCH}/{GH_RUN_ID}/checkpoints/"
+    chkp_in_gcs = get_chkp_gcs(gcs_path=trainer_dir)
+
+    # Checkpoints must match in logging and in gcs bucket.
+    if len(chkp_in_gcs) != len(chkp_in_logs):
+      raise ValueError(
+          f"Failed to validate checkpoints of the run. Checkp in Logs: {chkp_in_logs} "
+          f"Checkp in GCS Bucket: {chkp_in_gcs}"
+      )
+    print(f"Successfully validated {len(chkp_in_gcs)} checkpoints.")
+    print(f"Checkpoints found: {sorted(list(chkp_in_logs))}")
+
+  if VALIDATION_METHOD == "restore":
+    print("Waiting...  Giving time to restore (90 seconds)...",file=sys.stderr)
+    time.sleep(90) # ~2 minutes of buffer time so the jobset can restore.
+    time_elapsed = 0
+    while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
+
+      # Get current time every 60 seconds.
+      now = str(int(datetime.now(timezone.utc).timestamp()))
+      start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
+
+      # We need to check that all pods are in Running state
+      label_selector = f"jobset.sigs.k8s.io/jobset-name={JOBSET_NAME_TARGET}"
+      pods_pw = KUBE_API.list_namespaced_pod(
+          namespace="axlearn-arc",
+          label_selector=label_selector
+      )
+
+      all_running = all(pod.status.phase == "Running" for pod in pods_pw.items)
+      if all_running and len(pods_pw.items) > 0:
+          print(f"All pods for {JOBSET_NAME_TARGET} are Running. Proceeding with restore validation.", file=sys.stderr)
+          restore_step_target = 100
+          if validate_restore(restore_step_target, start_dt, end_dt):
+             sys.exit(0)
+          raise ValueError(
+              f"Restore validation failed: Could not find log entry indicating "
+              f"restoration from any checkpoint in the time window"
+              f"for the restore step {restore_step_target}."
+          )
+      print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for all pods to be Running...", file=sys.stderr)
+      time.sleep(60)
+      time_elapsed += 60
+
+
+
+
+
