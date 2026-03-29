@@ -24,7 +24,7 @@ jobs:
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: pip install -U --pre jax jaxlib requests  -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
         # POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
-        POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax==0.9.2 jaxlib==0.9.2 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
+        POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax==0.9.1 jaxlib==0.9.1 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
