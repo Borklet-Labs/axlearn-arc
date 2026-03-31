@@ -16,6 +16,18 @@ fi
 
 echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
+# Check if Checkpoint Steps were passed. If not 100 default.
+if [ -z "$STEPS_CHECKPOINT" ]; then
+    STEPS_CHECKPOINT=100
+else
+    STEPS_CHECKPOINT="$STEPS_CHECKPOINT"
+fi
+
+# Check Max Steps. Default 500.
+if [ -z "$MAX_STEPS" ]; then
+    MAX_STEPS=500
+fi
+
 # Grab the latest AXLearn from upstream
 git init /root && cd /root
 git remote add origin $GIT_ORIGIN
