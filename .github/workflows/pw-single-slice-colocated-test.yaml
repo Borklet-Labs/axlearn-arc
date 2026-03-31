@@ -1,0 +1,87 @@
+name: pw-single-slice-colocated-test
+on:
+  workflow_dispatch
+jobs:
+  pw-tpu-single-slice-training-test-job:
+    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
+    container:
+      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset-val:latest
+      env:
+        # Required environmental variables for a successful run
+        ARC_JOBSET_NAME: arc-pw-training
+        ARC_JOBSET_JSON: /var/arc/arc-pw.json
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
+        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python-val:latest
+        JOBSET_HEALTHY_TIMEOUT: 750
+        ACCELERATOR: v6e_4x4_1
+        BENCHMARK_MODE: default
+        # Optional flags
+        STEPS_CHECKPOINT: 100
+        MAX_STEPS: 500
+        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+        # CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
+        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
+        # POST_SETUP_CMD: uv pip install libtpu==0.0.32.2
+        # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
+        # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
+        # PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
+        # PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
+        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
+        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
+        COLOCATED_PY_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-colocated:latest
+    steps:
+      - name: Install the Kubernetes Python SDK
+        run: uv pip install kubernetes
+      - name: Launch the TPU training job
+        run: |
+          GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+      - name: Run Default Python Benchmark
+        if: always()
+        id: default_benchmark
+        env:
+          BENCHMARK_MODE: default
+          GH_RUN_ID: ${{ github.run_id }}
+          ARC_JOBSET_NAME: arc-pw-colocated
+          ARC_JOBSET_JSON: /var/arc/arc-pw-colocated.json
+        run: |
+          NOW=$(date +%s)
+          echo "start_time=$NOW" >> "$GITHUB_OUTPUT"
+          echo "Starting default benchmarking at $NOW"
+          sleep 70
+          GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+      - name: Run Colocated Python Benchmark
+        if: always()
+        id: colocated_benchmark
+        env:
+          BENCHMARK_MODE: colocated
+          GH_RUN_ID: ${{ github.run_id }}
+          ARC_JOBSET_NAME: arc-pw-colocated
+          ARC_JOBSET_JSON: /var/arc/arc-pw-colocated.json
+        run: |
+          echo "Give 90s to clean previous jobset runs..."
+          echo "Starting colocated benchmarking...."
+          sleep 70
+          GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+      - name: Validate Colocated vs Default
+        if: always()
+        id: validate_colocated_vs_default
+        env:
+          BENCHMARK_MODE: colocated
+          START_TIME: ${{ steps.default_benchmark.outputs.start_time}}
+          GH_RUN_ID: ${{ github.run_id }}
+          ARC_JOBSET_NAME: arc-pw-colocated
+          VALIDATION_METHOD: benchmark
+        run: |
+          # 1. Capture the current time right now
+          END_TIME=$(date +%s)
+
+          # 2. Export it so the python script can see it as an env var
+          export END_TIME=$END_TIME
+
+          echo "Validation Start: $START_TIME"
+          echo "Validation End: $END_TIME"
+
+          sleep 70
+          echo "Verifying: START=$START_TIME, END=$END_TIME"
+          python3 /var/arc/validation_utils.py
