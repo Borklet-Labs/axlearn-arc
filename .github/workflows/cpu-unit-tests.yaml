@@ -5,21 +5,26 @@ jobs:
   cpu-unit-tests-job:
     runs-on: jobset
     container:
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
+      # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-post-cmd-nightly:latest
+      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         ARC_JOBSET_NAME: cpu-unit-tests
         ARC_JOBSET_JSON: /var/arc/cpu.json
-        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:python3.12
+        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu-py312-jax-nightly:latest
         JOBSET_HEALTHY_TIMEOUT: 3600
         RESUME_JOBSET: true
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
+        #CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn  # Optionally point to another repo
+        # CUSTOM_GIT_BRANCH: jax_py3.12_nightly
+        # CUSTOM_GIT_BRANCH: jw/fix-pallas-nonetype
+        #CUSTOM_GIT_BRANCH: jw/fix-explicit-axis-type
         CUSTOM_GIT_BRANCH: cienet_jax_0.9.1_dev
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
-        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
-        # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
-        ENABLE_JAX_DEV: true
+        # POST_SETUP_CMD: pip install -U --pre jax jaxlib requests  -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
+        POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
