@@ -31,7 +31,6 @@ PROJECT_ID = "tpu-prod-env-one-vm"
 LOCATION = "us-central1"
 CLUSTER_NAME = "axlearn-arc-cluster"
 NAMESPACE = "axlearn-arc"
-
 LOG_CONFIG = {
     "project_id": PROJECT_ID,
     "location": LOCATION,
@@ -49,7 +48,7 @@ END_TIME = os.environ['END_TIME'] if "END_TIME" in os.environ else None
 GCS_PREFIX = os.environ['GCS_PREFIX'] if "GCS_PREFIX" in os.environ else None
 GIT_BRANCH = os.environ['CUSTOM_GIT_BRANCH'] if "CUSTOM_GIT_BRANCH" in os.environ else "main"
 VALIDATION_METHOD = os.environ['VALIDATION_METHOD'] if "VALIDATION_METHOD" in os.environ else None
-DELETE_POD= os.environ['DELETE_POD'] if "DELETE_POD" in os.environ else None
+DELETE_MODE= os.environ['DELETE_MODE'] if "DELETE_MODE" in os.environ else None
 
 
 # Use the dynamic client to leverage the JobSet API
@@ -65,10 +64,43 @@ kubernetes.config.load_incluster_config()
 KUBE_API = kubernetes.client.CoreV1Api()
 
 
+def delete_node_pw(dry_run: bool = False):
+    """ Delete Pathways worker node
+    Args:
+        dry_run: If True, only print the node that would be deleted.
+    Returns:
+        True if completed
+        False if not completed"""
+
+    # This way we only query the pods related with <JOBSET_NAME>
+    label_selector = f"jobset.sigs.k8s.io/jobset-name={JOBSET_NAME_TARGET}"
+    try:
+      pods_pw = KUBE_API.list_namespaced_pod(
+          namespace="axlearn-arc",
+          label_selector=label_selector
+      )
+      for pod in pods_pw.items:
+          if "-pwwk-1" in pod.metadata.name and pod.spec.node_name is not None:
+            node_name = pod.spec.node_name
+            prefix = "[DRY RUN] Would delete node" if dry_run else "Found and deleting"
+            print(f"{prefix}: {node_name}", file=sys.stderr)
+            if not dry_run:
+                KUBE_API.delete_node(
+                    name=node_name,
+                    grace_period_seconds=0
+                )
+                print(f"Deleting succeeded for node : {node_name}", file=sys.stderr)
+            sys.exit(0)
+    except ValueError as e:
+        print(f"Exception when calling CoreV1Api->delete_node_name: {e}", file=sys.stderr)
+    print(f"No worker found for JobSet: {JOBSET_NAME_TARGET}", file=sys.stderr)
+    sys.exit(1)
+
 
 def delete_pod_pw(dry_run: bool = False):
     """ Delete Pathways head pod
-
+    Args:
+        dry_run: If True, only print the pod that would be deleted.
     Returns:
         True if completed
         False if not completed"""
@@ -82,18 +114,17 @@ def delete_pod_pw(dry_run: bool = False):
       )
       for pod in pods_pw.items:
           if "-pwhd-0" in pod.metadata.name:
-            if dry_run:
-                print(f"[DRY RUN] Would delete pod: {pod.metadata.name}", file=sys.stderr)
-                sys.exit(0)
-            else:
-              print(f"Found and deleting: {pod.metadata.name}", file=sys.stderr)
-              KUBE_API.delete_namespaced_pod(
-                  name=pod.metadata.name,
-                  namespace="axlearn-arc",
-                  grace_period_seconds=0
-              )
-              print(f"Deleting succeded for: {pod.metadata.name}", file=sys.stderr)
-              sys.exit(0)
+            pod_name = pod.metadata.name
+            prefix = "[DRY RUN] Would delete pod" if dry_run else "Found and deleting"
+            print(f"{prefix}: {pod_name}", file=sys.stderr)
+            if not dry_run:
+                KUBE_API.delete_namespaced_pod(
+                    name=pod_name,
+                    namespace="axlearn-arc",
+                    grace_period_seconds=0
+                )
+                print(f"Deleting succeeded for: {pod_name}", file=sys.stderr)
+            sys.exit(0)
     except ValueError as e:
         print(f"Exception when calling CoreV1Api->delete_namespaced_pod: {e}", file=sys.stderr)
     print(f"No head pod found for JobSet: {JOBSET_NAME_TARGET}", file=sys.stderr)
@@ -297,8 +328,8 @@ def get_logs_benchmark(start_time:str = None, end_time:str = None):
   time_pattern = r"Deserialize took (?P<duration>\d+\.?\d*) seconds"
   pod_pttr_colocated = "arc-pw-colocated-pwhd-0-0-.*"
   container_name_colocated = ".*"
-  duartion = extract_log_metrics(time_pattern,pod_pttr_colocated,container_name_colocated
-                                 ,start_time, end_time, is_benchmark=True)
+  duartion = extract_log_metrics(log_pattern=time_pattern,pod_pattern=pod_pttr_colocated, container_name=container_name_colocated
+                                 ,start_time=start_time, end_time=end_time, is_benchmark=True)
   print(f"Times from logs --> {duartion}", file=sys.stderr)
   if len(duartion) > 0:
     return True
@@ -321,7 +352,7 @@ def validate_restore(target_step:int, start_time:str = None, end_time:str = None
 
     # We need to pass a <step> group so it can return the chckp step found.
     restore_pattern = r"Restoring.*step_(?P<step>\d{8})"
-    chkp_in_logs = extract_log_metrics(restore_pattern, start_time, end_time)
+    chkp_in_logs = extract_log_metrics(log_pattern=restore_pattern, start_time=start_time, end_time=end_time)
     print(f"Checkpoints found on Restore: {list(chkp_in_logs)}")
     if len(chkp_in_logs) > 0 and target_step in chkp_in_logs:
       print(f"Successfully validated restoration from steps: {list(chkp_in_logs)}")
@@ -334,16 +365,22 @@ if __name__ == '__main__':
   # TODO: Need to pass this variable from the yaml file.
   # This is the target step we are aiming for deleting the pod and
   # validating the restored step checkpoint.
-  target_step = 110
+  deletion_target_step = 25 if DELETE_MODE == "node" else 35
+  restore_step_target= 20 if DELETE_MODE == "node" else 30
+  # restore_step_target = 100
 
-  # Trigger the pod deletion of the pathways head pod. This will make the jobset
-  # restarts again. First step in the restore cycle workflow
-  if DELETE_POD:
+  # If DELETE_MODE: pod
+  # - Trigger the pod deletion of the pathways head pod. This will make the jobset
+  # restarts again.
+  # If DELETE_MODE: node
+  # - Trigger the node deletion of the pathways worker node. (For Pathways)
+
+  if DELETE_MODE:
     time_elapsed = 0
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
       now = str(int(datetime.now(timezone.utc).timestamp()))
       start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
-      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{target_step}\]"
+      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{deletion_target_step}\]"
       complied_pattern = re.compile(log_pattern)
       # Fetch logs from Cloud Logging API for the specified time window.
       entries = list_log_entries(
@@ -354,13 +391,18 @@ if __name__ == '__main__':
         )
       print(f"Entries ==>  {entries}",file=sys.stderr)
       if entries:
-        print(f"Target step {target_step} reached. Triggering pod deletion...")
-        delete_pod_pw(dry_run=False)
-        sys.exit(0)
-      print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for target step {target_step} in logs...", file=sys.stderr)
+        if DELETE_MODE == "pod":
+          print(f"Target step {deletion_target_step} reached. Triggering pod deletion...", file=sys.stderr)
+          delete_pod_pw(dry_run=False)
+          sys.exit(0)
+        elif DELETE_MODE == "node":
+          print(f"Target step {deletion_target_step} reached. Triggering node deletion...", file=sys.stderr)
+          delete_node_pw(dry_run=False)
+          sys.exit(0)
+      print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for target step {deetion_target_step} in logs...", file=sys.stderr)
       time.sleep(60)
       time_elapsed += 60
-    raise ValueError(f"Timeout reached: Target step {target_step} not found in logs "
+    raise ValueError(f"Timeout reached: Target step {deletion_target_step} not found in logs "
               f"within {JOBSET_HEALTHY_TIMEOUT} seconds.")
 
   # Validation method for "default" and "colocated python" benchmarking.
@@ -376,7 +418,7 @@ if __name__ == '__main__':
 
     # We need to pass a <step> group so it can return the chckp step found.
     log_pattern = r"^Serialization.*?step_(?P<step>\d+).*"
-    chkp_in_logs = extract_log_metrics(log_pattern, start_dt, end_dt)
+    chkp_in_logs = extract_log_metrics(log_pattern=log_pattern, start_time=start_dt, end_time=end_dt)
 
     # Get saved checkpoints in GCS Bucket.
     trainer_dir = f"{GCS_PREFIX}/runs/{GIT_BRANCH}/{GH_RUN_ID}/checkpoints/"
@@ -412,7 +454,6 @@ if __name__ == '__main__':
       all_running = all(pod.status.phase == "Running" for pod in pods_pw.items)
       if all_running and len(pods_pw.items) > 0:
           print(f"All pods for {JOBSET_NAME_TARGET} are Running. Proceeding with restore validation.", file=sys.stderr)
-          restore_step_target = 100
 
           # Validates step from pathways head logs matches the GCS bucket stored step.
           if validate_restore(restore_step_target, start_dt, end_dt):
@@ -425,7 +466,6 @@ if __name__ == '__main__':
       print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for all pods to be Running...", file=sys.stderr)
       time.sleep(60)
       time_elapsed += 60
-
 
 
 
