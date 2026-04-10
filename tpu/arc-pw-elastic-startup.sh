@@ -18,7 +18,7 @@ echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
 # Check if Checkpoint Steps were passed. If not 100 default.
 if [ -z "$STEPS_CHECKPOINT" ]; then
-    STEPS_CHECKPOINT=30
+    STEPS_CHECKPOINT=20
 else
     STEPS_CHECKPOINT="$STEPS_CHECKPOINT"
 fi
@@ -70,12 +70,11 @@ sed -i 's/lr_warmup_steps: int = 2000/lr_warmup_steps: int = 15/g' /root/axlearn
 sed -i "/trn2_config = _generate_trn2_custom_configs/a \    max_step=$MAX_STEPS" /root/axlearn/experiments/text/gpt/fuji.py
 sed -i "/max_step=max_step,/a \            save_every_n_steps=$STEPS_CHECKPOINT," /root/axlearn/experiments/text/gpt/fuji.py
 
-# Start the training loop
 python3 -m axlearn.common.launch_trainer_main \
-    --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
-    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
-    --data_dir=gs://axlearn-public/tensorflow_datasets \
-    --jax_backend=proxy \
-    --mesh_selector=tpu-v6e-16 \
-    --trace_at_steps=5 \
-    --trainer_log_every_n_steps=1 2>&1 | tee ${LOG_FILE}
+ --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
+ --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
+ --data_dir=gs://axlearn-public/tensorflow_datasets \
+ --jax_backend=proxy \
+ --mesh_selector=tpu-v6e-16 \
+ --trace_at_steps=5 \
+ --trainer_log_every_n_steps=1 2>&1 | tee ${LOG_FILE}

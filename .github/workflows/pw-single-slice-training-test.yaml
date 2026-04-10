@@ -5,18 +5,18 @@ jobs:
   pw-tpu-single-slice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
-      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset-val:latest
+      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset:latest
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: arc-pw-training
         ARC_JOBSET_JSON: /var/arc/arc-pw.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python-val:latest
+        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python:latest
         JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_1
         # Optional flags
-        STEPS_CHECKPOINT: 100
-        MAX_STEPS: 500
+        STEPS_CHECKPOINT: 30
+        MAX_STEPS: 100
         # POST_SETUP_CMD: uv pip install jax==0.9.0
         # CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: cienet_jax_py3.12_nightly
