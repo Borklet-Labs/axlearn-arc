@@ -365,9 +365,8 @@ if __name__ == '__main__':
   # TODO: Need to pass this variable from the yaml file.
   # This is the target step we are aiming for deleting the pod and
   # validating the restored step checkpoint.
-  deletion_target_step = 25 if DELETE_MODE == "node" else 35
-  restore_step_target= 20 if DELETE_MODE == "node" else 30
-  # restore_step_target = 100
+  deletion_target_step = 25 if DELETE_MODE == "node" else 55
+  restore_step_target= 20 if DELETE_MODE == "node" else 50
 
   # If DELETE_MODE: pod
   # - Trigger the pod deletion of the pathways head pod. This will make the jobset
@@ -399,7 +398,7 @@ if __name__ == '__main__':
           print(f"Target step {deletion_target_step} reached. Triggering node deletion...", file=sys.stderr)
           delete_node_pw(dry_run=False)
           sys.exit(0)
-      print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for target step {deetion_target_step} in logs...", file=sys.stderr)
+      print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for target step {deletion_target_step} in logs...", file=sys.stderr)
       time.sleep(60)
       time_elapsed += 60
     raise ValueError(f"Timeout reached: Target step {deletion_target_step} not found in logs "

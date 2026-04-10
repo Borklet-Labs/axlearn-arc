@@ -58,7 +58,7 @@ jobs:
   interruption-jobset:
     runs-on: jobset
     container:
-      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset-val:latest
+      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset:latest
       env:
         # Required environmental variables for a successful run
         JOBSET_HEALTHY_TIMEOUT: 1000
