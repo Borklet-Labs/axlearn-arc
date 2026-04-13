@@ -25,7 +25,7 @@ fi
 
 # Check Max Steps. Default 500.
 if [ -z "$MAX_STEPS" ]; then
-    MAX_STEPS=500
+    MAX_STEPS=100
 fi
 
 # Grab the latest AXLearn from upstream

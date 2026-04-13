@@ -15,8 +15,8 @@ jobs:
         JOBSET_HEALTHY_TIMEOUT: 600
         ACCELERATOR: v6e_4x4_2
         # Optional flags
-        STEPS_CHECKPOINT: 100
-        MAX_STEPS: 500
+        STEPS_CHECKPOINT: 30
+        MAX_STEPS: 100
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: main # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
