@@ -5,13 +5,13 @@ jobs:
   pw-tpu-single-slice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
-      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset:latest
+      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset-replica:latest
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: arc-pw-elastic-training
         ARC_JOBSET_JSON: /var/arc/arc-pw-elastic.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python:latest
+        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python-replica:latest
         JOBSET_HEALTHY_TIMEOUT: 3200
         ACCELERATOR: v6e_4x4_2
         # Optional flags
@@ -20,7 +20,7 @@ jobs:
         DELETE_MODE: node
         RESTORE_MODE: True
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: cienet/elastic_dev # Customize with a different branch
+        CUSTOM_GIT_BRANCH: cienet/replica_resize # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
