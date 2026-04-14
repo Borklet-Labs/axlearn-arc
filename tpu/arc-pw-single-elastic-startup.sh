@@ -18,14 +18,14 @@ echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
 # Check if Checkpoint Steps were passed. If not 100 default.
 if [ -z "$STEPS_CHECKPOINT" ]; then
-    STEPS_CHECKPOINT=50
+    STEPS_CHECKPOINT=100
 else
     STEPS_CHECKPOINT="$STEPS_CHECKPOINT"
 fi
 
 # Check Max Steps. Default 500.
 if [ -z "$MAX_STEPS" ]; then
-    MAX_STEPS=100
+    MAX_STEPS=300
 fi
 
 # Grab the latest AXLearn from upstream
@@ -51,8 +51,7 @@ if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
 fi
 
 # Modify the batch size to account for TPU v6e 4x4
-sed -i 's/train_batch_size=train_batch_size/train_batch_size=128/g' /root/axlearn/experiments/text/gpt/fuji.py
-sed -i 's/fsdp=8/fsdp=32/g' /root/axlearn/experiments/text/gpt/fuji.py
+sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn/experiments/text/gpt/fuji.py
 
 LOG_FILE="training_log_dump.log"
 

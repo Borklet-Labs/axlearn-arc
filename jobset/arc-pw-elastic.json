@@ -174,7 +174,7 @@
                     "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   }
                 ],
-                "nodeSelector": { "axlearn/nodepool_type": "workload" },
+                "nodeSelector": { "cloud.google.com/gke-nodepool": "worker-pool"},
                 "restartPolicy": "Never",
                 "serviceAccountName": "default",
                 "terminationGracePeriodSeconds": 60,

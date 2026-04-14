@@ -80,7 +80,7 @@ def delete_node_pw(dry_run: bool = False):
           label_selector=label_selector
       )
       for pod in pods_pw.items:
-          if "-pwwk-1" in pod.metadata.name and pod.spec.node_name is not None:
+          if "-pwwk-0" in pod.metadata.name and pod.spec.node_name is not None:
             node_name = pod.spec.node_name
             prefix = "[DRY RUN] Would delete node" if dry_run else "Found and deleting"
             print(f"{prefix}: {node_name}", file=sys.stderr)
@@ -276,8 +276,8 @@ def get_chkp_gcs(gcs_path: str) -> List[str]:
         return []
 
 def extract_log_metrics(log_pattern:str, pod_pattern:str="arc-pw-training-pwhd-0-.*",
-                        container_name:str="arc-pw-training-hd", start_time:datetime = None,
-                        end_time:datetime = None,is_benchmark:bool = False)-> set[int]:
+                        start_time:datetime = None, end_time:datetime = None,
+                        is_benchmark:bool = False)-> set[int]:
   """
   Retrieves checkpoint step numbers from Cloud Logging based on a specific pattern.
   Args:
@@ -294,7 +294,6 @@ def extract_log_metrics(log_pattern:str, pod_pattern:str="arc-pw-training-pwhd-0
         **LOG_CONFIG,
         text_filter=f'jsonPayload.message=~"{log_pattern}"',
         pod_pattern=pod_pattern,
-        container_name=container_name,
         start_time=start_time,
         end_time=end_time,
     )
@@ -327,9 +326,8 @@ def extract_log_metrics(log_pattern:str, pod_pattern:str="arc-pw-training-pwhd-0
 def get_logs_benchmark(start_time:str = None, end_time:str = None):
   time_pattern = r"Deserialize took (?P<duration>\d+\.?\d*) seconds"
   pod_pttr_colocated = "arc-pw-colocated-pwhd-0-0-.*"
-  container_name_colocated = ".*"
-  duartion = extract_log_metrics(log_pattern=time_pattern,pod_pattern=pod_pttr_colocated, container_name=container_name_colocated
-                                 ,start_time=start_time, end_time=end_time, is_benchmark=True)
+  duartion = extract_log_metrics(log_pattern=time_pattern,pod_pattern=pod_pttr_colocated,
+                                start_time=start_time, end_time=end_time, is_benchmark=True)
   print(f"Times from logs --> {duartion}", file=sys.stderr)
   if len(duartion) > 0:
     return True
@@ -338,7 +336,7 @@ def get_logs_benchmark(start_time:str = None, end_time:str = None):
         f"between {start_time} and {end_time}."
     )
 
-def validate_restore(target_step:int, start_time:str = None, end_time:str = None)-> bool:
+def validate_restore(target_step: int, start_time: Optional[datetime] = None, end_time: Optional[datetime] = None) -> bool:
     """
     Validates that the training has restored from a specific target step.
     Args:
@@ -350,11 +348,12 @@ def validate_restore(target_step:int, start_time:str = None, end_time:str = None
         bool: True if validation succeeds.
     """
 
+    pod_name_pattern =  "arc-pw-ss-elastic-training-pwhd-0-.*" if JOBSET_NAME_TARGET == "arc-pw-ss-elastic-training" else "arc-pw-training-pwhd-0-.*"
     # We need to pass a <step> group so it can return the chckp step found.
     restore_pattern = r"Restoring.*step_(?P<step>\d{8})"
-    chkp_in_logs = extract_log_metrics(log_pattern=restore_pattern, start_time=start_time, end_time=end_time)
+    chkp_in_logs = extract_log_metrics(log_pattern=restore_pattern, pod_pattern=pod_name_pattern, start_time=start_time, end_time=end_time)
     print(f"Checkpoints found on Restore: {list(chkp_in_logs)}")
-    if len(chkp_in_logs) > 0 and target_step in chkp_in_logs:
+    if target_step in chkp_in_logs:
       print(f"Successfully validated restoration from steps: {list(chkp_in_logs)}")
       return True
     return False
@@ -365,8 +364,11 @@ if __name__ == '__main__':
   # TODO: Need to pass this variable from the yaml file.
   # This is the target step we are aiming for deleting the pod and
   # validating the restored step checkpoint.
-  deletion_target_step = 25 if DELETE_MODE == "node" else 55
-  restore_step_target= 20 if DELETE_MODE == "node" else 50
+  deletion_target_step = 55
+  restore_step_target= 50
+  if JOBSET_NAME_TARGET == "arc-pw-ss-elastic-training":
+    deletion_target_step = 105
+    restore_step_target= 100
 
   # If DELETE_MODE: pod
   # - Trigger the pod deletion of the pathways head pod. This will make the jobset
@@ -454,8 +456,15 @@ if __name__ == '__main__':
       if all_running and len(pods_pw.items) > 0:
           print(f"All pods for {JOBSET_NAME_TARGET} are Running. Proceeding with restore validation.", file=sys.stderr)
 
-          # Validates step from pathways head logs matches the GCS bucket stored step.
-          if validate_restore(restore_step_target, start_dt, end_dt):
+          # We need to give time so the restoring logs appear in the pw-head
+          # and recalculate NOW. (Extra ~2 min)
+          print(f"Waiting 100 seconds to give time to restore appear logs", file=sys.stderr)
+          time.sleep(120)
+          now = str(int(datetime.now(timezone.utc).timestamp()))
+          start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
+
+          # Validate that the training has restored from the target step.
+          if validate_restore(target_step=restore_step_target, start_time=start_dt, end_time=end_dt):
              sys.exit(0)
           raise ValueError(
               f"Restore validation failed: Could not find log entry indicating "
