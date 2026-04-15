@@ -54,5 +54,5 @@ fi
 
 # Run the colocated python benchmark script to calculate Data loading time.
 python3 axlearn/cloud/gcp/examples/colocated_python_benchmark.py \
-    --ckpt_path gs://axlearn-arc-testing/testing/runs/${GIT_BRANCH}/${GH_RUN_ID}/checkpoints/step_00000100 --method ${MODE}
+    --ckpt_path gs://axlearn-arc-testing/testing/runs/${GIT_BRANCH}/${GH_RUN_ID}/checkpoints/step_00000050 --method ${MODE}
     # --ckpt_path gs://axlearn-arc-testing/testing/runs/main/23529741527/checkpoints/step_00000100 --method ${MODE}
