@@ -75,5 +75,4 @@ python3 -m axlearn.common.launch_trainer_main \
  --data_dir=gs://axlearn-public/tensorflow_datasets \
  --jax_backend=proxy \
  --mesh_selector=tpu-v6e-16 \
- --trace_at_steps=5 \
  --trainer_log_every_n_steps=1 2>&1 | tee ${LOG_FILE}
