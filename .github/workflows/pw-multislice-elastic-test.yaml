@@ -19,8 +19,8 @@ jobs:
         MAX_STEPS: 100
         DELETE_MODE: node
         RESTORE_MODE: True
-        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: cienet/replica_resize # Customize with a different branch
+        CUSTOM_GIT_ORIGIN: https://github.com/lkolluru05/axlearn
+        CUSTOM_GIT_BRANCH: elastic_training # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
