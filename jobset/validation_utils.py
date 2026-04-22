@@ -364,8 +364,8 @@ if __name__ == '__main__':
   # TODO: Need to pass this variable from the yaml file.
   # This is the target step we are aiming for deleting the pod and
   # validating the restored step checkpoint.
-  deletion_target_step = 55
-  restore_step_target= 50
+  deletion_target_step = 25
+  restore_step_target= 20
   if JOBSET_NAME_TARGET == "arc-pw-ss-elastic-training":
     deletion_target_step = 105
     restore_step_target= 100
@@ -381,7 +381,8 @@ if __name__ == '__main__':
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
       now = str(int(datetime.now(timezone.utc).timestamp()))
       start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
-      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{deletion_target_step}\]"
+      print("On new image..........")
+      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{deletion_target_step}\s+\]"
       complied_pattern = re.compile(log_pattern)
       # Fetch logs from Cloud Logging API for the specified time window.
       entries = list_log_entries(
@@ -474,7 +475,3 @@ if __name__ == '__main__':
       print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for all pods to be Running...", file=sys.stderr)
       time.sleep(60)
       time_elapsed += 60
-
-
-
-
