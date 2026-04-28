@@ -15,17 +15,17 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.12
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu-py312-jax-nightly:latest
-        JOBSET_HEALTHY_TIMEOUT: 1500
+        JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_1
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn # Optionally point to another repo
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         # CUSTOM_GIT_BRANCH: jw/fix-pallas-nonetype
-        CUSTOM_GIT_BRANCH: main
+        CUSTOM_GIT_BRANCH: cienet/0_10_dev
         # CUSTOM_GIT_BRANCH: jax_0.9.1_dev # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
-        POST_SETUP_CMD: pip install -v -U --pre jax==0.9.2 jaxlib==0.9.2 requests libtpu==0.0.39 -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
+        POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
