@@ -71,7 +71,7 @@ sed -i "/trn2_config = _generate_trn2_custom_configs/a \    max_step=$MAX_STEPS"
 sed -i "/max_step=max_step,/a \            save_every_n_steps=$STEPS_CHECKPOINT," /root/axlearn/experiments/text/gpt/fuji.py
 
 python3 -m axlearn.common.launch_trainer_main \
- --module=text.gpt.c4_trainer --config=fuji-test-v2 \
+ --module=text.gpt.c4_trainer --config=fuji-7B-v1-flash \
  --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
  --data_dir=gs://axlearn-public/tensorflow_datasets \
  --jax_backend=proxy \
