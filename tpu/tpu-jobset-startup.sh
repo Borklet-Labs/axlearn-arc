@@ -16,8 +16,20 @@ fi
 
 echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
+# Check if Checkpoint Steps were passed. If not 100 default.
+if [ -z "$STEPS_CHECKPOINT" ]; then
+    STEPS_CHECKPOINT=50
+else
+    STEPS_CHECKPOINT="$STEPS_CHECKPOINT"
+fi
+
+# Check Max Steps. Default 500.
+if [ -z "$MAX_STEPS" ]; then
+    MAX_STEPS=100
+fi
+
 # Grab the latest AXLearn from upstream
-git init /root && cd /root 
+git init /root && cd /root
 git remote add origin $GIT_ORIGIN
 git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin
 git checkout $GIT_BRANCH
@@ -38,8 +50,19 @@ if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ]; then
     eval "$POST_SETUP_CMD"
 fi
 
+JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
+echo "JAX_VERSION_OUTPUT:${JAX_VER}"
+
+gsutil -h "x-goog-meta-jax-version:${JAX_VER}" -m cp /dev/null ${GCS_PREFIX}/metadata/jax_version_tag_${GH_RUN_ID}
+
 # Modify the batch size to account for TPU v6e 4x4
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn/experiments/text/gpt/fuji.py
+
+# Modify checkpointing steps
+sed -i 's/lr_warmup_steps: int = 2000/lr_warmup_steps: int = 50/g' /root/axlearn/experiments/text/gpt/common.py
+sed -i "/trn2_config = _generate_trn2_custom_configs/a \    max_step=$MAX_STEPS" /root/axlearn/experiments/text/gpt/fuji.py
+sed -i "/max_step=max_step,/a \            save_every_n_steps=$STEPS_CHECKPOINT," /root/axlearn/experiments/text/gpt/fuji.py
+
 
 # Start the training loop
 python3 -m axlearn.common.launch_trainer_main \
