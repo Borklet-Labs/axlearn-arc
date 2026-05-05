@@ -96,6 +96,8 @@
                       { "name": "BENCHMARK_MODE", "value": "INSERT_BENCHMARK_MODE" },
                       { "name": "POST_SETUP_CMD", "value": "INSERT_POST_SETUP_CMD" },
                       { "name": "FUJI_PATCH_FILE", "value": "INSERT_FUJI_PATCH_FILE" },
+                      { "name": "MAX_STEPS", "value": "INSERT_MAX_STEPS" },
+                      { "name": "STEPS_CHECKPOINT", "value": "INSERT_STEPS_CHECKPOINT" },
                       { "name": "ENABLE_JAX_DEV", "value": "INSERT_ENABLE_JAX_DEV" },
                       {
                         "name": "NUM_REPLICAS",
