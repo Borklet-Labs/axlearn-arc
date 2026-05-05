@@ -16,6 +16,9 @@ fi
 
 echo "About to pull branch $GIT_BRANCH from origin $GIT_ORIGIN"
 
+echo "STEPS_CHECKP: $STEPS_CHECKPOINT"
+echo "MAX_STEPS: $MAX_STEPS"
+
 # Check if Checkpoint Steps were passed. If not 100 default.
 if [ -z "$STEPS_CHECKPOINT" ]; then
     STEPS_CHECKPOINT=50

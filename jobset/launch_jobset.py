@@ -35,6 +35,8 @@ PW_SERVER_IMAGE = os.environ['PW_SERVER_IMAGE'] if "PW_SERVER_IMAGE" in os.envir
 RESTORE_MODE = os.environ['RESTORE_MODE'] if "RESTORE_MODE" in os.environ else None
 COLOCATED_PY_IMAGE = os.environ['COLOCATED_PY_IMAGE'] if "COLOCATED_PY_IMAGE" in os.environ else None
 BENCHMARK_MODE = os.environ['BENCHMARK_MODE'] if "BENCHMARK_MODE" in os.environ else None
+MAX_STEPS = os.environ['MAX_STEPS'] if "MAX_STEPS" in os.environ else None
+STEPS_CHECKPOINT = os.environ['STEPS_CHECKPOINT'] if "STEPS_CHECKPOINT" in os.environ else None
 
 
 # Use the dynamic client to leverage the JobSet API
@@ -284,6 +286,16 @@ def update_jobset(jobset_base_config: dict) -> dict:
     if POST_SETUP_CMD:
         print(f'Detected post-setup command: {POST_SETUP_CMD}', file=sys.stderr)
         updated_jobset = updated_jobset.replace("INSERT_POST_SETUP_CMD", POST_SETUP_CMD)
+
+    # Set Max steps of the training
+    if MAX_STEPS:
+        print(f'Detected custom Max steps of the training to : {MAX_STEPS}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_MAX_STEPS", MAX_STEPS)
+
+    # Set Steps of Checkpoint
+    if STEPS_CHECKPOINT:
+        print(f'Detected custom Checkpoint steps of the training to : {STEPS_CHECKPOINT}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_STEPS_CHECKPOINT", STEPS_CHECKPOINT)
 
     # Add any mesh selector patches for fuji.py
     if FUJI_PATCH_FILE:
