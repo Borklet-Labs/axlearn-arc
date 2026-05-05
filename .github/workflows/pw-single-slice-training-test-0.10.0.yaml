@@ -1,0 +1,56 @@
+name: pw-single-slice-training-test-0.10.0
+on:
+  workflow_dispatch
+jobs:
+  pw-tpu-single-slice-training-test-job:
+    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
+    container:
+      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset:latest
+      env:
+        # Required environmental variables for a successful run
+        ARC_JOBSET_NAME: arc-pw-training
+        ARC_JOBSET_JSON: /var/arc/arc-pw.json
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
+        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python:latest
+        JOBSET_HEALTHY_TIMEOUT: 900
+        ACCELERATOR: v6e_4x4_1
+        # Optional flags
+        STEPS_CHECKPOINT: 50
+        MAX_STEPS: 500
+        # POST_SETUP_CMD: uv pip install jax==0.9.0
+        # CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo
+        # CUSTOM_GIT_BRANCH: cienet_jax_py3.12_nightly
+        # Optional flags
+        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
+        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
+        # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
+        # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
+        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260501-jax_0.10.0
+        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260501-jax_0.10.0
+        POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.10.0 jaxlib==0.10.0 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
+    steps:
+      - name: Install the Kubernetes Python SDK
+        run: uv pip install kubernetes
+      - name: Launch the TPU training job
+        id: launch_step
+        run: |
+          START_TIME=$(date +%s)
+          echo "START_TIME=$START_TIME" >> $GITHUB_ENV
+          GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
+          echo "end_time=$END_TIME" >> $GITHUB_OUTPUT
+      - name: Checkpoint Validation
+        if: always()
+        env:
+          GH_RUN_ID: ${{ github.run_id }}
+          START_TIME: ${{ steps.launch_step.outputs.start_time}}
+          END_TIME: ${{ steps.launch_step.outputs.end_time}}
+          VALIDATION_METHOD: save
+        run: |
+          python /var/arc/validation_utils.py
+      - name: Upload the training result to GCS
+        if: always()
+        run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh
