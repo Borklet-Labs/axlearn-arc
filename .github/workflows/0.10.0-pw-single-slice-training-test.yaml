@@ -1,6 +1,6 @@
 name: 0.10.0-pw-single-slice-training-test
 on:
-  workflow_dispatch:
+  workflow_dispatch
 jobs:
   pw-tpu-single-slice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
