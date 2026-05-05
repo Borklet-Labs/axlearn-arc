@@ -15,7 +15,7 @@ jobs:
         JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_1
         # Optional flags
-        STEPS_CHECKPOINT: 50
+        # STEPS_CHECKPOINT: 50
         MAX_STEPS: 500
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         CUSTOM_GIT_BRANCH: cienet/0_10_dev
