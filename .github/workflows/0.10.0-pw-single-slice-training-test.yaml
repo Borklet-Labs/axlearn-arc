@@ -17,9 +17,8 @@ jobs:
         # Optional flags
         STEPS_CHECKPOINT: 50
         MAX_STEPS: 500
-        # POST_SETUP_CMD: uv pip install jax==0.9.0
-        # CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: cienet_jax_py3.12_nightly
+        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
+        CUSTOM_GIT_BRANCH: cienet/0_10_dev
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
