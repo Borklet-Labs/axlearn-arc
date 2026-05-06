@@ -2,7 +2,7 @@ name: pw-mult-elastic-training-test
 on:
   workflow_dispatch
 jobs:
-  pw-tpu-single-slice-training-test-job:
+  pw-elastic-replica-resize-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
       image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset-replica:latest
@@ -12,12 +12,12 @@ jobs:
         ARC_JOBSET_JSON: /var/arc/arc-pw-elastic.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python-replica:latest
-        JOBSET_HEALTHY_TIMEOUT: 3200
+        JOBSET_HEALTHY_TIMEOUT: 2000
         ACCELERATOR: v6e_4x4_2
         # Optional flags
         STEPS_CHECKPOINT: 20
         MAX_STEPS: 100
-        DELETE_MODE: node
+        RESTORE_MODE: True
         # RESTORE_MODE: True
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         CUSTOM_GIT_BRANCH: cienet/replica_resize # Customize with a different branch
@@ -44,49 +44,38 @@ jobs:
 
           echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
           echo "end_time=$END_TIME" >> $GITHUB_OUTPUT
-      - name: Checkpoint Validation
-        if: always()
+
+
+  interruption-jobset-replica-resize:
+    runs-on: jobset
+    container:
+      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset-replica:latest
+      env:
+        # Required environmental variables for a successful run
+        JOBSET_HEALTHY_TIMEOUT: 2000
+        CUSTOM_GIT_BRANCH: main # Customize with a different branch
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
+    steps:
+      - name: Install the Kubernetes Python SDK
+        run: |
+          uv pip install kubernetes
+      - name: Launch Node deletion
+        id: launch_deletion
         env:
           GH_RUN_ID: ${{ github.run_id }}
-          START_TIME: ${{ steps.launch_step.outputs.start_time}}
-          END_TIME: ${{ steps.launch_step.outputs.end_time}}
-          VALIDATION_METHOD: save
+          ARC_JOBSET_NAME_TARGET: arc-pw-elastic-training
+          DELETE_MODE: drain
         run: |
-          python /var/arc/validation_utils.py
-      - name: Upload the training result to GCS
-        if: always()
-        run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh
-
-
-  # interruption-jobset:
-  #   runs-on: jobset
-  #   container:
-  #     image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset-replica:latest
-  #     env:
-  #       # Required environmental variables for a successful run
-  #       JOBSET_HEALTHY_TIMEOUT: 2400
-  #       CUSTOM_GIT_BRANCH: main # Customize with a different branch
-  #       GCS_PREFIX: gs://axlearn-arc-testing/testing
-  #   steps:
-  #     - name: Install the Kubernetes Python SDK
-  #       run: |
-  #         uv pip install kubernetes
-  #     - name: Launch Node deletion
-  #       id: launch_deletion
-  #       env:
-  #         GH_RUN_ID: ${{ github.run_id }}
-  #         ARC_JOBSET_NAME_TARGET: arc-pw-elastic-training
-  #         DELETE_MODE: node
-  #       run: |
-  #         START_TIME=$(date +%s)
-  #         echo "START_TIME=$START_TIME" >> $GITHUB_ENV
-  #         DELETE_MODE=node START_TIME=$START_TIME GH_RUN_ID=${{ github.run_id }} python /var/arc/validation_utils.py
-  #         echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
-  #     - name: Launch the restore Validation
-  #       env:
-  #         GH_RUN_ID: ${{ github.run_id }}
-  #         START_TIME: ${{ steps.launch_deletion.outputs.start_time}}
-  #         ARC_JOBSET_NAME_TARGET: arc-pw-elastic-training
-  #         VALIDATION_METHOD: restore
-  #       run: |
-  #         START_TIME=$START_TIME GH_RUN_ID=${{ github.run_id }} python /var/arc/validation_utils.py
+          START_TIME=$(date +%s)
+          echo "START_TIME=$START_TIME" >> $GITHUB_ENV
+          START_TIME=$START_TIME GH_RUN_ID=${{ github.run_id }} python /var/arc/validation_utils.py
+          echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
+      - name: Launch the restore Validation
+        env:
+          GH_RUN_ID: ${{ github.run_id }}
+          START_TIME: ${{ steps.launch_deletion.outputs.start_time}}
+          ARC_JOBSET_NAME_TARGET: arc-pw-elastic-training
+          VALIDATION_METHOD: restore
+          MIN_SLICES: 1
+        run: |
+          START_TIME=$START_TIME GH_RUN_ID=${{ github.run_id }} python /var/arc/validation_utils.py

@@ -49,6 +49,8 @@ GCS_PREFIX = os.environ['GCS_PREFIX'] if "GCS_PREFIX" in os.environ else None
 GIT_BRANCH = os.environ['CUSTOM_GIT_BRANCH'] if "CUSTOM_GIT_BRANCH" in os.environ else "main"
 VALIDATION_METHOD = os.environ['VALIDATION_METHOD'] if "VALIDATION_METHOD" in os.environ else None
 DELETE_MODE= os.environ['DELETE_MODE'] if "DELETE_MODE" in os.environ else None
+MIN_SLICES = os.environ['MIN_SLICES'] if "MIN_SLICES" in os.environ else None
+
 
 
 # Use the dynamic client to leverage the JobSet API
@@ -453,8 +455,8 @@ def validate_restore(target_step: int, start_time: Optional[datetime] = None, en
         bool: True if validation succeeds.
     """
 
-    pod_name_pattern =  "arc-pw-ss-elastic-training-pwhd-0-.*" if JOBSET_NAME_TARGET == "arc-pw-ss-elastic-training" else "arc-pw-training-pwhd-0-.*"
     # We need to pass a <step> group so it can return the chckp step found.
+    pod_name_pattern =  ".*-elastic-training-pwhd-0-.*" if "elastic" in JOBSET_NAME_TARGET else "arc-pw-training-pwhd-0-.*"
     restore_pattern = r"Restoring.*step_(?P<step>\d{8})"
     chkp_in_logs = extract_log_metrics(log_pattern=restore_pattern, pod_pattern=pod_name_pattern, start_time=start_time, end_time=end_time)
     print(f"Checkpoints found on Restore: {list(chkp_in_logs)}")
@@ -469,6 +471,11 @@ if __name__ == '__main__':
   # TODO: Need to pass this variable from the yaml file.
   # This is the target step we are aiming for deleting the pod and
   # validating the restored step checkpoint.
+
+  print(f"DELETE_MODE: {DELETE_MODE}", file=sys.stderr)
+  print(f"VALIDATION METHOD: {VALIDATION_METHOD}", file=sys.stderr)
+  print(f"MIN_SLICES: {MIN_SLICES}", file=sys.stderr)
+
   deletion_target_step = 25
   restore_step_target= 20
   if JOBSET_NAME_TARGET == "arc-pw-ss-elastic-training":
@@ -488,7 +495,6 @@ if __name__ == '__main__':
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
       now = str(int(datetime.now(timezone.utc).timestamp()))
       start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
-      print("On new image..........")
       log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{deletion_target_step}\s+\]"
       complied_pattern = re.compile(log_pattern)
       # Fetch logs from Cloud Logging API for the specified time window.
@@ -510,11 +516,11 @@ if __name__ == '__main__':
           sys.exit(0)
         elif DELETE_MODE == "drain":
           print(f"Target step {deletion_target_step} reached. Triggering node drain...", file=sys.stderr)
-          drain_nodes_pw(dry_run=True)
+          drain_nodes_pw(dry_run=False)
           sys.exit(0)
       print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for target step {deletion_target_step} in logs...", file=sys.stderr)
-      time.sleep(60)
-      time_elapsed += 60
+      time.sleep(30)
+      time_elapsed += 30
     raise ValueError(f"Timeout reached: Target step {deletion_target_step} not found in logs "
               f"within {JOBSET_HEALTHY_TIMEOUT} seconds.")
 
@@ -564,8 +570,11 @@ if __name__ == '__main__':
       )
 
       # We need to check that all pods 'axlearn-arc' namespace  are in RUNNING state.
-      all_running = all(pod.status.phase == "Running" for pod in pods_pw.items)
-      if all_running and len(pods_pw.items) > 0:
+      # For Elastic Training Replica Resize we only need to wait for MIN_SLICES to be up.
+      pods_targets = [pod for pod in pods_pw.items if "pwwk-1" in pod.metadata.name] if MIN_SLICES else pods_pw.items
+      all_running = bool(pods_targets) and all(pod.status.phase == "Running" for pod in pods_targets)
+
+      if all_running and len(pods_targets) > 0:
           print(f"All pods for {JOBSET_NAME_TARGET} are Running. Proceeding with restore validation.", file=sys.stderr)
 
           # We need to give time so the restoring logs appear in the pw-head

@@ -28,7 +28,7 @@
           "metadata": {
             "annotations": {
               "axlearn/replicatedjob-load-balancer-port": "80",
-              "axlearn/replicatedjob-load-balancer-service-name": "arc-pw-elstic-training-pwhd-service",
+
               "axlearn/replicatedjob-load-balancer-target-port": "9000"
             }
           },
@@ -89,8 +89,11 @@
                       { "name": "ENABLE_JAX_DEV", "value": "INSERT_ENABLE_JAX_DEV" },
                       { "name": "MAX_STEPS", "value": "INSERT_MAX_STEPS" },
                       { "name": "STEPS_CHECKPOINT", "value": "INSERT_STEPS_CHECKPOINT" },
+                      { "name": "DELETE_MODE", "value": "INSERT_DELETE_MODE" },
+                      { "name": "VALIDATION_METHOD", "value": "INSERT_VALIDATION_METHOD" },
                       { "name": "NUM_REPLICAS", "value": "2" },
                       { "name": "ELASTIC_MODE", "value": "replica-resize" },
+
                       {
                         "name": "REPLICA_ID",
                         "valueFrom": { "fieldRef": { "fieldPath": "metadata.annotations['jobset.sigs.k8s.io/job-index']" } }

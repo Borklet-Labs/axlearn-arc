@@ -39,6 +39,8 @@ MAX_STEPS = os.environ['MAX_STEPS'] if "MAX_STEPS" in os.environ else None
 STEPS_CHECKPOINT = os.environ['STEPS_CHECKPOINT'] if "STEPS_CHECKPOINT" in os.environ else None
 
 
+
+
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
     kubernetes.client.ApiClient(
