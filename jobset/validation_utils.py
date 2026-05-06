@@ -97,6 +97,111 @@ def delete_node_pw(dry_run: bool = False):
     sys.exit(1)
 
 
+def drain_nodes_pw(dry_run: bool = False):
+    """ Drain Pathways worker nodes by cordoning and evicting pods.
+    Args:
+        dry_run: If True, only print the operations that would be performed.
+    This function terminates the execution by calling sys.exit upon completion."""
+
+    # This way we only query the pods related with <JOBSET_NAME>
+    label_selector = f"jobset.sigs.k8s.io/jobset-name={JOBSET_NAME_TARGET}"
+    try:
+      # Step 1: Identify the nodes for slice -0
+      pods_pw = KUBE_API.list_namespaced_pod(
+          namespace=NAMESPACE,
+          label_selector=label_selector
+      )
+      target_nodes = set()
+      for pod in pods_pw.items:
+          if "-pwwk-0" in pod.metadata.name and pod.spec.node_name is not None:
+            target_nodes.add(pod.spec.node_name)
+
+      if not target_nodes:
+          print(f"No workers found for JobSet: {JOBSET_NAME_TARGET} (slice -0)", file=sys.stderr)
+          sys.exit(1)
+
+      print(f"Found target nodes to drain: {target_nodes}", file=sys.stderr)
+
+      # Step 2: Process each node
+      for node_name in target_nodes:
+          prefix = "[DRY RUN] Would cordon node" if dry_run else "Cordoning node"
+          print(f"{prefix}: {node_name}", file=sys.stderr)
+          if not dry_run:
+              try:
+                  # Patching spec.unschedulable to True (Cordon)
+                  KUBE_API.patch_node(
+                      name=node_name,
+                      body={"spec": {"unschedulable": True}}
+                  )
+                  print(f"Cordon succeeded for node: {node_name}", file=sys.stderr)
+              except Exception as e:
+                  print(f"Failed to cordon {node_name}: {e}", file=sys.stderr)
+                  continue
+
+          # Step 3: Evict pods
+          try:
+              # List all pods on the node regardless of dry-run status for verbose confirmation
+              node_pods = KUBE_API.list_pod_for_all_namespaces(field_selector=f"spec.nodeName={node_name}")
+              for pod in node_pods.items:
+                  # Skip terminal pods
+                  if pod.status.phase in ["Succeeded", "Failed"]:
+                      continue
+
+                  # Check for DaemonSet owners
+                  is_daemonset = False
+                  if pod.metadata.owner_references:
+                      for owner in pod.metadata.owner_references:
+                          if owner.kind == "DaemonSet":
+                              is_daemonset = True
+                              break
+
+                  is_mirror = "kubernetes.io/config.mirror" in (pod.metadata.annotations or {})
+
+                  if is_daemonset or is_mirror:
+                      continue
+
+                  action_prefix = "[DRY RUN] Would evict" if dry_run else "Evicting"
+                  print(f"{action_prefix} pod: {pod.metadata.namespace}/{pod.metadata.name}", file=sys.stderr)
+
+                  if not dry_run:
+                      eviction = kubernetes.client.V1Eviction(
+                          api_version="policy/v1",
+                          kind="Eviction",
+                          metadata=kubernetes.client.V1ObjectMeta(
+                              name=pod.metadata.name,
+                              namespace=pod.metadata.namespace
+                          )
+                      )
+                      try:
+                          KUBE_API.create_namespaced_pod_eviction(
+                              name=pod.metadata.name,
+                              namespace=pod.metadata.namespace,
+                              body=eviction
+                          )
+                      except Exception as ev_e:
+                          print(f"Eviction failed for {pod.metadata.name} due to {ev_e}. Falling back to forceful delete.", file=sys.stderr)
+                          try:
+                              # Matches author intent established in existing delete_node_pw/delete_pod_pw functions
+                              KUBE_API.delete_namespaced_pod(
+                                  name=pod.metadata.name,
+                                  namespace=pod.metadata.namespace,
+                                  grace_period_seconds=0
+                              )
+                          except Exception as del_e:
+                              print(f"Delete failed for {pod.metadata.name}: {del_e}", file=sys.stderr)
+          except Exception as e:
+              print(f"Failed to list or process pods for {node_name}: {e}", file=sys.stderr)
+
+      print(f"Drain action completed for nodes: {target_nodes}", file=sys.stderr)
+      sys.exit(0)
+
+    except Exception as e:
+        print(f"Exception encountered during drain operation: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+
+
 def delete_pod_pw(dry_run: bool = False):
     """ Delete Pathways head pod
     Args:
@@ -375,6 +480,8 @@ if __name__ == '__main__':
   # restarts again.
   # If DELETE_MODE: node
   # - Trigger the node deletion of the pathways worker node. (For Pathways)
+  # If DELETE_MODE: drain
+  # - Trigger the node drain of the pathways worker node. (For Pathways)
 
   if DELETE_MODE:
     time_elapsed = 0
@@ -400,6 +507,10 @@ if __name__ == '__main__':
         elif DELETE_MODE == "node":
           print(f"Target step {deletion_target_step} reached. Triggering node deletion...", file=sys.stderr)
           delete_node_pw(dry_run=False)
+          sys.exit(0)
+        elif DELETE_MODE == "drain":
+          print(f"Target step {deletion_target_step} reached. Triggering node drain...", file=sys.stderr)
+          drain_nodes_pw(dry_run=True)
           sys.exit(0)
       print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for target step {deletion_target_step} in logs...", file=sys.stderr)
       time.sleep(60)
