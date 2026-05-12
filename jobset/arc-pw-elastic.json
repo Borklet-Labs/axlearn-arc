@@ -92,7 +92,7 @@
                       { "name": "DELETE_MODE", "value": "INSERT_DELETE_MODE" },
                       { "name": "VALIDATION_METHOD", "value": "INSERT_VALIDATION_METHOD" },
                       { "name": "NUM_REPLICAS", "value": "2" },
-                      { "name": "ELASTIC_MODE", "value": "replica-resize" },
+                      { "name": "ENABLED_REPLICA_RESIZE", "value": "INSERT_ENABLE_REPLICA_RESIZE" },
 
                       {
                         "name": "REPLICA_ID",
