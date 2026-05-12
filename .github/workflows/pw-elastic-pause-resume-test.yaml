@@ -1,8 +1,8 @@
-name: pw-ss-elastic-training-test
+name: pw-elastic-pause-resume-training-test
 on:
   workflow_dispatch
 jobs:
-  pw-tpu-single-slice-training-test-job:
+  pw-elastic-pause-resume-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
       image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset:latest
