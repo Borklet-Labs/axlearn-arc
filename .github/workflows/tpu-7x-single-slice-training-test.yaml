@@ -19,7 +19,7 @@ jobs:
         CUSTOM_GIT_BRANCH: tensorflow_2.21.0.1 # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
-        POST_SETUP_CMD: uv pip install libtpu==0.0.32.1
+        # POST_SETUP_CMD: uv pip install libtpu==0.0.32.1
         FUJI_PATCH_FILE: /var/arc/fuji-main.patch
         # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
     steps:
