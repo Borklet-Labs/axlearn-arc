@@ -27,8 +27,12 @@ jobs:
         # POST_SETUP_CMD: uv pip install libtpu==0.0.32.2
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
         # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
-        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
-        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
+        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
+        CUSTOM_GIT_BRANCH: cienet/elastic_training # Customize with a different branch
+
+        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260501-jax_0.10.0
+        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260501-jax_0.10.0
+        POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.10.0 jaxlib==0.10.0 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes

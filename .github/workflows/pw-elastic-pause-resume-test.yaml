@@ -21,7 +21,7 @@ jobs:
         RESTORE_MODE: True
         ENABLED_PAUSE_RESUME: True # For elastic training feature Pause && Resume
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: cienet/0_10_dev # Customize with a different branch
+        CUSTOM_GIT_BRANCH: cienet/elastic_training # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
