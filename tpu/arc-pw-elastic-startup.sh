@@ -28,6 +28,14 @@ if [ -z "$MAX_STEPS" ]; then
     MAX_STEPS=100
 fi
 
+# If ENABLED_REPLICA_RESIZE enabled use fuji-7B-v1-flash as config model
+# fuji-7B-v1-flash fit into one slice.
+if [ "$ENABLED_REPLICA_RESIZE" == "true" ]; then
+    CONFIG_MODEL="fuji-7B-v1-flash"
+else
+    CONFIG_MODEL="fuji-7B-v2-flash"
+fi
+
 # Grab the latest AXLearn from upstream
 git init /root && cd /root
 git remote add origin $GIT_ORIGIN
@@ -71,7 +79,7 @@ sed -i "/trn2_config = _generate_trn2_custom_configs/a \    max_step=$MAX_STEPS"
 sed -i "/max_step=max_step,/a \            save_every_n_steps=$STEPS_CHECKPOINT," /root/axlearn/experiments/text/gpt/fuji.py
 
 python3 -m axlearn.common.launch_trainer_main \
- --module=text.gpt.c4_trainer --config=fuji-7B-v1-flash \
+ --module=text.gpt.c4_trainer --config=${CONFIG_MODEL} \
  --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
  --data_dir=gs://axlearn-public/tensorflow_datasets \
  --jax_backend=proxy \
