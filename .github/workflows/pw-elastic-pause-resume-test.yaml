@@ -17,7 +17,6 @@ jobs:
         # Optional flags
         STEPS_CHECKPOINT: 100
         MAX_STEPS: 300
-        DELETE_MODE: node
         RESTORE_MODE: True
         ENABLED_PAUSE_RESUME: True # For elastic training feature Pause && Resume
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
@@ -81,7 +80,7 @@ jobs:
         run: |
           START_TIME=$(date +%s)
           echo "START_TIME=$START_TIME" >> $GITHUB_ENV
-          DELETE_MODE=node START_TIME=$START_TIME GH_RUN_ID=${{ github.run_id }} python /var/arc/validation_utils.py
+          START_TIME=$START_TIME GH_RUN_ID=${{ github.run_id }} python /var/arc/validation_utils.py
           echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
       - name: Launch the restore Validation
         env:
