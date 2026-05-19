@@ -19,7 +19,7 @@ import signal
 import threading
 import kubernetes
 
-# Get the JobSet info from the environment
+# Baseline Mcjax training jobset
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
 JOBSET_JSON = os.environ['ARC_JOBSET_JSON']
 DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
@@ -30,13 +30,25 @@ SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in 
 POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
 FUJI_PATCH_FILE = os.environ['FUJI_PATCH_FILE'] if "FUJI_PATCH_FILE" in os.environ else None
 ENABLE_JAX_DEV = os.environ['ENABLE_JAX_DEV'] if "ENABLE_JAX_DEV" in os.environ else None
+
+# Pathways Testing
 PW_PROXY_IMAGE = os.environ['PW_PROXY_IMAGE'] if "PW_PROXY_IMAGE" in os.environ else None
 PW_SERVER_IMAGE = os.environ['PW_SERVER_IMAGE'] if "PW_SERVER_IMAGE" in os.environ else None
+
+# Pathways + Elastic Training
+ENABLED_PAUSE_RESUME = os.environ['ENABLED_PAUSE_RESUME'] if "ENABLED_PAUSE_RESUME" in os.environ else None
+ENABLED_REPLICA_RESIZE = os.environ['ENABLED_REPLICA_RESIZE'] if "ENABLED_REPLICA_RESIZE" in os.environ else None
 RESTORE_MODE = os.environ['RESTORE_MODE'] if "RESTORE_MODE" in os.environ else None
+
+# Pathways + Colocated Python
 COLOCATED_PY_IMAGE = os.environ['COLOCATED_PY_IMAGE'] if "COLOCATED_PY_IMAGE" in os.environ else None
 BENCHMARK_MODE = os.environ['BENCHMARK_MODE'] if "BENCHMARK_MODE" in os.environ else None
 MAX_STEPS = os.environ['MAX_STEPS'] if "MAX_STEPS" in os.environ else None
 STEPS_CHECKPOINT = os.environ['STEPS_CHECKPOINT'] if "STEPS_CHECKPOINT" in os.environ else None
+
+
+
+
 
 
 # Use the dynamic client to leverage the JobSet API
@@ -301,6 +313,16 @@ def update_jobset(jobset_base_config: dict) -> dict:
     if FUJI_PATCH_FILE:
         print(f'Detected fuji mesh selector patch at: {FUJI_PATCH_FILE}', file=sys.stderr)
         updated_jobset = updated_jobset.replace("INSERT_FUJI_PATCH_FILE", FUJI_PATCH_FILE)
+
+    # Enabled Replica Resize mode
+    if ENABLED_REPLICA_RESIZE:
+        print(f'Detected Replica Resize mode enabled: {ENABLED_REPLICA_RESIZE}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("ENABLED_PAUSE_RESUME", ENABLED_REPLICA_RESIZE)
+
+    # Enabled Pause and Resume mode
+    if ENABLED_PAUSE_RESUME:
+        print(f'Detected Pause and Resume : {ENABLED_PAUSE_RESUME}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_ENABLED_PAUSE_RESUME", ENABLED_PAUSE_RESUME)
 
     # Enable pre-release Jax dev mode
     if ENABLE_JAX_DEV:

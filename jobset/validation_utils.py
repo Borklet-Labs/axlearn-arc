@@ -49,6 +49,8 @@ GCS_PREFIX = os.environ['GCS_PREFIX'] if "GCS_PREFIX" in os.environ else None
 GIT_BRANCH = os.environ['CUSTOM_GIT_BRANCH'] if "CUSTOM_GIT_BRANCH" in os.environ else "main"
 VALIDATION_METHOD = os.environ['VALIDATION_METHOD'] if "VALIDATION_METHOD" in os.environ else None
 DELETE_MODE= os.environ['DELETE_MODE'] if "DELETE_MODE" in os.environ else None
+MIN_SLICES = os.environ['MIN_SLICES'] if "MIN_SLICES" in os.environ else None
+
 
 
 # Use the dynamic client to leverage the JobSet API
@@ -95,6 +97,111 @@ def delete_node_pw(dry_run: bool = False):
         print(f"Exception when calling CoreV1Api->delete_node_name: {e}", file=sys.stderr)
     print(f"No worker found for JobSet: {JOBSET_NAME_TARGET}", file=sys.stderr)
     sys.exit(1)
+
+
+def drain_nodes_pw(dry_run: bool = False):
+    """ Drain Pathways worker nodes by cordoning and evicting pods.
+    Args:
+        dry_run: If True, only print the operations that would be performed.
+    This function terminates the execution by calling sys.exit upon completion."""
+
+    # This way we only query the pods related with <JOBSET_NAME>
+    label_selector = f"jobset.sigs.k8s.io/jobset-name={JOBSET_NAME_TARGET}"
+    try:
+      # Step 1: Identify the nodes for slice -0
+      pods_pw = KUBE_API.list_namespaced_pod(
+          namespace=NAMESPACE,
+          label_selector=label_selector
+      )
+      target_nodes = set()
+      for pod in pods_pw.items:
+          if "-pwwk-0" in pod.metadata.name and pod.spec.node_name is not None:
+            target_nodes.add(pod.spec.node_name)
+
+      if not target_nodes:
+          print(f"No workers found for JobSet: {JOBSET_NAME_TARGET} (slice -0)", file=sys.stderr)
+          sys.exit(1)
+
+      print(f"Found target nodes to drain: {target_nodes}", file=sys.stderr)
+
+      # Step 2: Process each node
+      for node_name in target_nodes:
+          prefix = "[DRY RUN] Would cordon node" if dry_run else "Cordoning node"
+          print(f"{prefix}: {node_name}", file=sys.stderr)
+          if not dry_run:
+              try:
+                  # Patching spec.unschedulable to True (Cordon)
+                  KUBE_API.patch_node(
+                      name=node_name,
+                      body={"spec": {"unschedulable": True}}
+                  )
+                  print(f"Cordon succeeded for node: {node_name}", file=sys.stderr)
+              except Exception as e:
+                  print(f"Failed to cordon {node_name}: {e}", file=sys.stderr)
+                  continue
+
+          # Step 3: Evict pods
+          try:
+              # List all pods on the node regardless of dry-run status for verbose confirmation
+              node_pods = KUBE_API.list_pod_for_all_namespaces(field_selector=f"spec.nodeName={node_name}")
+              for pod in node_pods.items:
+                  # Skip terminal pods
+                  if pod.status.phase in ["Succeeded", "Failed"]:
+                      continue
+
+                  # Check for DaemonSet owners
+                  is_daemonset = False
+                  if pod.metadata.owner_references:
+                      for owner in pod.metadata.owner_references:
+                          if owner.kind == "DaemonSet":
+                              is_daemonset = True
+                              break
+
+                  is_mirror = "kubernetes.io/config.mirror" in (pod.metadata.annotations or {})
+
+                  if is_daemonset or is_mirror:
+                      continue
+
+                  action_prefix = "[DRY RUN] Would evict" if dry_run else "Evicting"
+                  print(f"{action_prefix} pod: {pod.metadata.namespace}/{pod.metadata.name}", file=sys.stderr)
+
+                  if not dry_run:
+                      eviction = kubernetes.client.V1Eviction(
+                          api_version="policy/v1",
+                          kind="Eviction",
+                          metadata=kubernetes.client.V1ObjectMeta(
+                              name=pod.metadata.name,
+                              namespace=pod.metadata.namespace
+                          )
+                      )
+                      try:
+                          KUBE_API.create_namespaced_pod_eviction(
+                              name=pod.metadata.name,
+                              namespace=pod.metadata.namespace,
+                              body=eviction
+                          )
+                      except Exception as ev_e:
+                          print(f"Eviction failed for {pod.metadata.name} due to {ev_e}. Falling back to forceful delete.", file=sys.stderr)
+                          try:
+                              # Matches author intent established in existing delete_node_pw/delete_pod_pw functions
+                              KUBE_API.delete_namespaced_pod(
+                                  name=pod.metadata.name,
+                                  namespace=pod.metadata.namespace,
+                                  grace_period_seconds=0
+                              )
+                          except Exception as del_e:
+                              print(f"Delete failed for {pod.metadata.name}: {del_e}", file=sys.stderr)
+          except Exception as e:
+              print(f"Failed to list or process pods for {node_name}: {e}", file=sys.stderr)
+
+      print(f"Drain action completed for nodes: {target_nodes}", file=sys.stderr)
+      sys.exit(0)
+
+    except Exception as e:
+        print(f"Exception encountered during drain operation: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 
 
 def delete_pod_pw(dry_run: bool = False):
@@ -348,8 +455,8 @@ def validate_restore(target_step: int, start_time: Optional[datetime] = None, en
         bool: True if validation succeeds.
     """
 
-    pod_name_pattern =  "arc-pw-ss-elastic-training-pwhd-0-.*" if JOBSET_NAME_TARGET == "arc-pw-ss-elastic-training" else "arc-pw-training-pwhd-0-.*"
     # We need to pass a <step> group so it can return the chckp step found.
+    pod_name_pattern =  ".*-elastic-training-pwhd-0-.*" if "elastic" in JOBSET_NAME_TARGET else "arc-pw-training-pwhd-0-.*"
     restore_pattern = r"Restoring.*step_(?P<step>\d{8})"
     chkp_in_logs = extract_log_metrics(log_pattern=restore_pattern, pod_pattern=pod_name_pattern, start_time=start_time, end_time=end_time)
     print(f"Checkpoints found on Restore: {list(chkp_in_logs)}")
@@ -364,8 +471,13 @@ if __name__ == '__main__':
   # TODO: Need to pass this variable from the yaml file.
   # This is the target step we are aiming for deleting the pod and
   # validating the restored step checkpoint.
-  deletion_target_step = 55
-  restore_step_target= 50
+
+  print(f"DELETE_MODE: {DELETE_MODE}", file=sys.stderr)
+  print(f"VALIDATION METHOD: {VALIDATION_METHOD}", file=sys.stderr)
+  print(f"MIN_SLICES: {MIN_SLICES}", file=sys.stderr)
+
+  deletion_target_step = 25
+  restore_step_target= 20
   if JOBSET_NAME_TARGET == "arc-pw-ss-elastic-training":
     deletion_target_step = 105
     restore_step_target= 100
@@ -375,13 +487,15 @@ if __name__ == '__main__':
   # restarts again.
   # If DELETE_MODE: node
   # - Trigger the node deletion of the pathways worker node. (For Pathways)
+  # If DELETE_MODE: drain
+  # - Trigger the node drain of the pathways worker node. (For Pathways)
 
   if DELETE_MODE:
     time_elapsed = 0
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
       now = str(int(datetime.now(timezone.utc).timestamp()))
       start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
-      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{deletion_target_step}\]"
+      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{deletion_target_step}\s+\]"
       complied_pattern = re.compile(log_pattern)
       # Fetch logs from Cloud Logging API for the specified time window.
       entries = list_log_entries(
@@ -400,9 +514,13 @@ if __name__ == '__main__':
           print(f"Target step {deletion_target_step} reached. Triggering node deletion...", file=sys.stderr)
           delete_node_pw(dry_run=False)
           sys.exit(0)
+        elif DELETE_MODE == "drain":
+          print(f"Target step {deletion_target_step} reached. Triggering node drain...", file=sys.stderr)
+          drain_nodes_pw(dry_run=False)
+          sys.exit(0)
       print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for target step {deletion_target_step} in logs...", file=sys.stderr)
-      time.sleep(60)
-      time_elapsed += 60
+      time.sleep(30)
+      time_elapsed += 30
     raise ValueError(f"Timeout reached: Target step {deletion_target_step} not found in logs "
               f"within {JOBSET_HEALTHY_TIMEOUT} seconds.")
 
@@ -452,8 +570,11 @@ if __name__ == '__main__':
       )
 
       # We need to check that all pods 'axlearn-arc' namespace  are in RUNNING state.
-      all_running = all(pod.status.phase == "Running" for pod in pods_pw.items)
-      if all_running and len(pods_pw.items) > 0:
+      # For Elastic Training Replica Resize we only need to wait for MIN_SLICES to be up.
+      pods_targets = [pod for pod in pods_pw.items if "pwwk-1" in pod.metadata.name] if MIN_SLICES else pods_pw.items
+      all_running = bool(pods_targets) and all(pod.status.phase == "Running" for pod in pods_targets)
+
+      if all_running and len(pods_targets) > 0:
           print(f"All pods for {JOBSET_NAME_TARGET} are Running. Proceeding with restore validation.", file=sys.stderr)
 
           # We need to give time so the restoring logs appear in the pw-head
@@ -474,7 +595,3 @@ if __name__ == '__main__':
       print(f"[{time_elapsed}/{JOBSET_HEALTHY_TIMEOUT}]: Waiting for all pods to be Running...", file=sys.stderr)
       time.sleep(60)
       time_elapsed += 60
-
-
-
-
