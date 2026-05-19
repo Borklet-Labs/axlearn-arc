@@ -16,7 +16,7 @@ jobs:
         ACCELERATOR: v6e_4x4_1
         # Optional flags
         STEPS_CHECKPOINT: 50
-        MAX_STEPS: 500
+        MAX_STEPS: 100
         # POST_SETUP_CMD: uv pip install jax==0.9.0
         # CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: cienet_jax_py3.12_nightly
