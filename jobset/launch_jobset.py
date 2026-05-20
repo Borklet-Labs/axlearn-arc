@@ -8,7 +8,7 @@
  #                                                                                                               
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2026-01-30
+ # @version: 2026-05-20
  #
 
 import json
@@ -30,6 +30,9 @@ SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in 
 POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
 FUJI_PATCH_FILE = os.environ['FUJI_PATCH_FILE'] if "FUJI_PATCH_FILE" in os.environ else None
 ENABLE_JAX_DEV = os.environ['ENABLE_JAX_DEV'] if "ENABLE_JAX_DEV" in os.environ else None
+# Evaluate using the bazel cache once to prevent re-eval later
+USE_BAZEL_CACHE = "true" == os.environ['USE_BAZEL_CACHE'] if "USE_BAZEL_CACHE" in os.environ else False
+UPDATE_BAZEL_CACHE = "true" == os.environ['UPDATE_BAZEL_CACHE'] if "UPDATE_BAZEL_CACHE" in os.environ else False
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
@@ -289,6 +292,15 @@ def update_jobset(jobset_base_config: dict) -> dict:
         if ENABLE_JAX_DEV == "true":
             print('Detected Jax pre-release dev mode', file=sys.stderr)
             updated_jobset = updated_jobset.replace("INSERT_ENABLE_JAX_DEV", ENABLE_JAX_DEV)
+
+    # Use the bazel cache
+    if USE_BAZEL_CACHE:
+        print('Using bazel cache', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_USE_BAZEL_CACHE", "true")
+
+    if UPDATE_BAZEL_CACHE:
+        print('Updating bazel cache with new results', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_UPDATE_BAZEL_CACHE", "true")
 
     return json.loads(updated_jobset)
 

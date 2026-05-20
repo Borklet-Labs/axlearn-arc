@@ -7,13 +7,6 @@ TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
 
-# Fetch resources needed
-mkdir -p axlearn/data/tokenizers/sentencepiece
-mkdir -p axlearn/data/tokenizers/bpe
-curl https://huggingface.co/t5-base/resolve/main/spiece.model -o axlearn/data/tokenizers/sentencepiece/t5-base
-curl https://huggingface.co/FacebookAI/roberta-base/raw/main/merges.txt -o axlearn/data/tokenizers/bpe/roberta-base-merges.txt
-curl https://huggingface.co/FacebookAI/roberta-base/raw/main/vocab.json -o axlearn/data/tokenizers/bpe/roberta-base-vocab.json
-
 # Create five groups of pytest files, needed to avoid OOM with stack trace failures
 groups=(00 01 02 03 04)
 find axlearn -type f -name "*_test*.py" ! -name "*gpu*" ! -name "*vertex*" ! -name "*tpu*" ! -name "*golden_config_test.py" > pytest_files.txt
