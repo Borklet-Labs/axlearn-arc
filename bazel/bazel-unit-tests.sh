@@ -1,11 +1,11 @@
 #!/bin/bash
 
-cd /root
+cd /root/axlearn
 
 # Get the timestamp of when the tests started
 TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
-JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
+JAX_VER=$(grep "jax==" requirements.in | cut -c 6-)
 
 # Extract the GCS bucket name / path, without gs://
 GCS_BUCKET_PATH=$(echo $GCS_PREFIX | cut -c 6-)
@@ -35,7 +35,7 @@ else
     READONLY_CACHE=""
 fi
 
-bazel test $BAZEL_CACHE_CMD $READONLY_CACHE --jobs=50 --test_timeout=1800 -- //...
+bazel test $BAZEL_CACHE_CMD $READONLY_CACHE --jobs=75 --test_timeout=1800 --test_output=errors -- //...
 
 if [ $? -ne 0 ]; then
     echo "Detected test failures / timeouts"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Setup output directories
-mkdir -p /home/runner/_work/csv_results
+mkdir -p /home/runner/_work/csv_results && mkdir -p /var/arc/bazel_cache
 
 # Run the git configuration
 bash /var/arc/git-setup.sh
@@ -13,7 +13,7 @@ if [ "$ENABLE_JAX_DEV" == "true" ]; then
 fi
 
 # Validate that we are able to calculate dependencies
-cd /root && uv pip install --dry-run .[core,dev,gcp,audio,orbax] 
+cd /root/axlearn && uv pip install --dry-run .[core,dev,gcp,audio,orbax] 
 if [ $? -ne 0 ]; then
     echo "Unable to successfully resolve dependencies. Exiting before testing fails." && exit 1
 fi

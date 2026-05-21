@@ -4,7 +4,7 @@
   "metadata": {
     "name": "bazel-unit-tests",
     "annotations": {
-      "kueue.x-k8s.io/queue-name": "cpu-worker"
+      "kueue.x-k8s.io/queue-name": "bazel-worker"
     }
   },
   "spec": {
@@ -33,7 +33,7 @@
                 "hostNetwork": true,
                 "dnsPolicy": "ClusterFirstWithHostNet",
                 "nodeSelector": {
-                  "cloud.google.com/gke-nodepool": "worker-pool"
+                  "cloud.google.com/gke-nodepool": "bazel-worker-pool"
                 },
                 "containers": [
                   {
@@ -46,7 +46,7 @@
                     
                     "command": [
                       "bash",
-                      "/var/arc/cpu-jobset-startup.sh"
+                      "/var/arc/bazel-jobset-startup.sh"
                     ],
                     "resources": {
                       "requests": {
