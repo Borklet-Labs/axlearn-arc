@@ -25,6 +25,9 @@ ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies.
-RUN pip install --upgrade pip && pip install uv flit kubernetes && pip cache purge
+RUN pip install --upgrade pip uv && \
+    uv pip install flit kubernetes==35.0.0 && \
+    uv cache clean && \
+    pip cache purge
 # Copy the test setup to the image
 COPY . .

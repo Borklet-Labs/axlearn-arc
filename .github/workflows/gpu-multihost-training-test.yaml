@@ -22,8 +22,6 @@ jobs:
         # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
         # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
     steps:
-      - name: Install the Kubernetes Python SDK
-        run: uv pip install kubernetes
       - name: Launch the GPU training job
         run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
       - name: Upload the training result to GCS

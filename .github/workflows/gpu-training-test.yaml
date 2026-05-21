@@ -21,8 +21,6 @@ jobs:
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
         # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
     steps:
-      - name: Install the Kubernetes Python SDK
-        run: uv pip install kubernetes
       - name: Launch the GPU training job
         run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
       - name: Upload the training result to GCS
