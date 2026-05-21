@@ -26,8 +26,6 @@ jobs:
         ENABLE_JAX_DEV: true
         POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
     steps:
-      - name: Install the Kubernetes Python SDK
-        run: uv pip install kubernetes
       - name: Launch the TPU training job
         id: launch_job
         run: |

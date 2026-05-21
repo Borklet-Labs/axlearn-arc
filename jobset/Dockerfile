@@ -25,11 +25,9 @@ ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies.
-RUN pip install --upgrade pip && pip install uv flit && pip cache purge
-
-# Necessary for gcp logging api
-RUN uv pip install google-cloud-logging
-RUN uv pip install google-cloud-storage
-
+RUN pip install --upgrade pip uv && \
+    uv pip install flit kubernetes==35.0.0 && \
+    uv cache clean && \
+    pip cache purge
 # Copy the test setup to the image
 COPY . .

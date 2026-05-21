@@ -24,8 +24,6 @@ jobs:
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
         ENABLE_JAX_DEV: true
     steps:
-      - name: Install the Kubernetes Python SDK
-        run: uv pip install kubernetes
       - name: Launch the TPU training job
         run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
       - name: Upload the training result to GCS
