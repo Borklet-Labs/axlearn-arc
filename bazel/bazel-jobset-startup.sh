@@ -30,7 +30,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Copy the requirements lock to the right destination
-cp -L -v bazel-bin/requirements.out /root/requirements_lock.txt
+cp -L -v bazel-bin/requirements.out /root/axlearn/requirements_lock.txt
 
 # Run the unit tests
 if [ $? -eq 0 ]; then
