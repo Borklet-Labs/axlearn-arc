@@ -31,8 +31,6 @@ jobs:
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
         COLOCATED_PY_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-colocated:latest
     steps:
-      - name: Install the Kubernetes Python SDK
-        run: uv pip install kubernetes
       - name: Launch the TPU training job
         run: |
           GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py

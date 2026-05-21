@@ -27,8 +27,6 @@ jobs:
         POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.10.0 jaxlib==0.10.0 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
 
     steps:
-      - name: Install the Kubernetes Python SDK
-        run: uv pip install kubernetes
       - name: Launch the TPU training job
         id: launch_step
         run: |
@@ -54,9 +52,6 @@ jobs:
         CUSTOM_GIT_BRANCH: main # Customize with a different branch
         GCS_PREFIX: gs://axlearn-arc-testing/testing
     steps:
-      - name: Install the Kubernetes Python SDK
-        run: |
-          uv pip install kubernetes
       - name: Launch Node deletion
         id: launch_deletion
         env:
