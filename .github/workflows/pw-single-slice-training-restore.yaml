@@ -28,7 +28,7 @@ jobs:
         # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
         # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: cienet/jax_0.10_dev # Customize with a different branch
+        CUSTOM_GIT_BRANCH: cienet/0_10_dev # Customize with a different branch
 
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260501-jax_0.10.0
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260501-jax_0.10.0
