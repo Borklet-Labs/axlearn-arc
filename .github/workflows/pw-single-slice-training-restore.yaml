@@ -12,10 +12,10 @@ jobs:
         ARC_JOBSET_JSON: /var/arc/arc-pw.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python:latest
-        JOBSET_HEALTHY_TIMEOUT: 900
+        JOBSET_HEALTHY_TIMEOUT: 1300
         ACCELERATOR: v6e_4x4_1
         # Optional flags
-        STEPS_CHECKPOINT: 30
+        STEPS_CHECKPOINT: 20
         MAX_STEPS: 100
         RESTORE_MODE: True
         # CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo

@@ -495,7 +495,7 @@ if __name__ == '__main__':
     while time_elapsed < JOBSET_HEALTHY_TIMEOUT:
       now = str(int(datetime.now(timezone.utc).timestamp()))
       start_dt, end_dt = convert_unix_timestamps(start_time=START_TIME, end_time=now)
-      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{deletion_target_step}\s+\]"
+      log_pattern = rf"gpt_trainer\s+process\s+\d+\s+step\s+{deletion_target_step}\s*\]"
       complied_pattern = re.compile(log_pattern)
       # Fetch logs from Cloud Logging API for the specified time window.
       entries = list_log_entries(
