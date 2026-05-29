@@ -57,10 +57,11 @@ sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn
 #     --trainer_log_every_n_steps=1
 
 python3 -m axlearn.common.launch_trainer_main \
-    --module=text.gpt.c4_trainer \
-    --config=qwen3-30B-A3B-bs8m-seq8k \
-    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID}/qwen-30B-checkpoint \
+    --module=text.gpt.pajama_trainer \
+    --config=gala-85M-sp-rp \
+    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID}/gala-85M-sp-rp-checkpoint \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
+    --data_dir=FAKE \
     --jax_backend=tpu \
     --mesh_selector=tpu-v6e-16 \
     --trace_at_steps=5 \
