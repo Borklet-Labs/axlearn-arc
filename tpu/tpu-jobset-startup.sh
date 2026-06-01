@@ -47,21 +47,10 @@ gsutil -h "x-goog-meta-jax-version:${JAX_VER}" -m cp /dev/null ${GCS_PREFIX}/met
 sed -i 's/train_batch_size=train_batch_size/train_batch_size=32/g' /root/axlearn/experiments/text/gpt/fuji.py
 
 # Start the training loop
-# python3 -m axlearn.common.launch_trainer_main \
-#     --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
-#     --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
-#     --data_dir=gs://axlearn-public/tensorflow_datasets \
-#     --jax_backend=tpu \
-#     --mesh_selector=tpu-v6e-16 \
-#     --trace_at_steps=5 \
-#     --trainer_log_every_n_steps=1
-
 python3 -m axlearn.common.launch_trainer_main \
-    --module=text.gpt.pajama_trainer \
-    --config=gala-85M-sp-rp \
-    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID}/gala-85M-sp-rp-checkpoint \
+    --module=text.gpt.c4_trainer --config=fuji-7B-v2-flash \
+    --trainer_dir=${GCS_PREFIX}/runs/${GIT_BRANCH}/${GH_RUN_ID} \
     --data_dir=gs://axlearn-public/tensorflow_datasets \
-    --data_dir=FAKE \
     --jax_backend=tpu \
     --mesh_selector=tpu-v6e-16 \
     --trace_at_steps=5 \

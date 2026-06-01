@@ -15,7 +15,7 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.12
         JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu-py312-jax-nightly:latest
-        JOBSET_HEALTHY_TIMEOUT: 6000
+        JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_2
         # Optional flags
         CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn # Optionally point to another repo
@@ -24,7 +24,7 @@ jobs:
         # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
-        POST_SETUP_CMD: pip install -v -U --pre jax==0.10.0 jaxlib==0.10.0 requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
+        POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
     steps:
       - name: Launch the TPU training job
         id: launch_job
