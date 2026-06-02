@@ -27,6 +27,7 @@ jobs:
         # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
         # PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
         # PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
+
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
         COLOCATED_PY_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-colocated:latest

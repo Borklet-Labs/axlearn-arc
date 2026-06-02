@@ -21,13 +21,14 @@ jobs:
         ENABLED_PAUSE_RESUME: True # For elastic training feature Pause && Resume
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         CUSTOM_GIT_BRANCH: cienet/elastic_training # Customize with a different branch
-        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
-        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
-        # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
-        # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
-        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260501-jax_0.10.0
-        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260501-jax_0.10.0
-        POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.10.0 jaxlib==0.10.0 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
+
+        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
+        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
+        POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
+
+        # PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
+        # PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
+        # POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Launch the TPU training job
         id: launch_step
