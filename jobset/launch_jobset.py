@@ -18,6 +18,7 @@ import os
 import signal
 import threading
 import kubernetes
+from google.cloud import artifactregistry_v1
 
 # Baseline Mcjax training jobset
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
@@ -55,6 +56,8 @@ STEPS_CHECKPOINT = os.environ['STEPS_CHECKPOINT'] if "STEPS_CHECKPOINT" in os.en
 CLIENT = kubernetes.dynamic.DynamicClient(
     kubernetes.client.ApiClient(
         configuration=kubernetes.config.load_incluster_config()))
+# Artifact Registry client
+ARTIFACT_CLIENT = artifactregistry_v1.ArtifactRegistryClient()
 # Custom objects API
 CUSTOM_OBJECT_API = kubernetes.client.CustomObjectsApi()
 # Import the JobSet API into our k8s client
@@ -234,6 +237,57 @@ def check_jobset_completed(jobset_name: str) -> bool:
 
     return False
 
+def get_image_digest(image: str)-> str:
+  """Retrieves the SHA digest for an image from Artifact Registry.
+
+  Args:
+      image: String containing the image name
+
+  Returns:
+      str: The SHA256 digest of the image.
+  """
+  # If the image already contains a SHA digest, return it directly
+  if "@sha256:" in image:
+    digest = image.split("@")[-1]
+    return digest
+
+  # Parse the Artifact Registry image URL
+  # Format: {location}-docker.pkg.dev/{project}/{repository}/{package}:{tag}
+  if ":" in image.split("/")[-1]:
+    image_path, tag = image.rsplit(":", 1)
+  else:
+    image_path, tag = image, "latest"
+
+  path_parts = image_path.split("/")
+  if len(path_parts) < 4:
+    raise ValueError(f"Invalid Artifact Registry image URL: {image}")
+
+  host = path_parts[0]
+  project = path_parts[1]
+  repository = path_parts[2]
+  package = "/".join(path_parts[3:])
+
+  if "-docker.pkg.dev" in host:
+    location = host.split("-docker.pkg.dev")[0]
+  else:
+    raise ValueError(f"Host {host} is not a valid Artifact Registry host")
+
+  tag_name = f"projects/{project}/locations/{location}/repositories/{repository}/packages/{package}/tags/{tag}"
+
+  # Fetch the tag metadata
+  try:
+    request = artifactregistry_v1.GetTagRequest(name=tag_name)
+    tag_info = ARTIFACT_CLIENT.get_tag(request=request)
+  except Exception as e:
+    print(f"Error fetching tag metadata for {image}: {e}", file=sys.stderr)
+    sys.exit(-1)
+
+  # The 'version' field returns the full path, ending with the SHA digest
+  # e.g., projects/.../versions/sha256:abcdef123456...
+  digest = tag_info.version.split("/")[-1]
+
+  return digest
+
 def update_jobset(jobset_base_config: dict) -> dict:
     """Take in a JobSet config dict and update with new Git info
     and information about the owner to handle proper termination
@@ -332,9 +386,11 @@ def update_jobset(jobset_base_config: dict) -> dict:
 
     # Add a Pathways image
     if PW_PROXY_IMAGE:
-        print(f'Using Pathways image {PW_PROXY_IMAGE}', file=sys.stderr)
+        print(f'Using Pathways Proxy Image {PW_PROXY_IMAGE}@{get_image_digest(PW_PROXY_IMAGE)}', file=sys.stderr)
+        print(f'Using Pathways Server Image {PW_SERVER_IMAGE}@{get_image_digest(PW_SERVER_IMAGE)}', file=sys.stderr)
         updated_jobset = updated_jobset.replace("INSERT_PROXY_IMAGE", PW_PROXY_IMAGE)
         updated_jobset = updated_jobset.replace("INSERT_SERVER_IMAGE", PW_SERVER_IMAGE)
+
 
     # Inserted Colocated Python image if aviable.
     if COLOCATED_PY_IMAGE:

@@ -17,9 +17,6 @@ jobs:
         # Optional flags
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
         CUSTOM_GIT_BRANCH: cienet/0_10_dev
-        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
-        # POST_SETUP_CMD: pip install -U --pre jax jaxlib requests  -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
-        # POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.10.0 jaxlib==0.10.0 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
         POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Launch the CPU unit tests

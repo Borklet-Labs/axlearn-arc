@@ -18,15 +18,6 @@ jobs:
         STEPS_CHECKPOINT: 20
         MAX_STEPS: 100
         RESTORE_MODE: True
-        # CUSTOM_GIT_ORIGIN: https://github.com/CIeNET-International/axlearn # Optionally point to another repo
-        # CUSTOM_GIT_BRANCH: cienet_jax_py3.12_nightly
-        # Optional flags
-        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
-        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
-        # POST_SETUP_CMD: uv pip install libtpu==0.0.32.2
-        # FUJI_PATCH_FILE: /var/arc/fuji-main.patch # Path to a patch for axlearn/experiments/text/gpt/fuji.py
-        # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         CUSTOM_GIT_BRANCH: cienet/0_10_dev # Customize with a different branch
 
