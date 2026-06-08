@@ -33,6 +33,7 @@ RUN pip install --upgrade pip uv && \
 # Necessary for gcp logging api
 RUN uv pip install google-cloud-logging
 RUN uv pip install google-cloud-storage
+RUN uv pip install google-cloud-artifact-registry
 
 # Copy the test setup to the image
 COPY . .

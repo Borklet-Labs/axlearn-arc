@@ -16,7 +16,7 @@ jobs:
         RESUME_JOBSET: true
         # Optional flags
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: cienet/0_10_dev
+        CUSTOM_GIT_BRANCH: cienet/test_rebase_nighlty
         POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Launch the CPU unit tests
