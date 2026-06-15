@@ -18,11 +18,13 @@ jobs:
         # Optional flags
         STEPS_CHECKPOINT: 50
         MAX_STEPS: 100
-        CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         CUSTOM_GIT_BRANCH: jax-nightly
 
-        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
-        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
+        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
+        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
+        # PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
+        # PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
         COLOCATED_PY_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-colocated:latest
     steps:
       - name: Launch the TPU training job

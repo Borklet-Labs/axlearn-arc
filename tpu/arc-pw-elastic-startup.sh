@@ -30,7 +30,8 @@ fi
 
 # If ENABLED_REPLICA_RESIZE enabled use fuji-7B-v1-flash as config model
 # fuji-7B-v1-flash fit into one slice.
-if [ "$ENABLED_REPLICA_RESIZE" == "true" ]; then
+echo "Value of ENABLED_REPLICA_RESIZE: $ENABLED_REPLICA_RESIZE"
+if [ "${ENABLED_REPLICA_RESIZE,,}" == "true" ]; then
     CONFIG_MODEL="fuji-7B-v1-flash"
 else
     CONFIG_MODEL="fuji-7B-v2-flash"
@@ -77,6 +78,8 @@ trap cleanup_logs EXIT
 sed -i 's/lr_warmup_steps: int = 2000/lr_warmup_steps: int = 15/g' /root/axlearn/experiments/text/gpt/common.py
 sed -i "/trn2_config = _generate_trn2_custom_configs/a \    max_step=$MAX_STEPS" /root/axlearn/experiments/text/gpt/fuji.py
 sed -i "/max_step=max_step,/a \            save_every_n_steps=$STEPS_CHECKPOINT," /root/axlearn/experiments/text/gpt/fuji.py
+
+echo "Starting training with config: ${CONFIG_MODEL}"
 
 python3 -m axlearn.common.launch_trainer_main \
  --module=text.gpt.c4_trainer --config=${CONFIG_MODEL} \

@@ -371,7 +371,7 @@ def update_jobset(jobset_base_config: dict) -> dict:
     # Enabled Replica Resize mode
     if ENABLED_REPLICA_RESIZE:
         print(f'Detected Replica Resize mode enabled: {ENABLED_REPLICA_RESIZE}', file=sys.stderr)
-        updated_jobset = updated_jobset.replace("ENABLED_PAUSE_RESUME", ENABLED_REPLICA_RESIZE)
+        updated_jobset = updated_jobset.replace("INSERT_ENABLE_REPLICA_RESIZE", ENABLED_REPLICA_RESIZE)
 
     # Enabled Pause and Resume mode
     if ENABLED_PAUSE_RESUME:
