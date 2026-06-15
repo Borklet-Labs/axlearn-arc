@@ -25,7 +25,9 @@ jobs:
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
         # PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
         # PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
-        COLOCATED_PY_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-colocated:latest
+        COLOCATED_PY_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-colocated:20260423-python_3.12-jax_0.10.0
+        POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.10.0 jaxlib==0.10.0 || echo setup_failed
+
     steps:
       - name: Launch the TPU training job
         run: |
