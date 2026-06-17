@@ -16,8 +16,8 @@ jobs:
         ACCELERATOR: v5p_2x2x1_2
         # Optional flags
         # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
-        CUSTOM_GIT_BRANCH: jax-nightly
+        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
+        CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
         # POST_SETUP_CMD: uv pip install libtpu==0.0.32.2
