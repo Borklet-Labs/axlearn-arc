@@ -19,11 +19,11 @@ jobs:
         MAX_STEPS: 100
         RESTORE_MODE: True
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
+        CUSTOM_GIT_BRANCH: jax_0.10.1
 
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
-        POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
+        # POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.10.1 jaxlib==0.10.1 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Launch the TPU training job
         id: launch_step
