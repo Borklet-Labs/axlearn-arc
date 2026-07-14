@@ -18,6 +18,7 @@ import os
 import signal
 import threading
 import kubernetes
+import subprocess
 from google.cloud import artifactregistry_v1
 
 # Baseline Mcjax training jobset

@@ -20,10 +20,12 @@ jobs:
         # CUSTOM_GIT_ORIGIN: https://github.com/judyzhaoxinwu/axlearn # Optionally point to another repo
         # CUSTOM_GIT_BRANCH: cienet/0_10_dev # Customize with a different branch
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
+        # CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
+        CUSTOM_GIT_BRANCH: jax_0.10.2
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
-        POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
+        # POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
+
     steps:
       - name: Launch the TPU training job
         id: launch_job
