@@ -35,7 +35,7 @@ else
     READONLY_CACHE=""
 fi
 
-bazel test $BAZEL_CACHE_CMD $READONLY_CACHE --jobs=75 --test_timeout=1800 --test_output=errors --test_summary=detailed -- //...
+bazel test $BAZEL_CACHE_CMD $READONLY_CACHE --jobs=50 --test_timeout=1800 --test_output=errors -- //...
 
 if [ $? -ne 0 ]; then
     echo "Detected test failures / timeouts"

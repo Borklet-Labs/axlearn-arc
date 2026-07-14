@@ -33,7 +33,8 @@ RUN mkdir -p /var/arc
 WORKDIR /var/arc
 # Setup venv to suppress pip warnings.
 ENV VIRTUAL_ENV=/opt/venv
-RUN python3.12 -m venv $VIRTUAL_ENV
+RUN python3.12 -m venv $VIRTUAL_ENV && \
+    ln -sfv /opt/venv/bin/python3.12 /usr/bin/python3
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies.
 RUN pip install --upgrade pip && pip install uv flit && pip cache purge
