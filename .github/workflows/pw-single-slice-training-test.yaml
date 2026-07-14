@@ -19,7 +19,7 @@ jobs:
         MAX_STEPS: 100
 
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: jax-nightly
+        CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
 
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
