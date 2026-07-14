@@ -29,5 +29,11 @@ RUN pip install --upgrade pip uv && \
     uv pip install flit kubernetes==35.0.0 && \
     uv cache clean && \
     pip cache purge
+
+# Necessary for gcp logging api
+RUN uv pip install google-cloud-logging
+RUN uv pip install google-cloud-storage
+RUN uv pip install google-cloud-artifact-registry
+
 # Copy the test setup to the image
 COPY . .
