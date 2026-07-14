@@ -6,15 +6,14 @@ jobs:
   tpu-single-slice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
-      # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-post-cmd-nightly:latest
-      image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-gcs-update:latest
+      image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:py3.12-jax-nightly
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: arc-tpu-training-v6e
         ARC_JOBSET_JSON: /var/arc/tpu.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         # JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:python3.12
-        JOBSET_DOCKER_IMAGE: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu-py312-jax-nightly:latest
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:py3.12-jax-nightly
         JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_1
         # Optional flags
