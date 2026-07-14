@@ -1,0 +1,51 @@
+name: pw-multislice-training-test
+on:
+  workflow_dispatch
+jobs:
+  pw-tpu-single-slice-training-test-job:
+    runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
+    container:
+      image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:py3.12-jax-nightly
+      env:
+        # Required environmental variables for a successful run
+        ARC_JOBSET_NAME: arc-pw-multislice-training
+        ARC_JOBSET_JSON: /var/arc/arc-pw-multislice.json
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:py3.12-jax-nightly
+        JOBSET_HEALTHY_TIMEOUT: 600
+        ACCELERATOR: v6e_4x4_2
+        # Optional flags
+        STEPS_CHECKPOINT: 30
+        MAX_STEPS: 100
+        CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
+        CUSTOM_GIT_BRANCH: jax-nighlty
+
+        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
+        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
+        POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
+    steps:
+      - name: Launch the TPU training job
+        id: launch_step
+        run: |
+          START_TIME=$(date +%s)
+          echo "START_TIME=$START_TIME" >> $GITHUB_ENV
+
+          GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+
+          echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
+          echo "end_time=$END_TIME" >> $GITHUB_OUTPUT
+      - name: Checkpoint Validation
+        if: always()
+        env:
+          GH_RUN_ID: ${{ github.run_id }}
+          START_TIME: ${{ steps.launch_step.outputs.start_time}}
+          END_TIME: ${{ steps.launch_step.outputs.end_time}}
+          VALIDATION_METHOD: save
+        run: |
+          python /var/arc/validation_utils.py
+      - name: Upload the training result to GCS
+        if: always()
+        run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh
