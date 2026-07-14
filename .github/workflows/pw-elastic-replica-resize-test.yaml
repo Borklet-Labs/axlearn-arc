@@ -21,8 +21,8 @@ jobs:
         # RESTORE_MODE: True
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         CUSTOM_GIT_BRANCH: cienet/0_10_dev # Customize with a different branch
-        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
-        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
+        PW_PROXY_IMAGE: us-central1-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260206-jax_0.8.2
+        PW_SERVER_IMAGE: us-central1-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260206-jax_0.8.2
     steps:
       - name: Install the Kubernetes Python SDK
         run: uv pip install kubernetes
