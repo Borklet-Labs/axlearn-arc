@@ -8,8 +8,8 @@
  #
  # Project: AXLearn ARC Testing: Launch a GPU or TPU training job
  # @author : Samuel Andersen
- # @version: 2026-03-21-nightly
-
+ # @version: 2026-07-14-nighlty
+ #
 
 import json
 import sys
@@ -18,9 +18,9 @@ import os
 import signal
 import threading
 import kubernetes
-import subprocess
+from google.cloud import artifactregistry_v1
 
-# Get the JobSet info from the environment
+# Baseline Mcjax training jobset
 JOBSET_NAME = os.environ['ARC_JOBSET_NAME']
 JOBSET_JSON = os.environ['ARC_JOBSET_JSON']
 DOCKER_IMAGE = os.environ['JOBSET_DOCKER_IMAGE']
@@ -31,14 +31,37 @@ SCHEDULE_TIMEOUT = int(os.environ['SCHEDULE_TIMEOUT']) if "SCHEDULE_TIMEOUT" in 
 POST_SETUP_CMD = os.environ['POST_SETUP_CMD'] if "POST_SETUP_CMD" in os.environ else None
 FUJI_PATCH_FILE = os.environ['FUJI_PATCH_FILE'] if "FUJI_PATCH_FILE" in os.environ else None
 ENABLE_JAX_DEV = os.environ['ENABLE_JAX_DEV'] if "ENABLE_JAX_DEV" in os.environ else None
+
 print(f"POST_SETUP_CMD: {POST_SETUP_CMD}")
 print(f"FUJI_PATCH_FILE: {FUJI_PATCH_FILE}")
 print(f"ENABLE_JAX_DEV: {ENABLE_JAX_DEV}")
+
+# Pathways Testing
+PW_PROXY_IMAGE = os.environ['PW_PROXY_IMAGE'] if "PW_PROXY_IMAGE" in os.environ else None
+PW_SERVER_IMAGE = os.environ['PW_SERVER_IMAGE'] if "PW_SERVER_IMAGE" in os.environ else None
+
+# Pathways + Elastic Training
+ENABLED_PAUSE_RESUME = os.environ['ENABLED_PAUSE_RESUME'] if "ENABLED_PAUSE_RESUME" in os.environ else None
+ENABLED_REPLICA_RESIZE = os.environ['ENABLED_REPLICA_RESIZE'] if "ENABLED_REPLICA_RESIZE" in os.environ else None
+RESTORE_MODE = os.environ['RESTORE_MODE'] if "RESTORE_MODE" in os.environ else None
+
+# Pathways + Colocated Python
+COLOCATED_PY_IMAGE = os.environ['COLOCATED_PY_IMAGE'] if "COLOCATED_PY_IMAGE" in os.environ else None
+BENCHMARK_MODE = os.environ['BENCHMARK_MODE'] if "BENCHMARK_MODE" in os.environ else None
+MAX_STEPS = os.environ['MAX_STEPS'] if "MAX_STEPS" in os.environ else None
+STEPS_CHECKPOINT = os.environ['STEPS_CHECKPOINT'] if "STEPS_CHECKPOINT" in os.environ else None
+
+
+
+
+
 
 # Use the dynamic client to leverage the JobSet API
 CLIENT = kubernetes.dynamic.DynamicClient(
     kubernetes.client.ApiClient(
         configuration=kubernetes.config.load_incluster_config()))
+# Artifact Registry client
+ARTIFACT_CLIENT = artifactregistry_v1.ArtifactRegistryClient()
 # Custom objects API
 CUSTOM_OBJECT_API = kubernetes.client.CustomObjectsApi()
 # Import the JobSet API into our k8s client
@@ -79,10 +102,10 @@ def get_current_jobset(jobset_name: str):
 
 def get_jobset_status(jobset_name: str):
     """Get the status of a JobSet
-    
+
     Args:
         jobnet_name: String containing the JobSet name
-        
+
     Returns:
         Returns the JobSet status object matching the name, or None"""
 
@@ -108,12 +131,13 @@ def cleanup_jobset_and_exit(jobset_name: str,
         exit_code: Integer code to return
         log_worker: Thread where the logger is running
         stop_log: Event to stop the log_worker before join"""
+
     # --- JAX version extraction (MODIFIED) ---
     github_output_path = os.environ.get('GITHUB_OUTPUT')
     if github_output_path:
         # 1. Check environment variable first
         JAX_VER_OUTPUT = os.environ.get('JAX_VERSION')
-        
+
         if JAX_VER_OUTPUT:
             print(f"INFO: Using JAX_VERSION from env var: {JAX_VER_OUTPUT}", file=sys.stderr)
         else:
@@ -168,7 +192,7 @@ def get_pod_status(pod_name: str):
 
 def get_pod_logs(pod_name: str, stop: threading.Event):
     """Spawn a stream to print out pod logs during execution
-    
+
     Args:
         pod_name: String with the name of the pod
         stop: Threading event to stop execution"""
@@ -180,7 +204,6 @@ def get_pod_logs(pod_name: str, stop: threading.Event):
         if pod_name in pod.metadata.name:
             target_pod = pod.metadata.name
             break
-
     if not target_pod:
         return "Unable to infer pod name. Returning empty result"
 
@@ -196,13 +219,12 @@ def get_pod_logs(pod_name: str, stop: threading.Event):
         print("Turning off log streaming... full log will be available in GCS after the run",
                 file=sys.stderr)
 
-
 def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
     """Check if a JobSet was accepted and if the pods are in a healthy state
-    
+
     Args:
         jobset_name: String containing the JobSet name
-        
+
     Returns:
         True if the JobSet is active and pods are running
         False if the JobSet is active but pods aren't scheduled"""
@@ -211,9 +233,11 @@ def check_jobset_healthy(jobset_name: str, before_schedule = False) -> bool:
 
     if jobset_status["failed"] != 0 or jobset_status["suspended"] != 0:
         return False
+
     # Ensure we check for success before seeing if it is still active
     elif jobset_status["succeeded"] != 0:
         return True
+
     elif jobset_status["active"] != 0:
         if before_schedule:
             return True
@@ -242,6 +266,57 @@ def check_jobset_completed(jobset_name: str) -> bool:
         return True
 
     return False
+
+def get_image_digest(image: str)-> str:
+  """Retrieves the SHA digest for an image from Artifact Registry.
+
+  Args:
+      image: String containing the image name
+
+  Returns:
+      str: The SHA256 digest of the image.
+  """
+  # If the image already contains a SHA digest, return it directly
+  if "@sha256:" in image:
+    digest = image.split("@")[-1]
+    return digest
+
+  # Parse the Artifact Registry image URL
+  # Format: {location}-docker.pkg.dev/{project}/{repository}/{package}:{tag}
+  if ":" in image.split("/")[-1]:
+    image_path, tag = image.rsplit(":", 1)
+  else:
+    image_path, tag = image, "latest"
+
+  path_parts = image_path.split("/")
+  if len(path_parts) < 4:
+    raise ValueError(f"Invalid Artifact Registry image URL: {image}")
+
+  host = path_parts[0]
+  project = path_parts[1]
+  repository = path_parts[2]
+  package = "/".join(path_parts[3:])
+
+  if "-docker.pkg.dev" in host:
+    location = host.split("-docker.pkg.dev")[0]
+  else:
+    raise ValueError(f"Host {host} is not a valid Artifact Registry host")
+
+  tag_name = f"projects/{project}/locations/{location}/repositories/{repository}/packages/{package}/tags/{tag}"
+
+  # Fetch the tag metadata
+  try:
+    request = artifactregistry_v1.GetTagRequest(name=tag_name)
+    tag_info = ARTIFACT_CLIENT.get_tag(request=request)
+  except Exception as e:
+    print(f"Error fetching tag metadata for {image}: {e}", file=sys.stderr)
+    sys.exit(-1)
+
+  # The 'version' field returns the full path, ending with the SHA digest
+  # e.g., projects/.../versions/sha256:abcdef123456...
+  digest = tag_info.version.split("/")[-1]
+
+  return digest
 
 def update_jobset(jobset_base_config: dict) -> dict:
     """Take in a JobSet config dict and update with new Git info
@@ -308,10 +383,30 @@ def update_jobset(jobset_base_config: dict) -> dict:
         print(f'Detected post-setup command: {POST_SETUP_CMD}', file=sys.stderr)
         updated_jobset = updated_jobset.replace("INSERT_POST_SETUP_CMD", POST_SETUP_CMD)
 
+    # Set Max steps of the training
+    if MAX_STEPS:
+        print(f'Detected custom Max steps of the training to : {MAX_STEPS}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_MAX_STEPS", MAX_STEPS)
+
+    # Set Steps of Checkpoint
+    if STEPS_CHECKPOINT:
+        print(f'Detected custom Checkpoint steps of the training to : {STEPS_CHECKPOINT}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_STEPS_CHECKPOINT", STEPS_CHECKPOINT)
+
     # Add any mesh selector patches for fuji.py
     if FUJI_PATCH_FILE:
         print(f'Detected fuji mesh selector patch at: {FUJI_PATCH_FILE}', file=sys.stderr)
         updated_jobset = updated_jobset.replace("INSERT_FUJI_PATCH_FILE", FUJI_PATCH_FILE)
+
+    # Enabled Replica Resize mode
+    if ENABLED_REPLICA_RESIZE:
+        print(f'Detected Replica Resize mode enabled: {ENABLED_REPLICA_RESIZE}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_ENABLE_REPLICA_RESIZE", ENABLED_REPLICA_RESIZE)
+
+    # Enabled Pause and Resume mode
+    if ENABLED_PAUSE_RESUME:
+        print(f'Detected Pause and Resume : {ENABLED_PAUSE_RESUME}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_ENABLED_PAUSE_RESUME", ENABLED_PAUSE_RESUME)
 
     # Enable pre-release Jax dev mode
     if ENABLE_JAX_DEV:
@@ -319,6 +414,20 @@ def update_jobset(jobset_base_config: dict) -> dict:
             print('Detected Jax pre-release dev mode', file=sys.stderr)
             updated_jobset = updated_jobset.replace("INSERT_ENABLE_JAX_DEV", ENABLE_JAX_DEV)
 
+    # Add a Pathways image
+    if PW_PROXY_IMAGE:
+        print(f'Using Pathways Proxy Image {PW_PROXY_IMAGE}@{get_image_digest(PW_PROXY_IMAGE)}', file=sys.stderr)
+        print(f'Using Pathways Server Image {PW_SERVER_IMAGE}@{get_image_digest(PW_SERVER_IMAGE)}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_PROXY_IMAGE", PW_PROXY_IMAGE)
+        updated_jobset = updated_jobset.replace("INSERT_SERVER_IMAGE", PW_SERVER_IMAGE)
+
+
+    # Inserted Colocated Python image if aviable.
+    if COLOCATED_PY_IMAGE:
+        print(f'Using Colocated Python image {COLOCATED_PY_IMAGE}', file=sys.stderr)
+        print(f'Using Benchmark Mode {BENCHMARK_MODE}', file=sys.stderr)
+        updated_jobset = updated_jobset.replace("INSERT_COLOCATED_IMAGE", COLOCATED_PY_IMAGE)
+        updated_jobset = updated_jobset.replace("INSERT_BENCHMARK_MODE", BENCHMARK_MODE)
     return json.loads(updated_jobset)
 
 def write_result(success: bool):
@@ -400,9 +509,13 @@ def monitor_jobset_status():
               file=sys.stderr)
         # Check for failures
         if not jobset_healthy:
+          if RESTORE_MODE:
+            print(f"Error detected but skipped since RESTORE_MODE: ${RESTORE_MODE}.", file=sys.stderr)
+          else:
             print(f"Error detected in pod for JobSet {JOBSET_NAME}. Cleaning up.", file=sys.stderr)
             write_result(False)
             cleanup_jobset_and_exit(JOBSET_NAME, -1, log_worker, stop_log)
+
         else:
             if check_jobset_completed(JOBSET_NAME):
                 print(f"JobSet {JOBSET_NAME} completed successfully.", file=sys.stderr)
@@ -441,9 +554,11 @@ def get_jax_version_from_gcs_metadata():
 
     return "unknown_version"
 
+
 if __name__ == '__main__':
     print("Writing default failure result CSV...", file=sys.stderr)
     write_result(False)
+
 
     # Read in the JobSet JSON
     with open(JOBSET_JSON, "r", encoding="utf-8") as js_file:
@@ -457,7 +572,9 @@ if __name__ == '__main__':
     jobset_resumed = False
     # Check to see if the JobSet already exists
     print(f"Checking to see if JobSet {JOBSET_NAME} already exists", file=sys.stderr)
+
     if get_current_jobset(JOBSET_NAME):
+        print(get_current_jobset(JOBSET_NAME))
         jobset_status = get_jobset_status(JOBSET_NAME)
         if jobset_status["active"] != 0:
             if "RESUME_JOBSET" in os.environ:
