@@ -1,0 +1,30 @@
+name: bazel-unit-tests
+on:
+  workflow_dispatch
+jobs:
+  bazel-unit-tests-job:
+    runs-on: jobset
+    container:
+      image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:latest
+      env:
+        GCS_PREFIX: gs://axlearn-arc-testing/testing
+        ARC_JOBSET_NAME: bazel-unit-tests
+        ARC_JOBSET_JSON: /var/arc/bazel.json
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-bazel:python3.12
+        JOBSET_HEALTHY_TIMEOUT: 3600
+        RESUME_JOBSET: true
+        USE_BAZEL_CACHE: true
+        UPDATE_BAZEL_CACHE: true
+        # Optional flags
+        # CUSTOM_GIT_ORIGIN: https://github.com/apple/axlearn # Optionally point to another repo
+        CUSTOM_GIT_BRANCH: jax_0.10.2 # Customize with a different branch
+        # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
+        # SCHEDULE_TIMEOUT: 600 # Seconds to wait for job to be scheduled. Default = 900
+        POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
+        # ENABLE_JAX_DEV: # Set this to true to enable prereleases in uv and reference the Jax index
+    steps:
+      - name: Launch the bazel unit tests
+        run: GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
+      - name: Delete JobSet if cancelling
+        if: cancelled()
+        run: python3 /var/arc/cleanup_jobset.py

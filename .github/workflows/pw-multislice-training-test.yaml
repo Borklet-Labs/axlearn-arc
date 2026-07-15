@@ -19,7 +19,6 @@ jobs:
         MAX_STEPS: 100
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
-
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
         POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
