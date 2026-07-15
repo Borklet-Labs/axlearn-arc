@@ -10,7 +10,7 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         ARC_JOBSET_NAME: cpu-unit-tests
         ARC_JOBSET_JSON: /var/arc/cpu.json
-        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:py3.12-jax-nightly
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:py3.12-jax-nightly
         JOBSET_HEALTHY_TIMEOUT: 3600
         RESUME_JOBSET: true
         # Optional flags
@@ -18,7 +18,7 @@ jobs:
         # CUSTOM_GIT_BRANCH: cienet/0_10_dev
         # CUSTOM_GIT_BRANCH: jw/fix-pallas-nonetype
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: jax-nightly-dev # Customize with a different branch
+        CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: pip install -U --pre jax jaxlib requests  -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/
         POST_SETUP_CMD: pip install importlib_resources && pip install -U --pre jax jaxlib -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
