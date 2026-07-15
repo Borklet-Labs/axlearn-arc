@@ -1,8 +1,8 @@
-name: jax-nightly-scheduler
+name: jax-pinned-scheduler
 
 on:
   schedule:
-    - cron: '0 8 * * *'
+    - cron: '0 6 * * 1,3,5'
   workflow_dispatch:
 
 jobs:
@@ -15,19 +15,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Run JAX Nightly Sequence Training Tests
+      - name: Run JAX Pinned Sequence Training Tests
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           echo "Triggering workflow: tpu-single-slice-training-test.yaml"
-          gh workflow run tpu-single-slice-training-test.yaml --ref jax_nightly_py3.12
+          gh workflow run tpu-single-slice-training-test.yaml --ref jax_0.10.2
 
           echo "Waiting 30 seconds for the new run to be registered with the API..."
           sleep 30
 
           echo "Fetching the ID of the new run..."
-          RUN_ID=$(gh run list --workflow="tpu-single-slice-training-test.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow="tpu-single-slice-training-test.yaml" --branch jax_0.10.2 --limit 1 --json databaseId -q '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "Error: Could not find a recent run for the workflow."
@@ -47,19 +47,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Run JAX Nightly Sequence Training Tests
+      - name: Run JAX Pinned Sequence Training Tests
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           echo "Triggering workflow: tpu-multislice-training-test.yaml"
-          gh workflow run tpu-multislice-training-test.yaml --ref jax_nightly_py3.12
+          gh workflow run tpu-multislice-training-test.yaml --ref jax_0.10.2
 
           echo "Waiting 30 seconds for the new run to be registered with the API..."
           sleep 30
 
           echo "Fetching the ID of the new run..."
-          RUN_ID=$(gh run list --workflow="tpu-multislice-training-test.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow="tpu-multislice-training-test.yaml" --branch jax_0.10.2 --limit 1 --json databaseId -q '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "Error: Could not find a recent run for the workflow."
@@ -79,19 +79,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Run JAX Nightly Sequence Training Tests
+      - name: Run JAX Pinned Sequence Training Tests
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           echo "Triggering workflow: pw-single-slice-training-test.yaml"
-          gh workflow run pw-single-slice-training-test.yaml --ref jax_nightly_py3.12
+          gh workflow run pw-single-slice-training-test.yaml --ref jax_0.10.2
 
           echo "Waiting 30 seconds for the new run to be registered with the API..."
           sleep 30
 
           echo "Fetching the ID of the new run..."
-          RUN_ID=$(gh run list --workflow="pw-single-slice-training-test.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow="pw-single-slice-training-test.yaml" --branch jax_0.10.2 --limit 1 --json databaseId -q '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "Error: Could not find a recent run for the workflow."
@@ -111,19 +111,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Run JAX Nightly Sequence Training Tests
+      - name: Run JAX Pinned Sequence Training Tests
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           echo "Triggering workflow: pw-multislice-training-test.yaml"
-          gh workflow run pw-multislice-training-test.yaml --ref jax_nightly_py3.12
+          gh workflow run pw-multislice-training-test.yaml --ref jax_0.10.2
 
           echo "Waiting 30 seconds for the new run to be registered with the API..."
           sleep 30
 
           echo "Fetching the ID of the new run..."
-          RUN_ID=$(gh run list --workflow="pw-multislice-training-test.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow="pw-multislice-training-test.yaml" --branch jax_0.10.2 --limit 1 --json databaseId -q '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "Error: Could not find a recent run for the workflow."
@@ -148,13 +148,13 @@ jobs:
         run: |
           set -e
           echo "Triggering workflow: bazel-unit-tests.yaml"
-          gh workflow run bazel-unit-tests.yaml --ref jax_nightly_py3.12
+          gh workflow run bazel-unit-tests.yaml --ref jax_0.10.2
 
           echo "Waiting 30 seconds for the new run to be registered with the API..."
           sleep 30
 
           echo "Fetching the ID of the new run..."
-          RUN_ID=$(gh run list --workflow="bazel-unit-tests.yaml" --branch jax_nightly_py3.12 --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow="bazel-unit-tests.yaml" --branch jax_0.10.2 --limit 1 --json databaseId -q '.[0].databaseId')
 
           if [ -z "$RUN_ID" ]; then
             echo "Error: Could not find a recent run for the workflow."
