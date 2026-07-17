@@ -11,29 +11,23 @@ jobs:
         ARC_JOBSET_NAME: arc-pw-training
         ARC_JOBSET_JSON: /var/arc/arc-pw.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:py3.12-jax-nightly
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:py3.12-jax-nightly-jw
         JOBSET_HEALTHY_TIMEOUT: 900
         ACCELERATOR: v6e_4x4_1
         # Optional flags
         STEPS_CHECKPOINT: 50
         MAX_STEPS: 100
-
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        # CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
         CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
 
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest
         POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
-
-        # POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.10.0 jaxlib==0.10.0 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
-        # PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260527_RC00-jax_0.8.3
-        # PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260527_RC00-jax_0.8.3
-        # POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.8.3 jaxlib==0.8.3 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
     steps:
       - name: Launch the TPU training job
         id: launch_step
         run: |
+          export GITHUB_OUTPUT=$GITHUB_OUTPUT
           START_TIME=$(date +%s)
           echo "START_TIME=$START_TIME" >> $GITHUB_ENV
           GH_RUN_ID=${{ github.run_id }} python3 /var/arc/launch_jobset.py
@@ -52,4 +46,6 @@ jobs:
           python /var/arc/validation_utils.py
       - name: Upload the training result to GCS
         if: always()
-        run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh
+        run: |
+          JAX_VER=${{ steps.launch_step.outputs.jax_version }}
+          GH_RUN_ID=${{ github.run_id }} JAX_VER="${JAX_VER}" bash /var/arc/upload-result.sh

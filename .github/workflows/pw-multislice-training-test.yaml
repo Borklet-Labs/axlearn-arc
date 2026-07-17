@@ -26,6 +26,7 @@ jobs:
       - name: Launch the TPU training job
         id: launch_step
         run: |
+          export GITHUB_OUTPUT=$GITHUB_OUTPUT
           START_TIME=$(date +%s)
           echo "START_TIME=$START_TIME" >> $GITHUB_ENV
 
@@ -47,4 +48,6 @@ jobs:
           python /var/arc/validation_utils.py
       - name: Upload the training result to GCS
         if: always()
-        run: GH_RUN_ID=${{ github.run_id }} bash /var/arc/upload-result.sh
+        run: |
+          JAX_VER=${{ steps.launch_step.outputs.jax_version }}
+          GH_RUN_ID=${{ github.run_id }} JAX_VER="${JAX_VER}" bash /var/arc/upload-result.sh
