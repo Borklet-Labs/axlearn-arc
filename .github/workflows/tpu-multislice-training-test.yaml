@@ -20,7 +20,7 @@ jobs:
         # CUSTOM_GIT_BRANCH: cienet/0_10_dev
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         # CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
-       CUSTOM_GIT_BRANCH: jax_0.10.2
+        CUSTOM_GIT_BRANCH: jax_0.10.2
         # CUSTOM_GIT_BRANCH: jax_0.6.2_py3.12 # Customize with a different branch
         # JOBSET_MAX_RESTARTS: 1 # Allow restarts in the JobSet. Default = 0 (no restarts)
         # POST_SETUP_CMD: # Execute a command after git setup and dependency resolution is complete
