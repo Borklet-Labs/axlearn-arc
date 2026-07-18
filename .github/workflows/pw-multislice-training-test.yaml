@@ -5,13 +5,13 @@ jobs:
   pw-tpu-single-slice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
-      image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:py3.12-jax-nightly
+      image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:py3.12-jax-nightly-jw
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: arc-pw-multislice-training
         ARC_JOBSET_JSON: /var/arc/arc-pw-multislice.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:py3.12-jax-nightly
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:py3.12-jax-nightly-jw
         JOBSET_HEALTHY_TIMEOUT: 600
         ACCELERATOR: v6e_4x4_2
         # Optional flags
@@ -50,4 +50,4 @@ jobs:
         if: always()
         run: |
           JAX_VER=${{ steps.launch_step.outputs.jax_version }}
-          GH_RUN_ID=${{ github.run_id }} JAX_VER="${JAX_VER}" bash /var/arc/upload-result.sh
+          GH_RUN_ID=${{ github.run_id }} JAX_VER="${JAX_VER}" TEST_TYPE="pw-training-test" bash /var/arc/upload-result.sh

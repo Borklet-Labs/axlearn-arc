@@ -58,11 +58,25 @@ fi
 
 echo "JAX version: ${JAX_VER}"
 
+# Check for test type
+if [ -z "$TEST_TYPE" ]; then
+    TEST_TYPE="training-test"
+fi
+
+# Add optional metadata headers if they are defined
+EXTRA_HEADERS=()
+if [ -n "${PW_PROXY_IMAGE}" ]; then
+    EXTRA_HEADERS+=("-h" "x-goog-meta-pw-proxy-image:${PW_PROXY_IMAGE}")
+fi
+if [ -n "${PW_SERVER_IMAGE}" ]; then
+    EXTRA_HEADERS+=("-h" "x-goog-meta-pw-server-image:${PW_SERVER_IMAGE}")
+fi
+
 # Upload the result CSV to GCS with the correct metadata
-gsutil -h "x-goog-meta-test-type:training-test" -h "x-goog-meta-commit-hash:${GITHUB_HASH}" \
+gsutil "${EXTRA_HEADERS[@]}" -h "x-goog-meta-test-type:${TEST_TYPE}" -h "x-goog-meta-commit-hash:${GITHUB_HASH}" \
    -h "x-goog-meta-jax-version:${JAX_VER}" -h "x-goog-meta-github-run-id:${GH_RUN_ID}" \
    -h "x-goog-meta-run-timestamp:${TIMESTAMP}" -h "x-goog-meta-accelerator:${ACCELERATOR}" \
-   -m cp /var/arc/result.csv ${GCS_PREFIX}/results/training-test-${ACCELERATOR}-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
+   -m cp /var/arc/result.csv ${GCS_PREFIX}/results/${TEST_TYPE}-${ACCELERATOR}-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
 
 if [[ -z "$GCS_PREFIX" || "$GCS_PREFIX" != gs://* ]]; then
   echo "FATAL ERROR: The GCS_PREFIX environment variable is not set or is invalid."
