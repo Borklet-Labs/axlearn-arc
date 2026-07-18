@@ -2,7 +2,7 @@ name: pw-single-slice-colocated-test
 on:
   workflow_dispatch
 jobs:
-  pw-tpu-single-slice-training-test-job:
+  pw-tpu-single-slice-colocated-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
       image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:py3.12-jax-nightly
