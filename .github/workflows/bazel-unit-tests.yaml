@@ -10,7 +10,7 @@ jobs:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         ARC_JOBSET_NAME: bazel-unit-tests
         ARC_JOBSET_JSON: /var/arc/bazel.json
-        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-bazel:python3.12
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-bazel:py3.12-jax-nightly-jw
         JOBSET_HEALTHY_TIMEOUT: 3600
         RESUME_JOBSET: true
         USE_BAZEL_CACHE: true
