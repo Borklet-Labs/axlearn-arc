@@ -42,9 +42,18 @@ if [ $? -ne 0 ]; then
     touch /home/runner/_work/test_failed
 fi
 
+# Generate the master CSV report from Bazel testlogs
+python3 /var/arc/parse_bazel_xml_results.py /home/runner/_work/csv_results/bazel_tests_all_results.csv
+
 # Compress the results
 cd /home/runner/_work
 tar -czvf results.tar.gz csv_results
 
 # Upload to GCS, including the date and commit hash
 gsutil -m cp results.tar.gz ${GCS_PREFIX}/results/archive/bazel-unit-tests-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.tar.gz
+gsutil -h "x-goog-meta-test-type:unit-tests" -h "x-goog-meta-processor:bazel" \
+   -h "x-goog-meta-commit-hash:${GITHUB_HASH}" -h "x-goog-meta-jax-version:${JAX_VER}" \
+   -h "x-goog-meta-github-run-id:${GH_RUN_ID}" -h "x-goog-meta-run-timestamp:${TIMESTAMP}" \
+   -m cp /home/runner/_work/csv_results/bazel_tests_all_results.csv ${GCS_PREFIX}/results/unit-tests-bazel-${GITHUB_HASH}-${JAX_VER}-${GH_RUN_ID}-${TIMESTAMP}.csv
+
+exit
