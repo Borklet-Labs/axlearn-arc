@@ -5,13 +5,13 @@ jobs:
   pw-tpu-single-slice-training-test-job:
     runs-on: jobset # Runs on CPU because this schedules a JobSet that's later routed to TPU
     container:
-      image: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-jobset:latest
+      image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:py3.12-jax-nightly-cam
       env:
         # Required environmental variables for a successful run
         ARC_JOBSET_NAME: arc-pw-training
         ARC_JOBSET_JSON: /var/arc/arc-pw.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
-        JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/camilo-tpu/pw-arc-python:latest
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-tpu:py3.12-jax-nightly-cam
         JOBSET_HEALTHY_TIMEOUT: 1300
         ACCELERATOR: v6e_4x4_1
         # Optional flags
@@ -19,7 +19,7 @@ jobs:
         MAX_STEPS: 100
         RESTORE_MODE: True
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
-        CUSTOM_GIT_BRANCH: jax_0.10.1
+        CUSTOM_GIT_BRANCH: cienet/jax-nighlty-dev
 
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:latest
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:latest

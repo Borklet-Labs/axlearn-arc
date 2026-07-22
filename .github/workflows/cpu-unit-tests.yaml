@@ -6,12 +6,12 @@ jobs:
     runs-on: jobset
     container:
       # image: us-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset-post-cmd-nightly:latest
-      image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:py3.12-jax-nightly
+      image: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-jobset:py3.12-jax-nightly-cam
       env:
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         ARC_JOBSET_NAME: cpu-unit-tests
         ARC_JOBSET_JSON: /var/arc/cpu.json
-        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:py3.12-jax-nightly
+        JOBSET_DOCKER_IMAGE: us-central1-docker.pkg.dev/supercomputer-testing/axlearn/arc-cpu:py3.12-jax-nightly-cam
         JOBSET_HEALTHY_TIMEOUT: 3600
         RESUME_JOBSET: true
         # Optional flags
