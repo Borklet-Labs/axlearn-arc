@@ -31,7 +31,7 @@ git log -1 --stat --pretty=format:"%H" --no-patch
 TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
 
-JAX_VER=$(cat pyproject.toml | grep jax== | sed 's/\s*"jax==//g' | sed 's/",\s*//g' | sed 's/\s*//g')
+JAX_VER=$(python3 -c 'import jax; print(jax.__version__)' 2>/dev/null || grep "jax==" requirements.in | cut -d'=' -f3)
 
 
 # Check for test type

@@ -5,7 +5,7 @@ cd /root
 # Get the timestamp of when the tests started
 TIMESTAMP=$(date +"%Y-%m-%d-%T")
 GITHUB_HASH=$(git log -1 --stat --pretty=format:"%h" --no-patch)
-JAX_VER=$(python3 -c 'import jax; print(jax.version.__version__)')
+JAX_VER=$(python3 -c 'import jax; print(jax.__version__)' 2>/dev/null || grep "jax==" requirements.in | cut -d'=' -f3)
 
 # Create five groups of pytest files, needed to avoid OOM with stack trace failures
 groups=(00 01 02 03 04)
