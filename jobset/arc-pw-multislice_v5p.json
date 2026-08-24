@@ -179,7 +179,7 @@
                     "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   }
                 ],
-                "nodeSelector": { "cloud.google.com/gke-nodepool": "worker-pool"},
+                "nodeSelector": {},
                 "restartPolicy": "Never",
                 "serviceAccountName": "default",
                 "terminationGracePeriodSeconds": 60,
@@ -274,8 +274,7 @@
                       { "containerPort": 29001, "protocol": "TCP" }
                     ],
                     "resources": {
-                      "limits": { "google.com/tpu": "4", "memory": "720Gi" },
-                      "requests": { "memory": "576Gi" }
+                      "limits": { "google.com/tpu": "4" }
                     },
                     "securityContext": { "privileged": true },
                     "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
