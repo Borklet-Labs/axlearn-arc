@@ -96,16 +96,36 @@ def get_current_jobset(jobset_name: str):
         if jobset_name in jobset["metadata"]["name"]:
             return jobset
 
-def get_jobset_status(jobset_name: str):
-    """Get the status of a JobSet
+def get_jobset_status(jobset_name: str, timeout: int = 60):
+    """Get the status of a JobSet with retry/polling to allow the controller time to populate status.
 
     Args:
-        jobnet_name: String containing the JobSet name
+        jobset_name: String containing the JobSet name
+        timeout: Maximum seconds to wait for status to populate
 
     Returns:
-        Returns the JobSet status object matching the name, or None"""
+        Returns the JobSet status dictionary matching the name
 
-    return get_current_jobset(jobset_name)["status"]["replicatedJobsStatus"][0]
+    Raises:
+        TimeoutError: If the status does not populate within the timeout period
+    """
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            jobset = get_current_jobset(jobset_name)
+            if jobset:
+                status = jobset.get("status")
+                if status:
+                    replicated_statuses = status.get("replicatedJobsStatus")
+                    if replicated_statuses and len(replicated_statuses) > 0:
+                        return replicated_statuses[0]
+        except Exception as e:
+            print(f"Transient error fetching JobSet status: {e}. Retrying...", file=sys.stderr)
+
+        time.sleep(2)
+
+    print(f"ERROR: Timed out waiting for JobSet {jobset_name} status to populate after {timeout}s", file=sys.stderr)
+    raise TimeoutError(f"Timed out waiting for JobSet {jobset_name} status to populate.")
 
 def cleanup_jobset(jobset_name: str):
     """Delete a JobSet when finishing execution
