@@ -54,7 +54,10 @@
                       { "containerPort": 9000 }
                     ],
                     "securityContext": { "privileged": true },
-                    "command": [ "bash", "/var/arc/arc-pw-multislice-startup.sh" ],
+                    "command": [
+                      "bash",
+                      "/var/arc/arc-pw-multislice-v5p-startup.sh"
+                    ],
                     "resources": {
                       "requests": {
                         "cpu": "1",
@@ -83,6 +86,7 @@
                       { "name": "GCS_PREFIX", "value": "INSERT_GCS_PREFIX" },
                       { "name": "CUSTOM_GIT_ORIGIN", "value": "INSERT_GIT_ORIGIN" },
                       { "name": "CUSTOM_GIT_BRANCH", "value": "INSERT_GIT_BRANCH" },
+                      { "name": "CUSTOM_GIT_COMMIT", "value": "INSERT_GIT_COMMIT" },
                       { "name": "GH_RUN_ID", "value": "INSERT_GH_RUN_ID" },
                       { "name": "POST_SETUP_CMD", "value": "INSERT_POST_SETUP_CMD" },
                       { "name": "FUJI_PATCH_FILE", "value": "INSERT_FUJI_PATCH_FILE" },

@@ -318,6 +318,15 @@ def update_jobset(jobset_base_config: dict) -> dict:
     else:
         updated_jobset = updated_jobset.replace("INSERT_GIT_BRANCH", "")
 
+    if "CUSTOM_GIT_COMMIT" in os.environ:
+        if os.environ["CUSTOM_GIT_COMMIT"] != "INSERT_GIT_COMMIT":
+            print(f"Found custom git commit {os.environ['CUSTOM_GIT_COMMIT']}", file=sys.stderr)
+            updated_jobset = updated_jobset.replace("INSERT_GIT_COMMIT", os.environ["CUSTOM_GIT_COMMIT"])
+        else:
+            updated_jobset = updated_jobset.replace("INSERT_GIT_COMMIT", "")
+    else:
+        updated_jobset = updated_jobset.replace("INSERT_GIT_COMMIT", "")
+
     # Get the pod UID to ensure clean deletion later
     pods = KUBE_API.list_namespaced_pod(namespace="axlearn-arc", watch=False)
     pod_metadata = None
