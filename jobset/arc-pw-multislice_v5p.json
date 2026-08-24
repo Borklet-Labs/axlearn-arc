@@ -3,7 +3,7 @@
   "kind": "JobSet",
   "metadata": {
     "generation": 1,
-    "name": "arc-pw-multislice-v5p-training",
+    "name": "arc-pw-multislice-v5p",
     "namespace": "axlearn-arc"
   },
   "spec": {
@@ -28,7 +28,7 @@
           "metadata": {
             "annotations": {
               "axlearn/replicatedjob-load-balancer-port": "80",
-              "axlearn/replicatedjob-load-balancer-service-name": "arc-pw-multislice-v5p-training-pwhd-service",
+              "axlearn/replicatedjob-load-balancer-service-name": "arc-pw-multislice-v5p-pwhd-service",
               "axlearn/replicatedjob-load-balancer-target-port": "9000"
             }
           },
@@ -45,7 +45,7 @@
               "spec": {
                 "containers": [
                   {
-                    "name": "arc-pw-multislice-v5p-training-hd",
+                    "name": "arc-pw-multislice-v5p-hd",
                     "image": "INSERT_DOCKER_IMAGE",
                     "ports": [
                       { "containerPort": 8471 },
@@ -131,7 +131,7 @@
                     "args": [
                       "--resource_manager_address=localhost:29001",
                       "--server_port=29000",
-                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p-training/pathways-staging",
+                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p/pathways-staging",
                       "--xla_tpu_spmd_rng_bit_generator_unsafe=1",
                       "--xla_tpu_enable_latency_hiding_scheduler=true",
                       "--xla_tpu_perform_spmd_cse_prevention=false"
@@ -157,7 +157,7 @@
                       "--node_type=resource_manager",
                       "--instance_count=2",
                       "--instance_type=tpuv5p:2x2x1",
-                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p-training/pathways-staging"
+                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p/pathways-staging"
                     ],
                     "env": [ { "name": "TPU_SKIP_MDS_QUERY", "value": "true" } ],
                     "image": "INSERT_SERVER_IMAGE",
@@ -167,7 +167,7 @@
                     "volumeMounts": [ { "mountPath": "/output", "name": "shared-output" } ]
                   },
                   {
-                    "args": [ "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/arc-pw-multislice-v5p-training/output/$HOSTNAME/; sleep 60; done" ],
+                    "args": [ "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/arc-pw-multislice-v5p/output/$HOSTNAME/; sleep 60; done" ],
                     "command": [ "/bin/sh", "-c" ],
                     "image": "google/cloud-sdk:alpine",
                     "name": "output-uploader",
@@ -201,7 +201,7 @@
             "annotations": {
               "alpha.jobset.sigs.k8s.io/exclusive-topology": "cloud.google.com/gke-nodepool",
               "axlearn/replicatedjob-load-balancer-port": "80",
-              "axlearn/replicatedjob-load-balancer-service-name": "arc-pw-multislice-v5p-training-pwhd-service",
+              "axlearn/replicatedjob-load-balancer-service-name": "arc-pw-multislice-v5p-pwhd-service",
               "axlearn/replicatedjob-load-balancer-target-port": "9000"
             },
             "labels": {}
@@ -224,8 +224,8 @@
                   {
                     "args": [
                       "--server_port=29001",
-                      "--resource_manager_address=arc-pw-multislice-v5p-training-pwhd-0-0.arc-pw-multislice-v5p-training:29001",
-                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p-training/pathways-staging",
+                      "--resource_manager_address=arc-pw-multislice-v5p-pwhd-0-0.arc-pw-multislice-v5p:29001",
+                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p/pathways-staging",
                       "--tpu_pinned_host_allocation_recycle=true",
                       "--tpu_premapped_buffer_size=68719476736"
                     ],
@@ -256,7 +256,7 @@
                         "name": "REPLICA_ID",
                         "valueFrom": { "fieldRef": { "fieldPath": "metadata.annotations['jobset.sigs.k8s.io/job-index']" } }
                       },
-                      { "name": "MEGASCALE_COORDINATOR_ADDRESS", "value": "arc-pw-multislice-v5p-training-pwhd-0-0.arc-pw-multislice-v5p-training" },
+                      { "name": "MEGASCALE_COORDINATOR_ADDRESS", "value": "arc-pw-multislice-v5p-pwhd-0-0.arc-pw-multislice-v5p" },
                       { "name": "MEGASCALE_NUM_SLICES", "value": "2"},
                       {
                         "name": "MEGASCALE_SLICE_ID",
@@ -265,7 +265,7 @@
                     ],
                     "image": "INSERT_SERVER_IMAGE",
                     "imagePullPolicy": "Always",
-                    "name": "arc-pw-multislice-v5p-training-wk",
+                    "name": "arc-pw-multislice-v5p-wk",
                     "ports": [
                       { "containerPort": 8471, "protocol": "TCP" },
                       { "containerPort": 8080, "protocol": "TCP" },
@@ -290,7 +290,7 @@
                 ],
                 "initContainers": [
                   {
-                    "args": [ "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/arc-pw-multislice-v5p-training/output/$HOSTNAME/; sleep 60; done" ],
+                    "args": [ "while true; do gsutil -m rsync -r /output gs://qmcgarry-axlearn/arc-pw-multislice-v5p/output/$HOSTNAME/; sleep 60; done" ],
                     "command": [ "/bin/sh", "-c" ],
                     "image": "google/cloud-sdk:alpine",
                     "name": "output-uploader",
