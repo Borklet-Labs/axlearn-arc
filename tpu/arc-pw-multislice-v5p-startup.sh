@@ -59,16 +59,17 @@ if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ] && [ -n "$POST_SETUP_CMD" ];
     eval "$POST_SETUP_CMD"
 fi
 
-# Patch tpu_splash_attention.py for JAX 0.9.2 get_kernel_name compatibility if needed
+# Patch tpu_splash_attention.py for JAX 0.9.2 compatibility if needed
 python3 -c "
-import re
-path = '/root/axlearn/common/flash_attention/tpu_splash_attention.py'
+p = '/root/axlearn/common/flash_attention/tpu_splash_attention.py'
 try:
-    with open(path) as f:
+    with open(p) as f:
         c = f.read()
-    c_fixed = re.sub(r'kernel_name = get_kernel_name\(\s*(?:dataclasses\.asdict\(block_sizes\)|dict\([^)]+\)),\s*', 'kernel_name = get_kernel_name(\n        ', c)
-    with open(path, 'w') as f:
-        f.write(c_fixed)
+    c = c.replace('dataclasses.asdict(block_sizes),', '')
+    if 'pl.load' not in c or 'if not hasattr(pl, \"load\")' not in c:
+        c = c.replace('from jax.experimental import pallas as pl', 'from jax.experimental import pallas as pl\nif not hasattr(pl, \"load\"): pl.load = lambda r, i=...: r[i]\nif not hasattr(pl, \"store\"): pl.store = lambda r, i, v: r.__setitem__(i, v)')
+    with open(p, 'w') as f:
+        f.write(c)
 except Exception:
     pass
 "
