@@ -380,7 +380,8 @@ def update_jobset(jobset_base_config: dict) -> dict:
     # Add any additional setup commands if defined
     if POST_SETUP_CMD:
         print(f'Detected post-setup command: {POST_SETUP_CMD}', file=sys.stderr)
-        updated_jobset = updated_jobset.replace("INSERT_POST_SETUP_CMD", POST_SETUP_CMD)
+        escaped_cmd = json.dumps(POST_SETUP_CMD)[1:-1]
+        updated_jobset = updated_jobset.replace("INSERT_POST_SETUP_CMD", escaped_cmd)
 
     # Set Max steps of the training
     if MAX_STEPS:
