@@ -12,7 +12,7 @@ jobs:
         ARC_JOBSET_JSON: /var/arc/arc-pw-multislice_v5p.json
         GCS_PREFIX: gs://axlearn-arc-testing/testing
         JOBSET_DOCKER_IMAGE: us-central2-docker.pkg.dev/tpu-prod-env-one-vm/ryan-axlearn-arc/arc-tpu:latest
-        JOBSET_HEALTHY_TIMEOUT: 600
+        JOBSET_HEALTHY_TIMEOUT: 1500 # 25 minutes
         ACCELERATOR: v5p_2x2x1_2
         # Optional flags
         STEPS_CHECKPOINT: 30
@@ -21,8 +21,8 @@ jobs:
         CUSTOM_GIT_BRANCH: main
         CUSTOM_GIT_COMMIT: b4797145d672eec5a5dcc52f1dfada46963de509
 
-        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260422-jax_0.9.2
-        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260422-jax_0.9.2
+        PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260420-jax_0.9.2
+        PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260420-jax_0.9.2
         POST_SETUP_CMD: pip install importlib_resources && pip install jax==0.9.2 jaxlib==0.9.2 -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ --extra-index-url https://pypi.org/simple || echo setup_failed
 
         # POST_SETUP_CMD: pip install -v -U --pre jax jaxlib requests libtpu -f https://storage.googleapis.com/libtpu-wheels/index.html --extra-index-url https://storage.googleapis.com/jax-releases/jax_nightly_releases.html -i https://us-python.pkg.dev/ml-oss-artifacts-published/jax/simple/ || echo setup_failed
