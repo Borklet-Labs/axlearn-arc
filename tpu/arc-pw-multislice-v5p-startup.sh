@@ -65,11 +65,12 @@ p = '/root/axlearn/common/flash_attention/tpu_splash_attention.py'
 try:
     with open(p) as f:
         c = f.read()
-    c = c.replace('dataclasses.asdict(block_sizes),', '')
-    if 'pl.load' not in c or 'if not hasattr(pl, \"load\")' not in c:
-        c = c.replace('from jax.experimental import pallas as pl', 'from jax.experimental import pallas as pl\nif not hasattr(pl, \"load\"): pl.load = lambda r, i=...: r[i]\nif not hasattr(pl, \"store\"): pl.store = lambda r, i, v: r.__setitem__(i, v)')
-    with open(p, 'w') as f:
-        f.write(c)
+    if '_orig_get_kernel_name' not in c:
+        target = '    get_kernel_name,\n)'
+        replacement = '    get_kernel_name as _orig_get_kernel_name,\n)\n\nif not hasattr(pl, \"load\"): pl.load = lambda r, i=...: r[i]\nif not hasattr(pl, \"store\"): pl.store = lambda r, i, v: r.__setitem__(i, v)\n\ndef get_kernel_name(*args, **kwargs):\n    if args and isinstance(args[0], (dict, BlockSizes)):\n        args = args[1:]\n    return _orig_get_kernel_name(*args, **kwargs)'
+        c = c.replace(target, replacement)
+        with open(p, 'w') as f:
+            f.write(c)
 except Exception:
     pass
 "
