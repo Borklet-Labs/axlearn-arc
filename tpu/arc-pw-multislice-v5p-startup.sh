@@ -59,6 +59,20 @@ if [ "$POST_SETUP_CMD" != "INSERT_POST_SETUP_CMD" ] && [ -n "$POST_SETUP_CMD" ];
     eval "$POST_SETUP_CMD"
 fi
 
+# Patch tpu_splash_attention.py for JAX 0.9.2 get_kernel_name compatibility if needed
+python3 -c "
+import re
+path = '/root/axlearn/common/flash_attention/tpu_splash_attention.py'
+try:
+    with open(path) as f:
+        c = f.read()
+    c_fixed = re.sub(r'kernel_name = get_kernel_name\(\s*(?:dataclasses\.asdict\(block_sizes\)|dict\([^)]+\)),\s*', 'kernel_name = get_kernel_name(\n        ', c)
+    with open(path, 'w') as f:
+        f.write(c_fixed)
+except Exception:
+    pass
+"
+
 # Patch fuji.py to add new mesh selectors if provided
 if [ "$FUJI_PATCH_FILE" != "INSERT_FUJI_PATCH_FILE" ] && [ -n "$FUJI_PATCH_FILE" ] && [ -f "$FUJI_PATCH_FILE" ]; then
     echo "Applying patch to axlearn/experiments/text/gpt/fuji.py"
