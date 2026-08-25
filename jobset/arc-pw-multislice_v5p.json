@@ -134,7 +134,8 @@
                       "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p/pathways-staging",
                       "--xla_tpu_spmd_rng_bit_generator_unsafe=1",
                       "--xla_tpu_enable_latency_hiding_scheduler=true",
-                      "--xla_tpu_perform_spmd_cse_prevention=false"
+                      "--xla_tpu_perform_spmd_cse_prevention=false",
+                      "--enforce_kernel_ipv6_support=false"
                     ],
                     "env": [
                       { "name": "IFRT_PROXY_USE_INSECURE_GRPC_CREDENTIALS", "value": "true" },
@@ -156,8 +157,9 @@
                       "--server_port=29001",
                       "--node_type=resource_manager",
                       "--instance_count=2",
-                      "--instance_type=v5p:2x2x1",
-                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p/pathways-staging"
+                      "--instance_type=tpuv5:2x2x1",
+                      "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p/pathways-staging",
+                      "--enforce_kernel_ipv6_support=false"
                     ],
                     "env": [ { "name": "TPU_SKIP_MDS_QUERY", "value": "true" } ],
                     "image": "INSERT_SERVER_IMAGE",
@@ -227,7 +229,8 @@
                       "--resource_manager_address=arc-pw-multislice-v5p-pwhd-0-0.arc-pw-multislice-v5p:29001",
                       "--gcs_scratch_location=gs://tpu-prod-env-multipod-axlearn/axlearn/jobs/arc-pw-multislice-v5p/pathways-staging",
                       "--tpu_pinned_host_allocation_recycle=true",
-                      "--tpu_premapped_buffer_size=68719476736"
+                      "--tpu_premapped_buffer_size=68719476736",
+                      "--enforce_kernel_ipv6_support=false"
                     ],
                     "env": [
                       { "name": "GCS_RESOLVE_REFRESH_SECS", "value": "600" },

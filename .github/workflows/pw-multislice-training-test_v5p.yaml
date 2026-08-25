@@ -19,7 +19,7 @@ jobs:
         MAX_STEPS: 100
         CUSTOM_GIT_ORIGIN: https://github.com/Borklet-Labs/axlearn
         CUSTOM_GIT_BRANCH: main
-        CUSTOM_GIT_COMMIT: b4797145d672eec5a5dcc52f1dfada46963de509
+        CUSTOM_GIT_COMMIT: 76eca74736b3da7cfdc31a4cf8b0cd63bc630674
 
         PW_PROXY_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/proxy_server:20260420-jax_0.9.2
         PW_SERVER_IMAGE: us-docker.pkg.dev/cloud-tpu-v2-images/pathways/server:20260420-jax_0.9.2
